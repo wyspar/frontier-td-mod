@@ -1,0 +1,14 @@
+{
+  "name": "frontier-td",
+  "title": "Frontier Tower Defense",
+  "description": "To be used with the Frontier tower defense scenario.",
+  "author": "wyspar",
+  "version": "1.0.0",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0.42",
+    "fdsl >= 0.1.4",
+    "space-age"
+  ],
+  "space_travel_required": true
+}
