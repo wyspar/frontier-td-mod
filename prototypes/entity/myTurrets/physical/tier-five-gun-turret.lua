@@ -1,6 +1,7 @@
 local turret = table.deepcopy(data.raw["electric-turret"]["laser-turret"])
 local sounds = require("__base__.prototypes.entity.sounds")
 local hit_effects = require("__base__.prototypes.entity.hit-effects")
+local turretTint = {1.3, 1.3, 1.3, 1}
 
 function gun_turret_extension(inputs)
 return
@@ -31,7 +32,8 @@ return
   run_mode = inputs.run_mode or "forward",
   shift = util.by_pixel(0, -28),
   apply_runtime_tint = false,
-  scale = 0.75
+  scale = 0.75,
+  tint = turretTint
 }
 end
 
@@ -96,6 +98,7 @@ return
       direction_count = 64,
       shift = util.by_pixel(0, -32.5),
       apply_runtime_tint = false,
+      tint = turretTint,
       stripes =
       {
       {
@@ -157,37 +160,37 @@ return
 }
 end
 
-
-turret.name = "infinite-gun-turret"
+turret.name = "tier-five-gun-turret"
 turret.minable = {
   mining_time = 0.1,
-  result = "infinite-gun-turret"
+  result = "tier-five-gun-turret"
 }
 turret.fast_replaceable_group = "ammo-turret"
 turret.energy_source = {
     type = "void"
 }
+turret.icon = nil
+turret.icons = nil
 turret.icons = {
   {
-    icon = "__frontier-td__/graphics/icons/infinite-gun-turret.png",
-    icon_size = 64,
-    -- tint = {r = 0.1, g = 1.0, b = 0.1, a = 1.0}
+    icon = "__frontier-td__/graphics/icons/tier-five-gun-turret.png",
+    icon_size = 64
   }
 }
 turret.max_health = 100
 turret.corpse = "gun-turret-remnants"
 turret.dying_explosion = "gun-turret-explosion"
-turret.rotation_speed = 0.015
+turret.rotation_speed = 0.014
 turret.preparing_speed = 0.08
 turret.preparing_sound = sounds.gun_turret_activate
 turret.folding_sound = sounds.gun_turret_deactivate
-turret.attacking_speed = .5 --animation?
+turret.attacking_speed = 1 --animation?
 turret.alert_when_attacking = false
 turret.attack_parameters = {
   type = "projectile",
   ammo_category = "bullet",
   health_penalty = 1,
-  cooldown = 12, --firerate
+  cooldown = 4, --firerate
   projectile_creation_distance = 1.39375,
   projectile_center = {0, -0.0875}, -- same as gun_turret_attack shift
   -- shell_particle =
@@ -201,15 +204,15 @@ turret.attack_parameters = {
   --   starting_frame_speed = 0.2,
   --   starting_frame_speed_deviation = 0.1
   -- },
-  range = 16,
+  range = 20,
   sound = sounds.gun_turret_gunshot,
   ammo_type = {
     action = {
       type = "direct",
       action_delivery = {
         type = "projectile",
-        projectile = "infinite-bullet-projectile",
-        starting_speed = .5
+        projectile = "bullet-projectile-tier-five",
+        starting_speed = 1
       }
     }
   }
@@ -276,7 +279,8 @@ turret.graphics_set =
           height = 102,
           shift = util.by_pixel(0, -4.5),
           apply_runtime_tint = false,
-          scale = 0.75
+          scale = 0.75,
+          tint = turretTint
         }
       }
     }

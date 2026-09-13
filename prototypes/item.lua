@@ -4,7 +4,7 @@ local item_effects = require("__space-age__.prototypes.item-effects")
 local basicGunTurret = table.deepcopy(data.raw.item["gun-turret"])
 basicGunTurret.name = "infinite-gun-turret"
 basicGunTurret.place_result = "infinite-gun-turret"
-basicGunTurret.order = "a[turret]-a[infinite-gun-turret]"
+basicGunTurret.order = "a[turret]-a[basic-gun-turret]"
 basicGunTurret.icon = nil
 basicGunTurret.icons = nil
 basicGunTurret.icons = {
@@ -14,12 +14,7 @@ basicGunTurret.icons = {
   }
 }
 
-local siloLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
-siloLaserTurret.name = "silo-laser-turret"
-siloLaserTurret.place_result = "silo-laser-turret"
-siloLaserTurret.order = "a[turret]-a[silo-laser-turret]"
-
---tier two turrets
+--tiered gun turrets
 local tierTwoGunTurret = table.deepcopy(data.raw.item["gun-turret"])
 tierTwoGunTurret.name = "tier-two-gun-turret"
 tierTwoGunTurret.place_result = "tier-two-gun-turret"
@@ -73,6 +68,32 @@ tierFiveGunTurret.icons = {
   }
 }
 
+--tiered laser turrets
+local tierOneLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
+tierOneLaserTurret.name = "tier-one-laser-turret"
+tierOneLaserTurret.place_result = "tier-one-laser-turret"
+tierOneLaserTurret.order = "a[turret]-a[tier-one-laser-turret]"
+
+local tierTwoLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
+tierTwoLaserTurret.name = "tier-two-laser-turret"
+tierTwoLaserTurret.place_result = "tier-two-laser-turret"
+tierTwoLaserTurret.order = "a[turret]-a[tier-two-laser-turret]"
+
+local tierThreeLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
+tierThreeLaserTurret.name = "tier-three-laser-turret"
+tierThreeLaserTurret.place_result = "tier-three-laser-turret"
+tierThreeLaserTurret.order = "a[turret]-a[tier-three-laser-turret]"
+
+local tierFourLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
+tierFourLaserTurret.name = "tier-four-laser-turret"
+tierFourLaserTurret.place_result = "tier-four-laser-turret"
+tierFourLaserTurret.order = "a[turret]-a[tier-four-laser-turret]"
+
+local tierFiveLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
+tierFiveLaserTurret.name = "tier-five-laser-turret"
+tierFiveLaserTurret.place_result = "tier-five-laser-turret"
+tierFiveLaserTurret.order = "a[turret]-a[tier-five-laser-turret]"
+
 data:extend({
   {
     type = "item",
@@ -114,9 +135,13 @@ data:extend({
     stack_size = 200
   },
   basicGunTurret,
-  siloLaserTurret,
   tierTwoGunTurret,
   tierThreeGunTurret,
   tierFourGunTurret,
-  tierFiveGunTurret
+  tierFiveGunTurret,
+  tierOneLaserTurret,
+  tierTwoLaserTurret,
+  tierThreeLaserTurret,
+  tierFourLaserTurret,
+  tierFiveLaserTurret
 })

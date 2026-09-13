@@ -22,7 +22,7 @@ function make_laser_beam(sound)
         {
           {
             type = "damage",
-            damage = { amount = 30, type = "laser"}
+            damage = { amount = 10, type = "laser"}
           }
         }
       }
@@ -36,7 +36,7 @@ function make_laser_beam(sound)
           layers =
           {
             {
-              filename = "__frontier-td__/graphics/entity/laser-turret/blue-laser-body.png",
+              filename = "__frontier-td__/graphics/entity/laser-turret/gray-laser-body.png",
               flags = beam_non_light_flags,
               line_length = 8,
               width = 64,
@@ -64,7 +64,7 @@ function make_laser_beam(sound)
           layers =
           {
             {
-              filename = "__frontier-td__/graphics/entity/laser-turret/blue-laser-end.png",
+              filename = "__frontier-td__/graphics/entity/laser-turret/gray-laser-end.png",
               flags = beam_non_light_flags,
               width = 110,
               height = 62,
@@ -93,7 +93,7 @@ function make_laser_beam(sound)
             layers =
             {
               {
-                filename = "__frontier-td__/graphics/entity/laser-turret/blue-laser-body.png",
+                filename = "__frontier-td__/graphics/entity/laser-turret/gray-laser-body.png",
                 flags = beam_non_light_flags,
                 line_length = 8,
                 width = 64,
@@ -180,9 +180,9 @@ function make_laser_beam(sound)
       },
       max_sounds_per_prototype = 1
     }
-    result.name = "blue-laser-beam"
+    result.name = "gray-laser-beam"
   else
-    result.name = "blue-laser-beam-no-sound"
+    result.name = "gray-laser-beam-no-sound"
   end
   return result
 end
