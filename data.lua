@@ -30,6 +30,17 @@ require("prototypes.entity.myTurrets.physical.tier-three-gun-turret")
 require("prototypes.entity.myTurrets.physical.tier-four-gun-turret")
 require("prototypes.entity.myTurrets.physical.tier-five-gun-turret")
 
+require("prototypes.beams.blue-tesla-beam")
+require("prototypes.beams.green-tesla-beam")
+require("prototypes.beams.gray-tesla-beam")
+require("prototypes.beams.red-tesla-beam")
+require("prototypes.beams.white-tesla-beam")
+require("prototypes.entity.myTurrets.electric.tier-one-tesla-turret")
+require("prototypes.entity.myTurrets.electric.tier-two-tesla-turret")
+require("prototypes.entity.myTurrets.electric.tier-three-tesla-turret")
+require("prototypes.entity.myTurrets.electric.tier-four-tesla-turret")
+require("prototypes.entity.myTurrets.electric.tier-five-tesla-turret")
+
 require("base-data-updates")
 
 

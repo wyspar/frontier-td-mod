@@ -6,7 +6,6 @@ basicGunTurret.name = "infinite-gun-turret"
 basicGunTurret.place_result = "infinite-gun-turret"
 basicGunTurret.order = "a[turret]-a[basic-gun-turret]"
 basicGunTurret.icon = nil
-basicGunTurret.icons = nil
 basicGunTurret.icons = {
   {
     icon = "__frontier-td__/graphics/icons/infinite-gun-turret.png",
@@ -20,7 +19,6 @@ tierTwoGunTurret.name = "tier-two-gun-turret"
 tierTwoGunTurret.place_result = "tier-two-gun-turret"
 tierTwoGunTurret.order = "a[turret]-a[tier-two-gun-turret]" 
 tierTwoGunTurret.icon = nil
-tierTwoGunTurret.icons = nil
 tierTwoGunTurret.icons = {
   {
     icon = "__frontier-td__/graphics/icons/tier-two-gun-turret.png",
@@ -34,7 +32,6 @@ tierThreeGunTurret.name = "tier-three-gun-turret"
 tierThreeGunTurret.place_result = "tier-three-gun-turret"
 tierThreeGunTurret.order = "a[turret]-a[tier-three-gun-turret]" 
 tierThreeGunTurret.icon = nil
-tierThreeGunTurret.icons = nil
 tierThreeGunTurret.icons = {
   {
     icon = "__frontier-td__/graphics/icons/tier-three-gun-turret.png",
@@ -47,7 +44,6 @@ tierFourGunTurret.name = "tier-four-gun-turret"
 tierFourGunTurret.place_result = "tier-four-gun-turret"
 tierFourGunTurret.order = "a[turret]-a[tier-four-gun-turret]" 
 tierFourGunTurret.icon = nil
-tierFourGunTurret.icons = nil
 tierFourGunTurret.icons = {
   {
     icon = "__frontier-td__/graphics/icons/tier-four-gun-turret.png",
@@ -60,7 +56,6 @@ tierFiveGunTurret.name = "tier-five-gun-turret"
 tierFiveGunTurret.place_result = "tier-five-gun-turret"
 tierFiveGunTurret.order = "a[turret]-a[tier-five-gun-turret]" 
 tierFiveGunTurret.icon = nil
-tierFiveGunTurret.icons = nil
 tierFiveGunTurret.icons = {
   {
     icon = "__frontier-td__/graphics/icons/tier-five-gun-turret.png",
@@ -73,26 +68,122 @@ local tierOneLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierOneLaserTurret.name = "tier-one-laser-turret"
 tierOneLaserTurret.place_result = "tier-one-laser-turret"
 tierOneLaserTurret.order = "a[turret]-a[tier-one-laser-turret]"
+tierOneLaserTurret.icon = nil
+tierOneLaserTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-one-laser-turret.png",
+    icon_size = 64
+  }
+}
 
 local tierTwoLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierTwoLaserTurret.name = "tier-two-laser-turret"
 tierTwoLaserTurret.place_result = "tier-two-laser-turret"
 tierTwoLaserTurret.order = "a[turret]-a[tier-two-laser-turret]"
+tierTwoLaserTurret.icon = nil
+tierTwoLaserTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-two-laser-turret.png",
+    icon_size = 64
+  }
+}
 
 local tierThreeLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierThreeLaserTurret.name = "tier-three-laser-turret"
 tierThreeLaserTurret.place_result = "tier-three-laser-turret"
 tierThreeLaserTurret.order = "a[turret]-a[tier-three-laser-turret]"
+tierThreeLaserTurret.icon = nil
+tierThreeLaserTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-three-laser-turret.png",
+    icon_size = 64
+  }
+}
 
 local tierFourLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierFourLaserTurret.name = "tier-four-laser-turret"
 tierFourLaserTurret.place_result = "tier-four-laser-turret"
 tierFourLaserTurret.order = "a[turret]-a[tier-four-laser-turret]"
+tierFourLaserTurret.icon = nil
+tierFourLaserTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-four-laser-turret.png",
+    icon_size = 64
+  }
+}
 
 local tierFiveLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierFiveLaserTurret.name = "tier-five-laser-turret"
 tierFiveLaserTurret.place_result = "tier-five-laser-turret"
 tierFiveLaserTurret.order = "a[turret]-a[tier-five-laser-turret]"
+tierFiveLaserTurret.icon = nil
+tierFiveLaserTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-five-laser-turret.png",
+    icon_size = 64
+  }
+}
+
+--tiered electric turrets
+local tierOneTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
+tierOneTeslaTurret.name = "tier-one-tesla-turret"
+tierOneTeslaTurret.place_result = "tier-one-tesla-turret"
+tierOneTeslaTurret.order = "a[turret]-a[tier-one-tesla-turret]"
+tierOneTeslaTurret.icon = nil
+tierOneTeslaTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-one-tesla-turret.png",
+    icon_size = 64
+  }
+}
+
+local tierTwoTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
+tierTwoTeslaTurret.name = "tier-two-tesla-turret"
+tierTwoTeslaTurret.place_result = "tier-two-tesla-turret"
+tierTwoTeslaTurret.order = "a[turret]-a[tier-two-tesla-turret]"
+tierTwoTeslaTurret.icon = nil
+tierTwoTeslaTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-two-tesla-turret.png",
+    icon_size = 64
+  }
+}
+
+local tierThreeTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
+tierThreeTeslaTurret.name = "tier-three-tesla-turret"
+tierThreeTeslaTurret.place_result = "tier-three-tesla-turret"
+tierThreeTeslaTurret.order = "a[turret]-a[tier-three-tesla-turret]"
+tierThreeTeslaTurret.icon = nil
+tierThreeTeslaTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-three-tesla-turret.png",
+    icon_size = 64
+  }
+}
+
+local tierFourTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
+tierFourTeslaTurret.name = "tier-four-tesla-turret"
+tierFourTeslaTurret.place_result = "tier-four-tesla-turret"
+tierFourTeslaTurret.order = "a[turret]-a[tier-four-tesla-turret]"
+tierFourTeslaTurret.icon = nil
+tierFourTeslaTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-four-tesla-turret.png",
+    icon_size = 64
+  }
+}
+
+local tierFiveTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
+tierFiveTeslaTurret.name = "tier-five-tesla-turret"
+tierFiveTeslaTurret.place_result = "tier-five-tesla-turret"
+tierFiveTeslaTurret.order = "a[turret]-a[tier-five-tesla-turret]"
+tierFiveTeslaTurret.icon = nil
+tierFiveTeslaTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-five-tesla-turret.png",
+    icon_size = 64
+  }
+}
 
 data:extend({
   {
@@ -143,5 +234,10 @@ data:extend({
   tierTwoLaserTurret,
   tierThreeLaserTurret,
   tierFourLaserTurret,
-  tierFiveLaserTurret
+  tierFiveLaserTurret,
+  tierOneTeslaTurret,
+  tierTwoTeslaTurret,
+  tierThreeTeslaTurret,
+  tierFourTeslaTurret,
+  tierFiveTeslaTurret
 })

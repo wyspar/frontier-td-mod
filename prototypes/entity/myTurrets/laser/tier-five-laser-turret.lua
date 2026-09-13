@@ -196,6 +196,14 @@ turret.graphics_set =
   }
 }
 
+turret.icon = nil
+turret.icons = nil
+turret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-five-laser-turret.png",
+    icon_size = 64
+  }
+}
 turret.max_health = 500
 turret.attack_parameters = {
   type = "beam",
