@@ -41,6 +41,13 @@ require("prototypes.entity.myTurrets.electric.tier-three-tesla-turret")
 require("prototypes.entity.myTurrets.electric.tier-four-tesla-turret")
 require("prototypes.entity.myTurrets.electric.tier-five-tesla-turret")
 
+require("prototypes.entity.myTurrets.fire.tier-one-flamer-turret")
+require("prototypes.entity.myTurrets.fire.tier-two-flamer-turret")
+require("prototypes.entity.myTurrets.fire.tier-three-flamer-turret")
+require("prototypes.entity.myTurrets.fire.tier-four-flamer-turret")
+require("prototypes.entity.myTurrets.fire.tier-five-flamer-turret")
+
+
 require("base-data-updates")
 
 

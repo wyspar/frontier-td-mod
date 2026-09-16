@@ -1,14 +1,3 @@
-local infiniteGunTurretRecipe = table.deepcopy(data.raw.recipe["gun-turret"])
-
-infiniteGunTurretRecipe.name = "infinite-gun-turret"
-infiniteGunTurretRecipe.results = {
-  {
-      type = "item",
-      name = "infinite-gun-turret",
-      amount = 1
-  }
-}
-
 data:extend({
   {
     type = "recipe",
@@ -22,5 +11,4 @@ data:extend({
     },
     results = {{type="item", name="small-electric-pole-iron", amount=1}}
   },
-  infiniteGunTurretRecipe
 })

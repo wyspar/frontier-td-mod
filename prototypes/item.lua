@@ -185,6 +185,67 @@ tierFiveTeslaTurret.icons = {
   }
 }
 
+--tiered flamer turrets
+local tierOneFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
+tierOneFlamerTurret.name = "tier-one-flamer-turret"
+tierOneFlamerTurret.place_result = "tier-one-flamer-turret"
+tierOneFlamerTurret.order = "a[turret]-a[tier-one-flamer-turret]"
+tierOneFlamerTurret.icon = nil
+tierOneFlamerTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-one-flamer-turret.png",
+    icon_size = 64
+  }
+}
+
+local tierTwoFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
+tierTwoFlamerTurret.name = "tier-two-flamer-turret"
+tierTwoFlamerTurret.place_result = "tier-two-flamer-turret"
+tierTwoFlamerTurret.order = "a[turret]-a[tier-two-flamer-turret]"
+tierTwoFlamerTurret.icon = nil
+tierTwoFlamerTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-two-flamer-turret.png",
+    icon_size = 64
+  }
+}
+
+local tierThreeFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
+tierThreeFlamerTurret.name = "tier-three-flamer-turret"
+tierThreeFlamerTurret.place_result = "tier-three-flamer-turret"
+tierThreeFlamerTurret.order = "a[turret]-a[tier-three-flamer-turret]"
+tierThreeFlamerTurret.icon = nil
+tierThreeFlamerTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-three-flamer-turret.png",
+    icon_size = 64
+  }
+}
+
+local tierFourFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
+tierFourFlamerTurret.name = "tier-four-flamer-turret"
+tierFourFlamerTurret.place_result = "tier-four-flamer-turret"
+tierFourFlamerTurret.order = "a[turret]-a[tier-four-flamer-turret]"
+tierFourFlamerTurret.icon = nil
+tierFourFlamerTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-four-flamer-turret.png",
+    icon_size = 64
+  }
+}
+
+local tierFiveFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
+tierFiveFlamerTurret.name = "tier-five-flamer-turret"
+tierFiveFlamerTurret.place_result = "tier-five-flamer-turret"
+tierFiveFlamerTurret.order = "a[turret]-a[tier-five-flamer-turret]"
+tierFiveFlamerTurret.icon = nil
+tierFiveFlamerTurret.icons = {
+  {
+    icon = "__frontier-td__/graphics/icons/tier-five-flamer-turret.png",
+    icon_size = 64
+  }
+}
+
 data:extend({
   {
     type = "item",
@@ -239,5 +300,10 @@ data:extend({
   tierTwoTeslaTurret,
   tierThreeTeslaTurret,
   tierFourTeslaTurret,
-  tierFiveTeslaTurret
+  tierFiveTeslaTurret,
+  tierOneFlamerTurret,
+  tierTwoFlamerTurret,
+  tierThreeFlamerTurret,
+  tierFourFlamerTurret,
+  tierFiveFlamerTurret
 })
