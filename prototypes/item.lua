@@ -1,10 +1,12 @@
 local item_sounds = require("__base__.prototypes.item_sounds")
 local item_effects = require("__space-age__.prototypes.item-effects")
+local item_tints = require("__base__.prototypes.item-tints")
 
 local basicGunTurret = table.deepcopy(data.raw.item["gun-turret"])
 basicGunTurret.name = "infinite-gun-turret"
 basicGunTurret.place_result = "infinite-gun-turret"
-basicGunTurret.order = "a[turret]-a[basic-gun-turret]"
+basicGunTurret.subgroup = "gun-turrets"
+basicGunTurret.order = "a[basic-gun-turret]"
 basicGunTurret.icon = nil
 basicGunTurret.icons = {
   {
@@ -17,7 +19,8 @@ basicGunTurret.icons = {
 local tierTwoGunTurret = table.deepcopy(data.raw.item["gun-turret"])
 tierTwoGunTurret.name = "tier-two-gun-turret"
 tierTwoGunTurret.place_result = "tier-two-gun-turret"
-tierTwoGunTurret.order = "a[turret]-a[tier-two-gun-turret]" 
+tierTwoGunTurret.subgroup = "gun-turrets"
+tierTwoGunTurret.order = "b[tier-two-gun-turret]" 
 tierTwoGunTurret.icon = nil
 tierTwoGunTurret.icons = {
   {
@@ -30,7 +33,8 @@ tierTwoGunTurret.icons = {
 local tierThreeGunTurret = table.deepcopy(data.raw.item["gun-turret"])
 tierThreeGunTurret.name = "tier-three-gun-turret"
 tierThreeGunTurret.place_result = "tier-three-gun-turret"
-tierThreeGunTurret.order = "a[turret]-a[tier-three-gun-turret]" 
+tierThreeGunTurret.subgroup = "gun-turrets"
+tierThreeGunTurret.order = "c[tier-three-gun-turret]" 
 tierThreeGunTurret.icon = nil
 tierThreeGunTurret.icons = {
   {
@@ -42,7 +46,8 @@ tierThreeGunTurret.icons = {
 local tierFourGunTurret = table.deepcopy(data.raw.item["gun-turret"])
 tierFourGunTurret.name = "tier-four-gun-turret"
 tierFourGunTurret.place_result = "tier-four-gun-turret"
-tierFourGunTurret.order = "a[turret]-a[tier-four-gun-turret]" 
+tierFourGunTurret.subgroup = "gun-turrets"
+tierFourGunTurret.order = "d[tier-four-gun-turret]" 
 tierFourGunTurret.icon = nil
 tierFourGunTurret.icons = {
   {
@@ -54,7 +59,8 @@ tierFourGunTurret.icons = {
 local tierFiveGunTurret = table.deepcopy(data.raw.item["gun-turret"])
 tierFiveGunTurret.name = "tier-five-gun-turret"
 tierFiveGunTurret.place_result = "tier-five-gun-turret"
-tierFiveGunTurret.order = "a[turret]-a[tier-five-gun-turret]" 
+tierFiveGunTurret.subgroup = "gun-turrets"
+tierFiveGunTurret.order = "e[tier-five-gun-turret]" 
 tierFiveGunTurret.icon = nil
 tierFiveGunTurret.icons = {
   {
@@ -67,7 +73,8 @@ tierFiveGunTurret.icons = {
 local tierOneLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierOneLaserTurret.name = "tier-one-laser-turret"
 tierOneLaserTurret.place_result = "tier-one-laser-turret"
-tierOneLaserTurret.order = "a[turret]-a[tier-one-laser-turret]"
+tierOneLaserTurret.subgroup = "laser-turrets"
+tierOneLaserTurret.order = "a[tier-one-laser-turret]"
 tierOneLaserTurret.icon = nil
 tierOneLaserTurret.icons = {
   {
@@ -79,7 +86,8 @@ tierOneLaserTurret.icons = {
 local tierTwoLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierTwoLaserTurret.name = "tier-two-laser-turret"
 tierTwoLaserTurret.place_result = "tier-two-laser-turret"
-tierTwoLaserTurret.order = "a[turret]-a[tier-two-laser-turret]"
+tierTwoLaserTurret.subgroup = "laser-turrets"
+tierTwoLaserTurret.order = "b[tier-two-laser-turret]"
 tierTwoLaserTurret.icon = nil
 tierTwoLaserTurret.icons = {
   {
@@ -91,7 +99,8 @@ tierTwoLaserTurret.icons = {
 local tierThreeLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierThreeLaserTurret.name = "tier-three-laser-turret"
 tierThreeLaserTurret.place_result = "tier-three-laser-turret"
-tierThreeLaserTurret.order = "a[turret]-a[tier-three-laser-turret]"
+tierThreeLaserTurret.subgroup = "laser-turrets"
+tierThreeLaserTurret.order = "c[tier-three-laser-turret]"
 tierThreeLaserTurret.icon = nil
 tierThreeLaserTurret.icons = {
   {
@@ -103,7 +112,8 @@ tierThreeLaserTurret.icons = {
 local tierFourLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierFourLaserTurret.name = "tier-four-laser-turret"
 tierFourLaserTurret.place_result = "tier-four-laser-turret"
-tierFourLaserTurret.order = "a[turret]-a[tier-four-laser-turret]"
+tierFourLaserTurret.subgroup = "laser-turrets"
+tierFourLaserTurret.order = "d[tier-four-laser-turret]"
 tierFourLaserTurret.icon = nil
 tierFourLaserTurret.icons = {
   {
@@ -115,7 +125,8 @@ tierFourLaserTurret.icons = {
 local tierFiveLaserTurret = table.deepcopy(data.raw.item["laser-turret"])
 tierFiveLaserTurret.name = "tier-five-laser-turret"
 tierFiveLaserTurret.place_result = "tier-five-laser-turret"
-tierFiveLaserTurret.order = "a[turret]-a[tier-five-laser-turret]"
+tierFiveLaserTurret.subgroup = "laser-turrets"
+tierFiveLaserTurret.order = "e[tier-five-laser-turret]"
 tierFiveLaserTurret.icon = nil
 tierFiveLaserTurret.icons = {
   {
@@ -128,7 +139,8 @@ tierFiveLaserTurret.icons = {
 local tierOneTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
 tierOneTeslaTurret.name = "tier-one-tesla-turret"
 tierOneTeslaTurret.place_result = "tier-one-tesla-turret"
-tierOneTeslaTurret.order = "a[turret]-a[tier-one-tesla-turret]"
+tierOneTeslaTurret.subgroup = "tesla-turrets"
+tierOneTeslaTurret.order = "a[tier-one-tesla-turret]"
 tierOneTeslaTurret.icon = nil
 tierOneTeslaTurret.icons = {
   {
@@ -140,7 +152,8 @@ tierOneTeslaTurret.icons = {
 local tierTwoTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
 tierTwoTeslaTurret.name = "tier-two-tesla-turret"
 tierTwoTeslaTurret.place_result = "tier-two-tesla-turret"
-tierTwoTeslaTurret.order = "a[turret]-a[tier-two-tesla-turret]"
+tierTwoTeslaTurret.subgroup = "tesla-turrets"
+tierTwoTeslaTurret.order = "b[tier-two-tesla-turret]"
 tierTwoTeslaTurret.icon = nil
 tierTwoTeslaTurret.icons = {
   {
@@ -152,7 +165,8 @@ tierTwoTeslaTurret.icons = {
 local tierThreeTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
 tierThreeTeslaTurret.name = "tier-three-tesla-turret"
 tierThreeTeslaTurret.place_result = "tier-three-tesla-turret"
-tierThreeTeslaTurret.order = "a[turret]-a[tier-three-tesla-turret]"
+tierThreeTeslaTurret.subgroup = "tesla-turrets"
+tierThreeTeslaTurret.order = "c[tier-three-tesla-turret]"
 tierThreeTeslaTurret.icon = nil
 tierThreeTeslaTurret.icons = {
   {
@@ -164,7 +178,8 @@ tierThreeTeslaTurret.icons = {
 local tierFourTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
 tierFourTeslaTurret.name = "tier-four-tesla-turret"
 tierFourTeslaTurret.place_result = "tier-four-tesla-turret"
-tierFourTeslaTurret.order = "a[turret]-a[tier-four-tesla-turret]"
+tierFourTeslaTurret.subgroup = "tesla-turrets"
+tierFourTeslaTurret.order = "d[tier-four-tesla-turret]"
 tierFourTeslaTurret.icon = nil
 tierFourTeslaTurret.icons = {
   {
@@ -176,7 +191,8 @@ tierFourTeslaTurret.icons = {
 local tierFiveTeslaTurret = table.deepcopy(data.raw.item["tesla-turret"])
 tierFiveTeslaTurret.name = "tier-five-tesla-turret"
 tierFiveTeslaTurret.place_result = "tier-five-tesla-turret"
-tierFiveTeslaTurret.order = "a[turret]-a[tier-five-tesla-turret]"
+tierFiveTeslaTurret.subgroup = "tesla-turrets"
+tierFiveTeslaTurret.order = "e[tier-five-tesla-turret]"
 tierFiveTeslaTurret.icon = nil
 tierFiveTeslaTurret.icons = {
   {
@@ -189,7 +205,8 @@ tierFiveTeslaTurret.icons = {
 local tierOneFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
 tierOneFlamerTurret.name = "tier-one-flamer-turret"
 tierOneFlamerTurret.place_result = "tier-one-flamer-turret"
-tierOneFlamerTurret.order = "a[turret]-a[tier-one-flamer-turret]"
+tierOneFlamerTurret.subgroup = "flamer-turrets"
+tierOneFlamerTurret.order = "a[tier-one-flamer-turret]"
 tierOneFlamerTurret.icon = nil
 tierOneFlamerTurret.icons = {
   {
@@ -201,7 +218,8 @@ tierOneFlamerTurret.icons = {
 local tierTwoFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
 tierTwoFlamerTurret.name = "tier-two-flamer-turret"
 tierTwoFlamerTurret.place_result = "tier-two-flamer-turret"
-tierTwoFlamerTurret.order = "a[turret]-a[tier-two-flamer-turret]"
+tierTwoFlamerTurret.subgroup = "flamer-turrets"
+tierTwoFlamerTurret.order = "b[tier-two-flamer-turret]"
 tierTwoFlamerTurret.icon = nil
 tierTwoFlamerTurret.icons = {
   {
@@ -213,7 +231,8 @@ tierTwoFlamerTurret.icons = {
 local tierThreeFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
 tierThreeFlamerTurret.name = "tier-three-flamer-turret"
 tierThreeFlamerTurret.place_result = "tier-three-flamer-turret"
-tierThreeFlamerTurret.order = "a[turret]-a[tier-three-flamer-turret]"
+tierThreeFlamerTurret.subgroup = "flamer-turrets"
+tierThreeFlamerTurret.order = "c[tier-three-flamer-turret]"
 tierThreeFlamerTurret.icon = nil
 tierThreeFlamerTurret.icons = {
   {
@@ -225,7 +244,8 @@ tierThreeFlamerTurret.icons = {
 local tierFourFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
 tierFourFlamerTurret.name = "tier-four-flamer-turret"
 tierFourFlamerTurret.place_result = "tier-four-flamer-turret"
-tierFourFlamerTurret.order = "a[turret]-a[tier-four-flamer-turret]"
+tierFourFlamerTurret.subgroup = "flamer-turrets"
+tierFourFlamerTurret.order = "d[tier-four-flamer-turret]"
 tierFourFlamerTurret.icon = nil
 tierFourFlamerTurret.icons = {
   {
@@ -237,7 +257,8 @@ tierFourFlamerTurret.icons = {
 local tierFiveFlamerTurret = table.deepcopy(data.raw.item["flamethrower-turret"])
 tierFiveFlamerTurret.name = "tier-five-flamer-turret"
 tierFiveFlamerTurret.place_result = "tier-five-flamer-turret"
-tierFiveFlamerTurret.order = "a[turret]-a[tier-five-flamer-turret]"
+tierFiveFlamerTurret.subgroup = "flamer-turrets"
+tierFiveFlamerTurret.order = "e[tier-five-flamer-turret]"
 tierFiveFlamerTurret.icon = nil
 tierFiveFlamerTurret.icons = {
   {
@@ -285,6 +306,106 @@ data:extend({
     pick_sound = item_sounds.science_inventory_pickup,
     drop_sound = item_sounds.science_inventory_move,
     stack_size = 200
+  },
+  {
+    type = "tool",
+    name = "tier-one-science-pack",
+    localised_description = {"item-description.science-pack"},
+    icon = "__frontier-td__/graphics/icons/tier-one-science-pack.png",
+    icon_size = 64,
+    subgroup = "science-pack",
+    color_hint = { text = "O" },
+    order = "a[tier-one-science-pack]",
+    inventory_move_sound = item_sounds.science_inventory_move,
+    pick_sound = item_sounds.science_inventory_pickup,
+    drop_sound = item_sounds.science_inventory_move,
+    stack_size = 200,
+    weight = 1,
+    durability = 1,
+    durability_description_key = "description.science-pack-remaining-amount-key",
+    factoriopedia_durability_description_key = "description.factoriopedia-science-pack-remaining-amount-key",
+    durability_description_value = "description.science-pack-remaining-amount-value",
+    random_tint_color = item_tints.bluish_science
+  },
+  {
+    type = "tool",
+    name = "tier-two-science-pack",
+    localised_description = {"item-description.science-pack"},
+    icon = "__frontier-td__/graphics/icons/tier-two-science-pack.png",
+    icon_size = 64,
+    subgroup = "science-pack",
+    color_hint = { text = "T" },
+    order = "b[tier-two-science-pack]",
+    inventory_move_sound = item_sounds.science_inventory_move,
+    pick_sound = item_sounds.science_inventory_pickup,
+    drop_sound = item_sounds.science_inventory_move,
+    stack_size = 200,
+    weight = 1,
+    durability = 1,
+    durability_description_key = "description.science-pack-remaining-amount-key",
+    factoriopedia_durability_description_key = "description.factoriopedia-science-pack-remaining-amount-key",
+    durability_description_value = "description.science-pack-remaining-amount-value",
+    random_tint_color = item_tints.bluish_science
+  },
+  {
+    type = "tool",
+    name = "tier-three-science-pack",
+    localised_description = {"item-description.science-pack"},
+    icon = "__frontier-td__/graphics/icons/tier-three-science-pack.png",
+    icon_size = 64,
+    subgroup = "science-pack",
+    color_hint = { text = "T" },
+    order = "c[tier-three-science-pack]",
+    inventory_move_sound = item_sounds.science_inventory_move,
+    pick_sound = item_sounds.science_inventory_pickup,
+    drop_sound = item_sounds.science_inventory_move,
+    stack_size = 200,
+    weight = 1,
+    durability = 1,
+    durability_description_key = "description.science-pack-remaining-amount-key",
+    factoriopedia_durability_description_key = "description.factoriopedia-science-pack-remaining-amount-key",
+    durability_description_value = "description.science-pack-remaining-amount-value",
+    random_tint_color = item_tints.bluish_science
+  },
+  {
+    type = "tool",
+    name = "tier-four-science-pack",
+    localised_description = {"item-description.science-pack"},
+    icon = "__frontier-td__/graphics/icons/tier-four-science-pack.png",
+    icon_size = 64,
+    subgroup = "science-pack",
+    color_hint = { text = "O" },
+    order = "d[tier-four-science-pack]",
+    inventory_move_sound = item_sounds.science_inventory_move,
+    pick_sound = item_sounds.science_inventory_pickup,
+    drop_sound = item_sounds.science_inventory_move,
+    stack_size = 200,
+    weight = 1,
+    durability = 1,
+    durability_description_key = "description.science-pack-remaining-amount-key",
+    factoriopedia_durability_description_key = "description.factoriopedia-science-pack-remaining-amount-key",
+    durability_description_value = "description.science-pack-remaining-amount-value",
+    random_tint_color = item_tints.bluish_science
+  },
+  {
+    type = "tool",
+    name = "tier-five-science-pack",
+    localised_description = {"item-description.science-pack"},
+    icon = "__frontier-td__/graphics/icons/tier-five-science-pack.png",
+    icon_size = 64,
+    subgroup = "science-pack",
+    color_hint = { text = "O" },
+    order = "e[tier-five-science-pack]",
+    inventory_move_sound = item_sounds.science_inventory_move,
+    pick_sound = item_sounds.science_inventory_pickup,
+    drop_sound = item_sounds.science_inventory_move,
+    stack_size = 200,
+    weight = 1,
+    durability = 1,
+    durability_description_key = "description.science-pack-remaining-amount-key",
+    factoriopedia_durability_description_key = "description.factoriopedia-science-pack-remaining-amount-key",
+    durability_description_value = "description.science-pack-remaining-amount-value",
+    random_tint_color = item_tints.bluish_science
   },
   basicGunTurret,
   tierTwoGunTurret,

@@ -3,6 +3,7 @@ require("prototypes.entity.explosions")
 require("prototypes.entity.remnants")
 require("prototypes.entity.enemies")
 
+require("prototypes.item-groups")
 require("prototypes.item")
 require("prototypes.recipe")
 require("prototypes.categories.recipe-category")
@@ -52,11 +53,22 @@ require("base-data-updates")
 
 
 for _, technology in pairs(data.raw.technology) do
-  technology.enabled = false
-  technology.visible_when_disabled = false
+  if technology.name ~= 'electronics' then
+    technology.enabled = false
+    technology.visible_when_disabled = false
+  end
 end
 
 require("prototypes.technology")
+
+local towerCoinCosts = require("models.tower-coin-costs")
+local upgradeableTowers = {}
+
+for tower, _ in pairs(towerCoinCosts) do
+  if tower.upgradeToName ~= nil then
+    table.insert(upgradeableTowers, tower)
+  end
+end
 
 local turret_upgrade_tool = {
   type = "selection-tool",
@@ -78,12 +90,7 @@ local turret_upgrade_tool = {
     cursor_box_type = "entity",
 
     entity_filter_mode = "whitelist",
-    entity_filters = {
-      "infinite-gun-turret",
-      "tier-two-gun-turret",
-      "tier-three-gun-turret",
-      "tier-four-gun-turret"
-    }
+    entity_filters = upgradeableTowers
   },
 
   alt_select = {
@@ -91,18 +98,9 @@ local turret_upgrade_tool = {
     mode = {"any-entity"},
     cursor_box_type = "entity",
     entity_filter_mode = "whitelist",
-    entity_filters = {
-      "infinite-gun-turret",
-      "tier-two-gun-turret",
-      "tier-three-gun-turret",
-      "tier-four-gun-turret"
-    }
+    entity_filters = upgradeableTowers
   }
 }
-
-data:extend({
-  turret_upgrade_tool
-})
 
 local turret_upgrade_shortcut = {
 type = "shortcut",

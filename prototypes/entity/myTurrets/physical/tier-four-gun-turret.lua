@@ -14,7 +14,7 @@ return
   frame_count = inputs.frame_count or 5,
   line_length = inputs.line_length or 0,
   run_mode = inputs.run_mode or "forward",
-  shift = util.by_pixel(0, -26.5),
+  shift = util.by_pixel(0, -36.5),
   scale = 0.75
 }
 end
@@ -30,7 +30,7 @@ return
   frame_count = inputs.frame_count or 5,
   line_length = inputs.line_length or 0,
   run_mode = inputs.run_mode or "forward",
-  shift = util.by_pixel(0, -28),
+  shift = util.by_pixel(0, -38),
   apply_runtime_tint = false,
   scale = 0.75,
   tint = turretTint
@@ -47,7 +47,7 @@ return
   frame_count = inputs.frame_count or 5,
   line_length = inputs.line_length or 0,
   run_mode = inputs.run_mode or "forward",
-  shift = util.by_pixel(19, 2.5),
+  shift = util.by_pixel(19, -7.5),
   draw_as_shadow = true,
   scale = 0.75
 }
@@ -63,7 +63,7 @@ return
       height = 130,
       frame_count = inputs.frame_count or 2,
       direction_count = 64,
-      shift = util.by_pixel(0, -27.5),
+      shift = util.by_pixel(0, -37.5),
       stripes =
       {
       {
@@ -96,7 +96,7 @@ return
       height = 54,
       frame_count = inputs.frame_count or 2,
       direction_count = 64,
-      shift = util.by_pixel(0, -32.5),
+      shift = util.by_pixel(0, -42.5),
       apply_runtime_tint = false,
       tint = turretTint,
       stripes =
@@ -129,7 +129,7 @@ return
       height = 124,
       frame_count = inputs.frame_count or 2,
       direction_count = 64,
-      shift = util.by_pixel(22, 2.5),
+      shift = util.by_pixel(22, -7.5),
       draw_as_shadow = true,
       stripes =
       {

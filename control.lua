@@ -1,4 +1,5 @@
 local mainSurface = "frontier"
+local towerCoinCosts = require('models.tower-coin-costs')
 local function getBiterKillsByForce(force)
   local kills = 0
   local surface = game.surfaces[mainSurface]
@@ -48,9 +49,9 @@ local function getBiterKillsByForce(force)
 end
 
 local kill_requirements = {
-  ["biter-progress-automation-science"] = 10,
-  ["biter-progress-logistics"] = 50,
-  ["biter-progress-military"] = 200,
+  ["biter-progress-tier-one-science"] = 10,
+  ["biter-progress-tier-two-science"] = 50,
+  ["biter-progress-tier-three-science"] = 200,
 }
 
 script.on_nth_tick(60, function()
@@ -132,28 +133,6 @@ script.on_event(defines.events.on_gui_closed, function(event)
   end
 end)
 
-local turret_upgrades = {
-  ["infinite-gun-turret"] = {
-    name = "tier-two-gun-turret",
-    cost = 3
-  },
-
-  ["tier-two-gun-turret"] = {
-    name = "tier-three-gun-turret",
-    cost = 20
-  },
-
-  ["tier-three-gun-turret"] = {
-    name = "tier-four-gun-turret",
-    cost = 50
-  },
-
-  ["tier-four-gun-turret"] = {
-    name = "tier-five-gun-turret",
-    cost = 200
-  }
-}
-
 script.on_event(defines.events.on_player_selected_area, function(event)
   if event.item ~= "turret-upgrade-tool" then
     return
@@ -176,11 +155,16 @@ script.on_event(defines.events.on_player_selected_area, function(event)
 
   for _, turret in pairs(event.entities) do
     if turret.valid then
-      local upgrade = turret_upgrades[turret.name]
-
-      if upgrade then
-        total_cost = total_cost + upgrade.cost
-        upgrade_count = upgrade_count + 1
+      local towerCostDto = towerCoinCosts[turret.name]
+      if towerCostDto and towerCostDto.upgradeToName then
+        local upgradeTowerName = towerCostDto.upgradeToName
+        if upgradeTowerName then
+          local upgradeTowerDto = towerCoinCosts[upgradeTowerName]
+          if upgradeTowerDto then
+            total_cost = total_cost + upgradeTowerDto.cost
+            upgrade_count = upgrade_count + 1
+          end
+        end
       end
     end
   end
@@ -210,9 +194,9 @@ script.on_event(defines.events.on_player_selected_area, function(event)
   for _, old_turret in pairs(event.entities) do
     if old_turret.valid then
 
-      local upgrade = turret_upgrades[old_turret.name]
+      local towerCostDto = towerCoinCosts[old_turret.name]
 
-      if upgrade then
+      if towerCostDto then
 
         local surface = old_turret.surface
         local position = old_turret.position
@@ -221,7 +205,7 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         local health = old_turret.health
 
         local new_turret = surface.create_entity{
-          name = upgrade.name,
+          name = towerCostDto.upgradeToName,
           position = position,
           force = force,
           direction = direction
