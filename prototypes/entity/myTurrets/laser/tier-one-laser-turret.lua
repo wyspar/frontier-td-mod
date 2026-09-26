@@ -114,7 +114,7 @@ end
 
 turret.name = "tier-one-laser-turret"
 turret.minable = {
-  mining_time = 0.5,
+  mining_time = 0.1,
   result = "tier-one-laser-turret"
 }
 turret.energy_source = {

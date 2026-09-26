@@ -51,9 +51,16 @@ require("prototypes.entity.myTurrets.fire.tier-five-flamer-turret")
 
 require("base-data-updates")
 
+local enabledTechnologies = {
+  ["electronics"] = true,
+  ["big-mining-drill"] = true,
+  ["automation"] = true,
+  ["automation-2"] = true,
+  ["electric-energy-distribution-1"] = true,
+}
 
 for _, technology in pairs(data.raw.technology) do
-  if technology.name ~= 'electronics' then
+  if not enabledTechnologies[technology.name] then
     technology.enabled = false
     technology.visible_when_disabled = false
   end

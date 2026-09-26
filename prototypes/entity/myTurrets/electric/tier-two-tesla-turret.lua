@@ -319,7 +319,7 @@ end
 
 turret.name = "tier-two-tesla-turret"
 turret.minable = {
-  mining_time = 0.5,
+  mining_time = 0.1,
   result = "tier-two-tesla-turret"
 }
 turret.icon = nil

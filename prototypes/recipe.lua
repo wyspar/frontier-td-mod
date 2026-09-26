@@ -29,12 +29,25 @@ data:extend(recipes)
 data:extend({
   {
     type = "recipe",
+    name = "compressed-coal",
+    enabled = false,
+    category = "chemistry",
+    energy_required = 3,
+    ingredients =
+    {
+      {type = "item", name = "coal", amount = 2},
+      {type = "fluid", name = "water", amount = 25}
+    },
+    results = {{type="item", name="small-electric-pole-iron", amount=1}}
+  },
+  {
+    type = "recipe",
     name = "small-electric-pole-iron",
     enabled = false,
     category = "electronics",
     ingredients =
     {
-      {type = "item", name = "iron-plate", amount = 1},
+      {type = "item", name = "iron-stick", amount = 2},
       {type = "item", name = "copper-cable", amount = 1}
     },
     results = {{type="item", name="small-electric-pole-iron", amount=1}}
@@ -61,7 +74,9 @@ data:extend({
     energy_required = 4,
     ingredients =
     {
-      {type = "item", name = "engine-unit", amount = 1},
+      {type = "item", name = "medium-electric-pole", amount = 1},
+      {type = "item", name = "steam-turbine", amount = 1},
+      {type = "item", name = "heat-pipe", amount = 2},
     },
     results = {{type="item", name="tier-two-science-pack", amount=3}},
     allow_productivity = true

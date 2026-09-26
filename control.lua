@@ -196,8 +196,7 @@ script.on_event(defines.events.on_player_selected_area, function(event)
 
       local towerCostDto = towerCoinCosts[old_turret.name]
 
-      if towerCostDto then
-
+      if towerCostDto and towerCostDto.upgradeToName then
         local surface = old_turret.surface
         local position = old_turret.position
         local force = old_turret.force

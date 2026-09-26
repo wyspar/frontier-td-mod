@@ -569,7 +569,7 @@ data:extend(
     },
     minable =
     {
-      mining_time = 0.5,
+      mining_time = 0.1,
       result = "tier-three-flamer-turret"
     },
     fast_replaceable_group =

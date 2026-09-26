@@ -407,6 +407,23 @@ data:extend({
     durability_description_value = "description.science-pack-remaining-amount-value",
     random_tint_color = item_tints.bluish_science
   },
+  {
+    type = "item",
+    name = "compressed-coal",
+    icon = "__frontier-td__/graphics/icons/compressed-coal.png",
+    icon_size = 64,
+    --dark_background_icon = "__base__/graphics/icons/coal-dark-background.png",
+    fuel_category = "chemical",
+    fuel_value = "9.2MJ",
+    subgroup = "raw-resource",
+    order = "c[compressed-coal]",
+    inventory_move_sound = item_sounds.resource_inventory_move,
+    pick_sound = item_sounds.resource_inventory_pickup,
+    drop_sound = item_sounds.resource_inventory_move,
+    stack_size = 100,
+    weight = 2 * kg,
+    random_tint_color = item_tints.yellowing_coal
+  },
   basicGunTurret,
   tierTwoGunTurret,
   tierThreeGunTurret,
