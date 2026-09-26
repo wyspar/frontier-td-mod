@@ -378,12 +378,16 @@ local function fullClearPlayerInventory(player)
   player.get_inventory(defines.inventory.character_trash).clear()
 end
 
-local function checkForWinnerSoloSlot(slot)
+local function checkForWinnerSlot(slot, slotMapDef)
   if not slot then
     return
   end
 
-  if slot.enemyForce or slot.isEndless or slot.slotOwnerIndex == nil or slot.isDead or not slot.isGameStarted then
+  if slot.enemyForce or slot.isEndless or slot.isDead or not slot.isGameStarted then
+    return
+  end
+
+  if slot.currentWave < slot.totalWaves then
     return
   end
 
@@ -401,9 +405,8 @@ local function checkForWinnerSoloSlot(slot)
 
 	if #enemies == 0 then
 		-- No enemies alive: slot has won
-		
     local playerThatWon = nil
-    if slot.id == 1 then
+    if slot.id == 1 and slot.slotOwnerIndex == nil then
 			playerThatWon = "Public Slot "..tostring(slot.id)
 		else
 			playerThatWon = game.get_player(tonumber(slot.slotOwnerIndex))
@@ -426,7 +429,7 @@ local function checkForWinnerSoloSlot(slot)
     local mapData = mapModule.getMapByName(slot.mapName)
 		if not mapData then
 			for _, player in pairs(force.connected_players) do
-				player.print("No mapData found in checkForWinnerSoloSlot()")
+				player.print("No mapData found in checkForWinnerSlot()")
 			end
 			return
 		end
@@ -435,7 +438,6 @@ local function checkForWinnerSoloSlot(slot)
     if not publicSlotDef then
       return
     end
-
 		game.print(playerThatWon .. "'s team is Victorious! Map: " .. mapData.mapLabel .. " on " .. difficulty)
 
     mapModule.resetMapSlot(surface, slot.id, true)
@@ -445,6 +447,7 @@ local function checkForWinnerSoloSlot(slot)
         fullClearPlayerInventory(player)
         player.force = publicForce
         createDefaultPlayerGui(player)
+        --move the player back to public slot 1
         teleportPlayerToTheirSpawn(surface, publicForce, publicSlotDef, player)
       end
     end
@@ -453,7 +456,13 @@ local function checkForWinnerSoloSlot(slot)
     table.insert(storage.delayedTickActions, {
 			tick = game.tick + 600,
 			callback = function()
-        checkForWinnerSoloSlot(slot)
+        for _, slot in pairs(storage.mapSlots) do
+          local slotMapDef = mapModule.slotDefinitions[slot.id]
+
+          if slotMapDef then
+            checkForWinnerSlot(slot, slotMapDef)
+          end
+        end
 			end
 		})
 	end
@@ -474,7 +483,7 @@ local function updateWaveRoundGui(slot, waveCount)
 	end
 end
 
-local function startWave(slot)
+local function startWave(slot, slotMapDef)
 	slot.currentWave = slot.currentWave + 1
 	updateWaveRoundGui(slot, slot.currentWave)
 	slot.waveStartTick = game.tick
@@ -492,7 +501,13 @@ local function startWave(slot)
     table.insert(storage.delayedTickActions, {
 			tick = game.tick + 600,
 			callback = function()
-        checkForWinnerSoloSlot(slot)
+        for _, slot in pairs(storage.mapSlots) do
+          local slotMapDef = mapModule.slotDefinitions[slot.id]
+
+          if slotMapDef then
+            checkForWinnerSlot(slot, slotMapDef)
+          end
+        end
 			end
 		})
 
@@ -520,53 +535,57 @@ local function startWave(slot)
 end
 
 local function processWave(slot)
+  if not slot then
+    return
+  end
 
-		local wave = slot.mapWaveData[slot.currentWave]
-		if not wave then
-			return
-		end
+  local wave = slot.mapWaveData[slot.currentWave]
+  if not wave then
+    return
+  end
 
-		local biterPaths = slot.mapBiterPaths
-		if not biterPaths then
-			return
-		end
+  local biterPaths = slot.mapBiterPaths
+  if not biterPaths then
+    return
+  end
 
-		local surface = game.surfaces[main_surface_name]
+  local surface = game.surfaces[main_surface_name]
 
-		-- UPDATE TIMER
-		local waveDurationTicks = wave.waveDuration * TICKS_PER_SECOND
-		slot.waveTimer = math.max(0, waveDurationTicks - (game.tick - slot.waveStartTick))
-		-- PROCESS SPAWN GROUPS
-		if slot.waveGroups then
-			for i = #slot.waveGroups, 1, -1 do
-				local group = slot.waveGroups[i]
-				if group.remaining > 0 and game.tick >= group.nextSpawnTick then
-					-- INTERVAL = 0
-					-- Spawn entire group simultaneously
-					if group.intervalTicks == 0 then
-						for _ = 1, group.remaining do
-              send_biter_path(surface, biterPaths[1], biterPaths, group.remaining, group.name,
-                  slot)
-						end
-						group.remaining = 0
-						-- NORMAL INTERVAL
-					else
-						send_biter_path(surface, biterPaths[1], biterPaths, 1, group.name, slot)
+  -- UPDATE TIMER
+  local waveDurationTicks = wave.waveDuration * TICKS_PER_SECOND
+  slot.waveTimer = math.max(0, waveDurationTicks - (game.tick - slot.waveStartTick))
+  -- PROCESS SPAWN GROUPS
+  if slot.waveGroups then
+    for i = #slot.waveGroups, 1, -1 do
+      local group = slot.waveGroups[i]
+      if group.remaining > 0 and game.tick >= group.nextSpawnTick then
+        -- INTERVAL = 0
+        -- Spawn entire group simultaneously
+        if group.intervalTicks == 0 then
+          for _ = 1, group.remaining do
+            send_biter_path(surface, biterPaths[1], biterPaths, group.remaining, group.name,
+                slot)
+          end
+          group.remaining = 0
+          -- NORMAL INTERVAL
+        else
+          send_biter_path(surface, biterPaths[1], biterPaths, 1, group.name, slot)
 
-						group.remaining = group.remaining - 1
+          group.remaining = group.remaining - 1
 
-						group.nextSpawnTick = group.nextSpawnTick + group.intervalTicks
-					end
-				end
+          group.nextSpawnTick = group.nextSpawnTick + group.intervalTicks
+        end
+      end
 
-				if group.remaining <= 0 then
-					table.remove(slot.waveGroups, i)
-				end
-			end
-		end
+      if group.remaining <= 0 then
+        table.remove(slot.waveGroups, i)
+      end
+    end
+  end
+	local slotMapDef = mapModule.slotDefinitions[slot.id]
 
 	if slot.waveTimer <= 0 then
-		startWave(slot)
+		startWave(slot, slotMapDef)
 	end
 end
 
@@ -624,7 +643,7 @@ local function startRoundForForce(slot, force)
 	if not biterPaths then
 		for _, player in pairs(force.connected_players) do
 			player.print("Error finding biterPaths from getMapBiterPaths() in control.lua " ..
-					tostring(slotMapDef.mapName) .. " " .. tostring(slot.difficulty))
+        tostring(slotMapDef.mapName) .. " " .. tostring(slot.difficulty))
 		end
 		return
 	end
@@ -633,8 +652,8 @@ local function startRoundForForce(slot, force)
 	if not waveData then
 		for _, player in pairs(force.connected_players) do
 			player.print(
-						"Error finding waveData from getMapWaveData() in control.lua " .. tostring(slotMapDef.mapName) .. " " ..
-								tostring(slot.difficulty))
+        "Error finding waveData from getMapWaveData() in control.lua " .. tostring(slotMapDef.mapName) .. " " ..
+          tostring(slot.difficulty))
 		end
 		return
 	end
@@ -704,7 +723,7 @@ local function startRoundForForce(slot, force)
   force.manual_mining_speed_modifier = 3
 
 	-- Immediately start Wave 1
-	startWave(slot)
+	startWave(slot, slotMapDef)
 end
 
 local function createMapSelectionGui(event, player)
@@ -2581,31 +2600,37 @@ script.on_event(defines.events.on_chart_tag_removed, function(event)
 	end
 end)
 
-commands.add_command("suicide", "Kill your character.", function(command)
-	local player = game.get_player(command.player_index)
-	if player and player.character and player.character.valid then
-		if player.character.destructible == false then
-			player.character.destructible = true
-		end
-		player.character.die()
-	else
-		player.print("You have no character to kill.")
-	end
-end)
+if not commands.commands["suicide"] then
+  commands.add_command("suicide", "Kill your character.", function(command)
+    local player = game.get_player(command.player_index)
+    if player and player.character and player.character.valid then
+      if player.character.destructible == false then
+        player.character.destructible = true
+      end
+      player.character.die()
+    else
+      player.print("You have no character to kill.")
+    end
+  end)
+end
 
-commands.add_command("dropinv", "Drops your inventory.", function(command)
-	local player = game.get_player(command.player_index)
-	if player and player.character and player.character.valid then
-		createSnapshotInventory(player, 0)
-	end
-end)
-	
-commands.add_command("canceldropinv", "Cancel your inventory.", function(command)
-	local player = game.get_player(command.player_index)
-	if player and player.character and player.character.valid then
-		giveBackInventoryAndCancelRemovingInventory(player)
-	end
-end)
+if not commands.commands["dropinv"] then
+  commands.add_command("dropinv", "Drops your inventory.", function(command)
+    local player = game.get_player(command.player_index)
+    if player and player.character and player.character.valid then
+      createSnapshotInventory(player, 0)
+    end
+  end)
+end
+
+if not commands.commands["canceldropinv"] then
+	commands.add_command("canceldropinv", "Cancel your inventory.", function(command)
+    local player = game.get_player(command.player_index)
+    if player and player.character and player.character.valid then
+      giveBackInventoryAndCancelRemovingInventory(player)
+    end
+  end)
+end
 
 script.on_event(defines.events.on_gui_opened, function(event)
   local player = game.get_player(event.player_index)
