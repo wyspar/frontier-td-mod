@@ -89,10 +89,10 @@ data:extend({
     category = "crafting-with-fluid",
     ingredients =
     {
-      {type = "item", name = "iron-chest", amount = 1},
+      {type = "item", name = "concrete", amount = 10},
       {type = "fluid", name = "water", amount = 100}
     },
-    results = {{type="item", name="tier-three-science-pack", amount=3}},
+    results = {{type="item", name="tier-three-science-pack", amount=4}},
     allow_productivity = true
   },
 })
