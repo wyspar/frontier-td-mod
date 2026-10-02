@@ -95,14 +95,13 @@ bigMiner_recipe.category = "electronics"
 local heatEx_recipe = data.raw.recipe["heat-exchanger"]
 heatEx_recipe.ingredients = {
   {type = "item", name = "iron-plate", amount = 4},
-  {type = "item", name = "stone-furnace", amount = 2},
-  {type = "item", name = "copper-plate", amount = 2},
+  {type = "item", name = "boiler", amount = 1},
+  {type = "item", name = "copper-plate", amount = 4},
 }
 
 local steamTurbine_recipe = data.raw.recipe["steam-turbine"]
 steamTurbine_recipe.ingredients = {
-  {type = "item", name = "iron-plate", amount = 10},
-  {type = "item", name = "pipe", amount = 4},
+  {type = "item", name = "steam-engine", amount = 1},
   {type = "item", name = "copper-plate", amount = 10},
 }
 
@@ -232,6 +231,21 @@ electricPoles_tech.unit =
   },
   time = 20
 }
+
+local heatingTower_tech = data.raw.technology["heating-tower"]
+heatingTower_tech.prerequisites = {"biter-progress-tier-three-science"}
+heatingTower_tech.unit =
+{
+  count = 200,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+  },
+  time = 20
+}
+heatingTower_tech.research_trigger = nil
 
 data.raw["linked-container"]["linked-chest"].inventory_size = 48
 data.raw["linked-container"]["linked-chest"].gui_mode = "all"

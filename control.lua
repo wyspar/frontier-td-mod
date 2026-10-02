@@ -525,7 +525,7 @@ local function startWave(slot, slotMapDef)
 		slot.waveGroups[#slot.waveGroups + 1] = {
 			name = group.name,
 			remaining = group.count,
-
+      count = group.count,
 			intervalTicks = intervalTicks,
 			startDelayTicks = startDelayTicks,
 
@@ -562,16 +562,14 @@ local function processWave(slot)
         -- INTERVAL = 0
         -- Spawn entire group simultaneously
         if group.intervalTicks == 0 then
-          for _ = 1, group.remaining do
-            send_biter_path(surface, biterPaths[1], biterPaths, group.remaining, group.name,
-                slot)
-          end
+          send_biter_path(surface, biterPaths[1], biterPaths, group.remaining, group.name, slot)
           group.remaining = 0
-          -- NORMAL INTERVAL
+        -- NORMAL INTERVAL
         else
-          send_biter_path(surface, biterPaths[1], biterPaths, 1, group.name, slot)
+          local countOverDuration = math.floor(group.count / wave.waveDuration)
+          send_biter_path(surface, biterPaths[1], biterPaths, countOverDuration, group.name, slot)
 
-          group.remaining = group.remaining - 1
+          group.remaining = group.remaining - countOverDuration
 
           group.nextSpawnTick = group.nextSpawnTick + group.intervalTicks
         end
@@ -666,7 +664,10 @@ local function startRoundForForce(slot, force)
 		return
 	end
 
+  storage.turretUpgradeRewarded[force.index] = false
+
 	slot.isGameStarted = true
+  
 	for _, player in pairs(force.connected_players) do
 		mapModule.createStartingPlayer(player, slot)
 
@@ -782,7 +783,7 @@ local function createMapSelectionGui(event, player)
 
 		scroll = frame.add {
 			type = "scroll-pane",
-			name = "force_list",
+			name = "map_list",
 			direction = "vertical"
 		}
 
@@ -866,7 +867,7 @@ local function createDifficultyGui(event, player, availableDifficulties)
 
 		scroll = frame.add {
 			type = "scroll-pane",
-			name = "force_list",
+			name = "difficulty_list",
 			direction = "vertical"
 		}
 
@@ -1244,6 +1245,19 @@ local function giveBackInventoryAndCancelRemovingInventory(player)
 	storage.leftPlayers[playerIndex] = nil
 end
 
+local function rewardFirstTurretToolUpgrade(force)
+  storage.turretUpgradeRewarded = storage.turretUpgradeRewarded or {}
+  if storage.turretUpgradeRewarded[force.index] then
+    return
+  end
+  storage.turretUpgradeRewarded[force.index] = true
+
+  local tech = force.technologies["b-upgrade-turret-reward"]
+  if tech and not tech.researched then
+    force.script_trigger_research("b-upgrade-turret-reward")
+  end
+end
+
 script.on_init(function()
   if remote.interfaces["freeplay"] then
     remote.call("freeplay", "set_skip_intro", true)
@@ -1252,8 +1266,13 @@ script.on_init(function()
     remote.call("freeplay", "set_respawn_items", {})
   end
 
+  --this holds the map data for each slot
 	storage.mapSlots = storage.mapSlots or {};
+  --this holds any given delayed function that needs to be called later, like waveData
 	storage.delayedTickActions = storage.delayedTickActions or {}
+  --this holds if the force has used the 
+  storage.turretUpgradeRewarded = storage.turretUpgradeRewarded or {}
+
 	for _, slotInfo in pairs(mapModule.slotDefinitions) do
 		storage.mapSlots[slotInfo.id] = {
 			id = slotInfo.id,
@@ -1965,7 +1984,7 @@ script.on_event(defines.events.on_gui_click, function(event)
 		end
 
 		if player.gui.screen.difficulty_selection_gui then
-			local scroll = player.gui.screen.difficulty_selection_gui.force_list
+			local scroll = player.gui.screen.difficulty_selection_gui.difficulty_list
 			if scroll then
 				local startRoundButton = scroll.add {
 					type = "sprite-button",
@@ -2685,7 +2704,7 @@ script.on_event(defines.events.on_player_selected_area, function(event)
   local upgrade_count = 0
 
   for _, turret in pairs(event.entities) do
-    if turret.valid then
+    if turret.valid and turret.force.name == player.force.name then
       local towerCostDto = towerCoinCosts[turret.name]
       if towerCostDto and towerCostDto.upgradeToName then
         local upgradeTowerName = towerCostDto.upgradeToName
@@ -2721,6 +2740,8 @@ script.on_event(defines.events.on_player_selected_area, function(event)
     name = "coin",
     count = total_cost
   }
+
+  rewardFirstTurretToolUpgrade(player.force)
 
   for _, old_turret in pairs(event.entities) do
     if old_turret.valid then

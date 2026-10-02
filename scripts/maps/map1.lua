@@ -65,48 +65,101 @@ map1.mapNormalBiterPaths = {
 
 map1.mapNormalWaves = {
   [1] = {
-    waveDuration = 8,
-    groups = {
-      {name = "small-biter", count = 1, interval = 0, startDelay = 0},
-    },
-  },
-  [2] = {
-    waveDuration = 15,
+    waveDuration = 5,
     groups = {
       {name = "small-biter", count = 5, interval = 1, startDelay = 0},
     },
   },
-  [3] = {
-    waveDuration = 20,
+  [2] = {
+    waveDuration = 10,
     groups = {
-      {name = "small-biter", count = 20, interval = 1, startDelay = 0},
+      {name = "small-biter", count = 10, interval = 1, startDelay = 0},
+    },
+  },
+  [3] = {
+    waveDuration = 15,
+    groups = {
+      {name = "small-biter", count = 20, interval = 2, startDelay = 0},
     },
   },
   [4] = {
-    waveDuration = 25,
+    waveDuration = 15,
     groups = {
-      {name = "boss-biter-1", count = 1, interval = 1, startDelay = 0},
+      {name = "small-biter", count = 30, interval = 2, startDelay = 0},
     },
   },
-  --test wave to die faster
-  -- [1] = {
-  --   waveDuration = 8,
-  --   groups = {
-  --     {name = "boss-biter-1", count = 1, interval = 0, startDelay = 0},
-  --   },
-  -- },
-  -- [2] = {
-  --   waveDuration = 12,
-  --   groups = {
-  --     {name = "big-biter", count = 5, interval = 1, startDelay = 0},
-  --   },
-  -- },
-  -- [3] = {
-  --   waveDuration = 16,
-  --   groups = {
-  --     {name = "big-biter", count = 20, interval = 1, startDelay = 0},
-  --   },
-  -- },
+  [5] = {
+    waveDuration = 20,
+    groups = {
+      {name = "small-biter", count = 50, interval = 1, startDelay = 0},
+    },
+  },
+  [6] = {
+    waveDuration = 20,
+    groups = {
+      {name = "small-biter", count = 80, interval = 1, startDelay = 0},
+    },
+  },
+  [7] = {
+    waveDuration = 25,
+    groups = {
+      {name = "small-biter", count = 25, interval = 1, startDelay = 0},
+      {name = "medium-biter", count = 1, interval = 0, startDelay = 24},
+    },
+  },
+  [8] = {
+    waveDuration = 25,
+    groups = {
+      {name = "small-biter", count = 25, interval = 1, startDelay = 0},
+      {name = "medium-biter", count = 2, interval = 0, startDelay = 24},
+    },
+  },
+  [9] = {
+    waveDuration = 25,
+    groups = {
+      {name = "small-biter", count = 30, interval = 1, startDelay = 0},
+      {name = "medium-biter", count = 3, interval = 0, startDelay = 24},
+    },
+  },
+  [10] = {
+    waveDuration = 20,
+    groups = {
+      {name = "small-biter", count = 50, interval = 1, startDelay = 0},
+    },
+  },
+  [11] = {
+    waveDuration = 20,
+    groups = {
+      {name = "small-biter", count = 120, interval = 4, startDelay = 0},
+    },
+  },
+  [12] = {
+    waveDuration = 25,
+    groups = {
+      {name = "small-biter", count = 25, interval = 1, startDelay = 0},
+      {name = "medium-biter", count = 5, interval = 0, startDelay = 15},
+    },
+  },
+  [13] = {
+    waveDuration = 30,
+    groups = {
+      {name = "small-biter", count = 50, interval = 1, startDelay = 0},
+      {name = "medium-biter", count = 1, interval = 2, startDelay = 15},
+    },
+  },
+  [14] = {
+    waveDuration = 30,
+    groups = {
+      {name = "small-biter", count = 75, interval = 1, startDelay = 0},
+      {name = "medium-biter", count = 1, interval = 1, startDelay = 10},
+    },
+  },
+  [15] = {
+    waveDuration = 60,
+    groups = {
+      {name = "big-biter", count = 1, interval = 1, startDelay = 0},
+    },
+  },
 }
 
 map1.mapHardBiterPaths = {
@@ -142,9 +195,9 @@ map1.mapHardBiterPaths = {
 
 map1.mapHardWaves = {
   [1] = {
-    waveDuration = 1,
+    waveDuration = 5,
     groups = {
-      {name = "big-flyer", count = 3, interval = 1, startDelay = 0},
+      {name = "small-biter", count = 5, interval = 1, startDelay = 0},
     },
   },
   -- [2] = {
@@ -179,21 +232,56 @@ map1.DefaultMapStructures = {
     x = 100,
     y = 100
   },
-  -- {
-  --     name = "attack-market",
-  --     x = 46,
-  --     y = 3
-  -- },
-  -- {
-  --     name = "land-market",
-  --     x = 50,
-  --     y = 3
-  -- },
-  -- {
-  --     name = "weapons-market",
-  --     x = 54,
-  --     y = 3
-  -- },
+  {
+    name = "iron-ore",
+    x = 139,
+    y = 60,
+    amount = 1000000,
+    isOreTile = true,
+    size=19
+  },
+  {
+    name = "copper-ore",
+    x = 139,
+    y = 20,
+    amount = 1000000,
+    isOreTile = true,
+    size=19
+  },
+  {
+    name = "stone",
+    x = 179,
+    y = 20,
+    amount = 1000000,
+    isOreTile = true,
+    size=19
+  },
+  {
+    name = "coal",
+    x = 179,
+    y = 60,
+    amount = 1000000,
+    isOreTile = true,
+    size=19
+  },
+  {
+    name = "calcite",
+    x = 40,
+    y = 141,
+    amount = 1000000,
+    isOreTile = true,
+    size=5
+  },
+  {
+    name = "attack-market",
+    x = 103,
+    y = 93
+  },
+  {
+    name = "weapons-market",
+    x = 97,
+    y = 93
+  },
 }
 
 map1.waterCompleteTiles = {

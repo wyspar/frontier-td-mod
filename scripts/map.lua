@@ -126,26 +126,25 @@ local forbiddenTilesForSpawningRocksOn = {
 }
 
 function map.create_main_surface(player)
-    local surface_name = "frontier"
-    local surface = game.surfaces[surface_name]
+	local surface_name = "frontier"
+	local surface = game.surfaces[surface_name]
 
-    if not surface then
-        surface = game.create_surface(surface_name, {
-            terrain_segmentation = "none",
-            -- width = startingWidth,
-            -- height = startingHeight,
-            peaceful_mode = false,
-            no_enemies_mode = false,
-            starting_area = "none",
-            default_enable_all_autoplace_controls = false
-        })
+	if not surface then
+		surface = game.create_surface(surface_name, {
+				terrain_segmentation = "none",
+				-- width = startingWidth,
+				-- height = startingHeight,
+				peaceful_mode = false,
+				no_enemies_mode = false,
+				starting_area = "none",
+				default_enable_all_autoplace_controls = false
+		})
 
-        surface.request_to_generate_chunks({0, 0}, 2)
-        surface.force_generate_chunk_requests()
-    
-    end
+		surface.request_to_generate_chunks({0, 0}, 2)
+		surface.force_generate_chunk_requests()
+	end
 
-    return surface
+	return surface
 end
 
 -- Function to place the teleporter entity on Nauvis when the scenario starts
@@ -220,73 +219,96 @@ function map.getRelativeSlotPosition(slotDef, local_x, local_y)
 end
 
 local function generate_structures(surface, slot)
-    local mapSlot = storage.mapSlots[slot.id]
-    local force = game.forces[tostring(mapSlot.forceName)]
-    for _, structure in ipairs(slot.structures or {}) do
-        local position = map.getRelativeSlotPosition(
-            slot,
-            structure.x,
-            structure.y
-        )
+	local mapSlot = storage.mapSlots[slot.id]
+	local force = game.forces[tostring(mapSlot.forceName)]
+	for _, structure in ipairs(slot.structures or {}) do
+		local position = map.getRelativeSlotPosition(
+			slot,
+			structure.x,
+			structure.y
+		)
 
+		if structure.isOreTile and structure.amount and structure.size then
+			for x = -structure.size, structure.size do
+				for y = -structure.size, structure.size do
+					surface.create_entity({
+						name = structure.name,
+						position = {
+							position.x + x,
+							position.y + y
+						},
+						amount = structure.amount
+					})
+				end
+			end
+		else
+			local entity = surface.create_entity({
+				name = structure.name,
+				position = position,
+				direction = structure.direction or defines.direction.north,
+				force = force
+			})
 
-        local entity = surface.create_entity({
-            name = structure.name,
-            position = position,
-            direction = structure.direction or defines.direction.north,
-            force = force
-        })
+			entity.minable = false
+			if (entity.name ~= "rocket-silo") then
+				entity.destructible = false
+			end
+			if entity and entity.name == 'attack-market' then
+				market.fillMarket(surface, entity.name, entity.name)
+			end
+			if entity and entity.name == 'weapons-market' then
+				market.fillMarket(surface, entity.name, entity.name)
+			end
+		end
 
-        entity.minable = false
-        if (entity.name ~= "rocket-silo") then
-            entity.destructible = false
-        end
-    end
+	end
 
-    --generate stupid shit like decorations, trees, rocks
-    local random = game.create_random_generator()
-    local rockCount = random(50, 150)
+	--generate stupid shit like decorations, trees, rocks
+	if slot.mapName and slot.mapName == 'map-1-sand' then
+		local random = game.create_random_generator()
+		local rockCount = random(50, 150)
 
-    for _ = 1, rockCount do
-        local rockName = sandRockNames[random(1, #sandRockNames)]
+		for _ = 1, rockCount do
+			local rockName = sandRockNames[random(1, #sandRockNames)]
 
-        local position = map.getRelativeSlotPosition(
-            slot,
-            random() * slot.width,
-            random() * slot.height
-        )
+			local position = map.getRelativeSlotPosition(
+				slot,
+				random() * slot.width,
+				random() * slot.height
+			)
 
-        local tile = surface.get_tile(position)
+			local tile = surface.get_tile(position)
 
-        if tile and not forbiddenTilesForSpawningRocksOn[tile.name] then
-            local entity = surface.create_entity({
-                name = rockName,
-                position = position
-            })
+			if tile and not forbiddenTilesForSpawningRocksOn[tile.name] then
+				local entity = surface.create_entity({
+					name = rockName,
+					position = position
+				})
 
-            if entity then
-                entity.minable = true
-                entity.destructible = true
-            end
-        end
-    end
+				if entity then
+					entity.minable = true
+					entity.destructible = true
+				end
+			end
+		end
+	end
 end
 
 local function set_tile_area(surface, slot, tile_name, x1, y1, x2, y2)
-    local tiles = {}
+	local tiles = {}
 
-    for x = x1, x2 do
-        for y = y1, y2 do
-            local position = map.getRelativeSlotPosition(slot, x, y)
+	for x = x1, x2 do
+		for y = y1, y2 do
+			local position = map.getRelativeSlotPosition(slot, x, y)
 
-            tiles[#tiles + 1] = {
-                name = tile_name,
-                position = position
-            }
-        end
-    end
+			tiles[#tiles + 1] = {
+				name = tile_name,
+				position = position
+			}
+		end
+	end
 
-    surface.set_tiles(tiles, true)
+	surface.set_tiles(tiles, true)
 end
 
 local function createCircleOfTiles(surface, center_x, center_y, radius)
@@ -634,41 +656,46 @@ function map.createStartingPlayer(player, slot)
 		player.teleport(spawnPos, surface)
 	end
 
-    player.insert({name = "iron-plate", count = 200})
-    player.insert({name = "copper-plate", count = 200})
-    player.insert({name = "big-mining-drill", count = 20})
-    player.insert({name = "small-electric-pole-iron", count = 150})
-    player.insert({name = "electric-furnace", count = 10})
-    player.insert({name = "infinite-gun-turret", count = 10})
-    --player.insert({name = "firearm-magazine", count = 200})
+	player.insert({name = "iron-plate", count = 100})
+	player.insert({name = "coin", count = 16})
+	player.insert({name = "stone-furnace", count = 16})
+	player.insert({name = "burner-mining-drill", count = 16})
+	--player.insert({name = "turret-upgrade-tool", count = 1})
+	--player.insert({name = "infinite-gun-turret", count = 10})
+	--player.insert({name = "electric-energy-interface", count = 1})
 
-    player.insert({name = "electric-energy-interface", count = 1})
-    player.insert({name = "coin", count = 3000})
+	local inventory = player.get_inventory(defines.inventory.character_main)
+	local armor_inventory = player.get_inventory(defines.inventory.character_armor)
+	if armor_inventory then
+		armor_inventory.insert({
+			name = "mech-armor",
+			count = 1
+		})
+	end
 
-    local inventory = player.get_inventory(defines.inventory.character_main)
-    local armor_inventory = player.get_inventory(defines.inventory.character_armor)
-    if armor_inventory then
-			armor_inventory.insert({
-				name = "mech-armor",
-				count = 1
+	local guns = player.get_inventory(defines.inventory.character_guns)
+	local ammo = player.get_inventory(defines.inventory.character_ammo)
+
+	if guns then
+		guns[1].set_stack({
+			name = "pistol",
+			count = 1
+		})
+		if ammo then
+			ammo[1].set_stack({
+				name = "firearm-magazine",
+				count = 50
 			})
-    end
+		end
+	end
 
-    local guns = player.get_inventory(defines.inventory.character_guns)
-    local ammo = player.get_inventory(defines.inventory.character_ammo)
+	player.set_quick_bar_slot(1, "turret-upgrade-tool")
+	player.set_quick_bar_slot(2, "infinite-gun-turret")
+	player.set_quick_bar_slot(3, "tier-one-laser-turret")
+	player.set_quick_bar_slot(4, "tier-one-flamer-turret")
+	player.set_quick_bar_slot(5, "tier-one-tesla-turret")
+	player.set_quick_bar_slot(10, "coin")
 
-    if guns then
-			guns[1].set_stack({
-				name = "submachine-gun",
-				count = 1
-			})
-			if ammo then
-				ammo[1].set_stack({
-					name = "firearm-magazine",
-					count = 100
-				})
-			end
-    end
 end
 
 function map.resetMapSlot(surface, slotId, isHardReset)

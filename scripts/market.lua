@@ -1,48 +1,20 @@
 local market = {}
 market.custom_events = {
-    ['playerItemsMarket'] = 'playerItemsMarket',
+  ['playerItemsMarket'] = 'playerItemsMarket',
 }
 
-local sciMarket_Items = {
-    {
-        price = {
-            { name = 'coal', count = 50 },
-            { name = 'stone', count = 50 },
-            { name = 'iron-ore', count = 50 },
-            { name = 'copper-ore', count = 50 },
-        },
-        offer = { type = 'give-item', item = 'automation-science-pack', count = 1 }
-    },
-    {
-        price = {
-            { name = 'small-lamp', count = 50 },
-            { name = 'steel-plate', count = 100 },
-            { name = 'weed-indica-bag', count = 50 },
-            { name = 'inserter', count = 50 },
-        },
-        offer = { type = 'give-item', item = 'logistic-science-pack', count = 1 }
-    },
-    {
-        price = {
-            { name = 'coin', count = 2000 },
-        },
-        offer = { type = 'give-item', item = 'aai-loader', count = 1 }
-    },
+local attackMarketItems = {
+
 }
 
-local drugMarket_Items = {
-    {
-        price = {
-            { name = 'weed-indica-bag', count = 1 }
-        },
-        offer = { type = 'give-item', item = 'coin', count = 1 }
-    },
-    {
-        price = {
-            { name = 'cocaine-bag', count = 1 }
-        },
-        offer = { type = 'give-item', item = 'coin', count = 20 }
-    },
+local weaponMarketItems = {
+  { price = { { name = 'coin', count = 20 } },    offer = { type = 'give-item', item = 'submachine-gun', count = 1 } },
+  { price = { { name = 'coin', count = 20 } },    offer = { type = 'give-item', item = 'slowdown-capsule', count = 1 } },
+  { price = { { name = 'coin', count = 100 } },  offer = { type = 'give-item', item = 'fission-reactor-equipment', count = 1 } },
+  { price = { { name = 'coin', count = 250 } },  offer = { type = 'give-item', item = 'fusion-reactor-equipment', count = 1 } },
+	{ price = { { name = 'coin', count = 50 } },   offer = { type = 'give-item', item = 'personal-roboport-equipment', count = 1 } },
+	{ price = { { name = 'coin', count = 150 } },   offer = { type = 'give-item', item = 'personal-roboport-mk2-equipment', count = 1 } },
+  { price = { { name = 'coin', count = 10 } },    offer = { type = 'give-item', item = 'construction-robot', count = 5 } },
 }
 
 local landMarket_Items = {
@@ -131,22 +103,24 @@ local east_Market_Items = {
 }
 
 function market.fillMarket(surface, marketName, entityName)
-    for _, entity in pairs(surface.find_entities_filtered({name = entityName})) do
-        if entity and entity.valid then
-            if entity.name_tag == marketName then
-                entity.clear_market_items()
-                if marketName == market.custom_events["playerItemsMarket"] then
-                    for _, item in pairs(playerItemsMarket_items) do
-                        entity.add_market_item(item)
-                    end
-                -- elseif marketName == market.custom_events["playerSciMarket"] then
-                --     for _, item in pairs(sciMarket_Items) do
-                --         entity.add_market_item(item)
-                --     end
-                end
-            end
-        end
-    end
+	for _, entity in pairs(surface.find_entities_filtered({name = entityName})) do
+		if entity and entity.valid then
+			entity.clear_market_items()
+			if marketName == 'attack-market' then
+				for _, item in pairs(attackMarketItems) do
+					entity.add_market_item(item)
+				end
+			elseif marketName == 'weapons-market' then
+				for _, item in pairs(weaponMarketItems) do
+					entity.add_market_item(item)
+				end
+			end
+			-- this is for having multiple of the same market, need to mark it with a name tag / entity name tag
+			-- if entity.name_tag == marketName then
+				
+			-- end
+		end
+	end
 end
 
 function market.removeItemFromMarket(surface, itemName, marketName, entityName)

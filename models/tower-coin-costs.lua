@@ -9,15 +9,15 @@ local towerCoinCosts = {
     upgradeToName = "tier-three-gun-turret"
   },
   ["tier-three-gun-turret"] = {
-    cost = 25,
+    cost = 45,
     upgradeToName = "tier-four-gun-turret"
   },
   ["tier-four-gun-turret"] = {
-    cost = 50,
+    cost = 75,
     upgradeToName = "tier-five-gun-turret"
   },
   ["tier-five-gun-turret"] = {
-    cost = 150,
+    cost = 225,
     upgradeToName = nil
   },
 

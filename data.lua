@@ -57,6 +57,7 @@ local enabledTechnologies = {
   ["automation"] = true,
   ["automation-2"] = true,
   ["electric-energy-distribution-1"] = true,
+  ["heating-tower"] = true,
 }
 
 for _, technology in pairs(data.raw.technology) do
@@ -81,7 +82,7 @@ local turret_upgrade_tool = {
   type = "selection-tool",
   name = "turret-upgrade-tool",
 
-  icon = "__base__/graphics/icons/gun-turret.png",
+  icon = "__frontier-td__/graphics/icons/upgrade-tool.png",
   icon_size = 64,
 
   flags = {
@@ -117,10 +118,10 @@ type = "shortcut",
   localised_name = {"shortcut.turret-upgrade"},
   associated_control_input = "give-turret-upgrade-tool",
   item_to_spawn = "turret-upgrade-tool",
-  style = "green",
-  icon = "__base__/graphics/icons/gun-turret.png",
+  --style = "green",
+  icon = "__frontier-td__/graphics/icons/upgrade-tool.png",
   icon_size = 64,
-  small_icon = "__base__/graphics/icons/gun-turret.png",
+  small_icon = "__frontier-td__/graphics/icons/upgrade-tool.png",
   small_icon_size = 64
 }
 

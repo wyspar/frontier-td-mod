@@ -368,6 +368,7 @@ smallBiter.attack_parameters.animation = biterattackanimation(
 )
 
 local mediumBiter = data.raw["unit"]["medium-biter"]
+mediumBiter.max_health = 50
 local medium_biter_scale = 0.5
 mediumBiter.run_animation = biterrunanimation(
 	medium_biter_scale,

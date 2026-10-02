@@ -15,6 +15,25 @@ local laser_shooting_speed_icon = "__base__/graphics/technology/laser-shooting-s
 data:extend({
   {
     type = "technology",
+    name = "an-unlock-gun-turrets",
+    icon = "__frontier-td__/graphics/technology/infinte-gun-turret.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "character-crafting-speed",
+        modifier = 0.25
+      }
+    },
+    research_trigger =
+    {
+      type = "craft-item",
+      item = "infinite-gun-turret",
+      count = 1
+    }
+  },
+  {
+    type = "technology",
     name = "steam-power",
     icon = "__base__/graphics/technology/steam-power.png",
     icon_size = 256,
@@ -34,20 +53,12 @@ data:extend({
       },
       {
         type = "unlock-recipe",
-        recipe = "heating-tower"
+        recipe = "steam-engine"
       },
       {
         type = "unlock-recipe",
-        recipe = "steam-turbine"
+        recipe = "boiler"
       },
-      {
-        type = "unlock-recipe",
-        recipe = "heat-exchanger"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "heat-pipe"
-      }
     },
     research_trigger =
     {
@@ -95,12 +106,32 @@ data:extend({
       count = 100
     }
   },
+  {
+    type = "technology",
+    name = "b-upgrade-turret-reward",
+    icon = "__frontier-td__/graphics/technology/upgrade-tool.png",
+    icon_size = 256,
+    prerequisites = {"an-unlock-gun-turrets"},
+    effects =
+    {
+      {
+        type = "character-running-speed",
+        modifier = 0.3
+      }
+    },
+    research_trigger =
+    {
+      type = "scripted",
+      trigger_description = {"technology-description.b-upgrade-turret-reward"}
+    }
+  },
   --tier one science shit
   {
     type = "technology",
     name = "biter-progress-tier-one-science",
     icon = "__frontier-td__/graphics/technology/tier-one-science-pack.png",
     icon_size = 256,
+    prerequisites = {"b-upgrade-turret-reward"},
     effects =
     {
       {
@@ -125,22 +156,22 @@ data:extend({
         type = "unlock-recipe",
         recipe = "tier-one-laser-turret"
       },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-two-laser-turret"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-three-laser-turret"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-four-laser-turret"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-five-laser-turret"
-      }
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-two-laser-turret"
+      -- },
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-three-laser-turret"
+      -- },
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-four-laser-turret"
+      -- },
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-five-laser-turret"
+      -- }
     },
     prerequisites = {"biter-progress-tier-one-science"},
     unit =
@@ -334,7 +365,7 @@ data:extend({
     {
       {
         type = "character-running-speed",
-        modifier = 0.9
+        modifier = 0.6
       }
     },
     unit =
@@ -452,22 +483,22 @@ data:extend({
         type = "unlock-recipe",
         recipe = "tier-one-flamer-turret"
       },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-two-flamer-turret"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-three-flamer-turret"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-four-flamer-turret"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-five-flamer-turret"
-      }
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-two-flamer-turret"
+      -- },
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-three-flamer-turret"
+      -- },
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-four-flamer-turret"
+      -- },
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-five-flamer-turret"
+      -- }
     },
     prerequisites = {"biter-progress-tier-two-science"},
     unit =
@@ -560,22 +591,22 @@ data:extend({
         type = "unlock-recipe",
         recipe = "tier-one-tesla-turret"
       },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-two-tesla-turret"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-three-tesla-turret"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-four-tesla-turret"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "tier-five-tesla-turret"
-      }
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-two-tesla-turret"
+      -- },
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-three-tesla-turret"
+      -- },
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-four-tesla-turret"
+      -- },
+      -- {
+      --   type = "unlock-recipe",
+      --   recipe = "tier-five-tesla-turret"
+      -- }
     },
     prerequisites = {"biter-progress-tier-three-science"},
     unit =

@@ -2,18 +2,19 @@ local towerCoinCosts = require('models.tower-coin-costs')
 
 local recipes = {}
 for tower, towerData in pairs(towerCoinCosts) do
-  if tower and towerData and towerData.cost and data.raw.item[tower] then
+  if tower and (tower == "infinite-gun-turret" or string.find(tower, "tier-one", 1, true)) and towerData and towerData.cost and data.raw.item[tower] then
+    local towerIngredients = {
+      {
+        type = "item",
+        name = "coin",
+        amount = towerData.cost
+      }
+    }
     table.insert(recipes, {
       type = "recipe",
       name = tower,
-      enabled = string.find(tower, "gun%-turret") ~= nil,
-      ingredients = {
-        {
-          type = "item",
-          name = "coin",
-          amount = towerData.cost
-        }
-      },
+      enabled = tower == "infinite-gun-turret",
+      ingredients = towerIngredients,
       results = {
         {
           type = "item",
@@ -74,9 +75,8 @@ data:extend({
     energy_required = 4,
     ingredients =
     {
-      {type = "item", name = "medium-electric-pole", amount = 1},
-      {type = "item", name = "steam-turbine", amount = 1},
-      {type = "item", name = "heat-pipe", amount = 2},
+      {type = "item", name = "long-handed-inserter", amount = 1},
+      {type = "item", name = "underground-belt", amount = 1},
     },
     results = {{type="item", name="tier-two-science-pack", amount=3}},
     allow_productivity = true
@@ -89,8 +89,9 @@ data:extend({
     category = "crafting-with-fluid",
     ingredients =
     {
-      {type = "item", name = "concrete", amount = 10},
-      {type = "fluid", name = "water", amount = 100}
+      {type = "item", name = "medium-electric-pole", amount = 3},
+      {type = "item", name = "electric-furnace", amount = 1},
+      {type = "fluid", name = "steam", amount = 50}
     },
     results = {{type="item", name="tier-three-science-pack", amount=4}},
     allow_productivity = true
