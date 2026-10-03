@@ -409,6 +409,54 @@ data:extend({
       time = 30
     }
   },
+  {
+    type = "technology",
+    name = "laser-shooting-speed-1",
+    icons = util.technology_icon_constant_speed(laser_shooting_speed_icon),
+    effects =
+    {
+      {
+        type = "gun-speed",
+        ammo_category = "laser",
+        modifier = 0.1
+      }
+    },
+    prerequisites = {"laser-turrets"},
+    unit =
+    {
+      count = 50,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+      },
+      time = 25
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "laser-shooting-speed-2",
+    icons = util.technology_icon_constant_speed(laser_shooting_speed_icon),
+    effects =
+    {
+      {
+        type = "gun-speed",
+        ammo_category = "laser",
+        modifier = 0.2
+      }
+    },
+    prerequisites = {"laser-shooting-speed-1"},
+    unit =
+    {
+      count = 75,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+      },
+      time = 25
+    },
+    upgrade = true
+  },
   --tier two science shit
   {
     type = "technology",
@@ -560,7 +608,96 @@ data:extend({
     },
     upgrade = true
   },
-
+    {
+    type = "technology",
+    name = "physical-projectile-damage-3",
+    icons = util.technology_icon_constant_damage(physical_projectile_damage_1_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "bullet",
+        modifier = 0.3
+      },
+      {
+        type = "turret-attack",
+        turret_id = "gun-turret",
+        modifier = 0.3
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "shotgun-shell",
+        modifier = 0.3
+      }
+    },
+    prerequisites = {"physical-projectile-damage-2"},
+    unit =
+    {
+      count = 150,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1}
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+    {
+    type = "technology",
+    name = "weapon-shooting-speed-3",
+    icons = util.technology_icon_constant_speed(weapon_shooting_speed_1_icon),
+    effects =
+    {
+      {
+        type = "gun-speed",
+        ammo_category = "bullet",
+        modifier = 0.3
+      },
+      {
+        type = "gun-speed",
+        ammo_category = "shotgun-shell",
+        modifier = 0.3
+      }
+    },
+    prerequisites = {"weapon-shooting-speed-2"},
+    unit =
+    {
+      count = 150,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1}
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "laser-shooting-speed-3",
+    icons = util.technology_icon_constant_speed(laser_shooting_speed_icon),
+    effects =
+    {
+      {
+        type = "gun-speed",
+        ammo_category = "laser",
+        modifier = 0.3
+      }
+    },
+    prerequisites = {"laser-shooting-speed-2"},
+    unit =
+    {
+      count = 75,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+      },
+      time = 25
+    },
+    upgrade = true
+  },
   --tier three science shit
   {
     type = "technology",
@@ -620,5 +757,31 @@ data:extend({
       },
       time = 20
     }
+  },
+  {
+    type = "technology",
+    name = "laser-shooting-speed-4",
+    icons = util.technology_icon_constant_speed(laser_shooting_speed_icon),
+    effects =
+    {
+      {
+        type = "gun-speed",
+        ammo_category = "laser",
+        modifier = 0.4
+      }
+    },
+    prerequisites = {"laser-shooting-speed-3"},
+    unit =
+    {
+      count = 150,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+      },
+      time = 25
+    },
+    upgrade = true
   },
 })

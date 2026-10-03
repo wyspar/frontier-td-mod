@@ -33,7 +33,8 @@ return
   run_mode = inputs.run_mode or "forward",
   shift = util.by_pixel(0, -38),
   apply_runtime_tint = false,
-  scale = 0.75
+  scale = 0.75,
+  tint = turretTint
 }
 end
 
@@ -49,7 +50,8 @@ return
   run_mode = inputs.run_mode or "forward",
   shift = util.by_pixel(19, -7.5),
   draw_as_shadow = true,
-  scale = 0.75
+  scale = 0.75,
+  tint = turretTint
 }
 end
 
@@ -87,7 +89,8 @@ return
       height_in_frames = 16
       }
       },
-      scale = 0.75
+      scale = 0.75,
+      tint = turretTint
     },
     {
       flags = {"mask"},
@@ -154,7 +157,8 @@ return
       height_in_frames = 16
       }
       },
-      scale = 0.75
+      scale = 0.75,
+      tint = turretTint
     }
   }
 }
@@ -269,7 +273,8 @@ turret.graphics_set =
           width = 150,
           height = 118,
           shift = util.by_pixel(0.5, -1),
-          scale = 0.75
+          scale = 0.75,
+          tint = turretTint
         },
         {
           filename = "__base__/graphics/entity/gun-turret/gun-turret-base-mask.png",

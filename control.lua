@@ -3,6 +3,18 @@ local buildingModule = require('scripts.building')
 local mapModule = require('scripts.map')
 local TICKS_PER_SECOND = 60
 local main_surface_name = "frontier"
+
+--counts every entry in a table, # only works for tables with keys 1..n with no gaps
+local function countTableEntries(tbl)
+  local count = 0
+  if tbl then
+    for _ in pairs(tbl) do
+      count = count + 1
+    end
+  end
+  return count
+end
+
 local function getBiterKillsByForce(force)
   local kills = 0
   local surface = game.surfaces[main_surface_name]
@@ -378,6 +390,24 @@ local function fullClearPlayerInventory(player)
   player.get_inventory(defines.inventory.character_trash).clear()
 end
 
+--name used in win/lose messages: "Public Slot 1", the slot owner's name, or "Slot N" if there is no valid owner
+local function getSlotDisplayName(slot)
+	if not slot then
+		return "Unknown Slot"
+	end
+
+	if slot.id == 1 then
+		return "Public Slot 1"
+	end
+
+	local owner = slot.slotOwnerIndex and game.get_player(tonumber(slot.slotOwnerIndex))
+	if owner and owner.valid then
+		return owner.name
+	end
+
+	return "Slot " .. tostring(slot.id)
+end
+
 local function checkForWinnerSlot(slot, slotMapDef)
   if not slot then
     return
@@ -405,19 +435,8 @@ local function checkForWinnerSlot(slot, slotMapDef)
 
 	if #enemies == 0 then
 		-- No enemies alive: slot has won
-    local playerThatWon = nil
-    if slot.id == 1 and slot.slotOwnerIndex == nil then
-			playerThatWon = "Public Slot "..tostring(slot.id)
-		else
-			playerThatWon = game.get_player(tonumber(slot.slotOwnerIndex))
-			if not playerThatWon then
-				playerThatWon = "???"
-      else
-			  playerThatWon = playerThatWon.name
-			end
-		end
+    local playerThatWon = getSlotDisplayName(slot)
 
-    local findOtherForce = nil
 		local difficulty = mapModule.difficulties[tonumber(slot.difficulty)]
 		if not difficulty then
 			difficulty = "nil"
@@ -1005,6 +1024,51 @@ local function updateTeamMenuGui(player)
   end
 end
 
+--returns an error message if the slot cannot be part of a challenge, nil if it can
+local function getChallengeBlockedReason(slot)
+	if not slot then
+		return "That slot does not exist."
+	end
+	if slot.isGameStarted then
+		return "Slot " .. tostring(slot.id) .. " is already in a game."
+	end
+	if slot.isPvp or slot.enemyForce then
+		return "Slot " .. tostring(slot.id) .. " is already in a challenge."
+	end
+	return nil
+end
+
+--link two slots as pvp enemies and send everyone on both forces to the map selection gui
+local function startPvpChallenge(slot, enemySlot)
+	local force = game.forces[slot.forceName] or game.create_force(slot.forceName)
+	local enemyForce = game.forces[enemySlot.forceName] or game.create_force(enemySlot.forceName)
+
+	slot.isPvp = true
+	slot.enemyForce = enemyForce.name
+	enemySlot.isPvp = true
+	enemySlot.enemyForce = force.name
+
+	--start voting fresh for both slots
+	slot.mapVotes = {}
+	slot.mapDifficultyVotes = {}
+	enemySlot.mapVotes = {}
+	enemySlot.mapDifficultyVotes = {}
+
+	for _, forceToShow in pairs({force, enemyForce}) do
+		for _, forcePlayer in pairs(forceToShow.connected_players) do
+			if forcePlayer.gui.screen.force_gui then
+				forcePlayer.gui.screen.force_gui.destroy()
+			end
+			--createMapSelectionGui toggles, so clear any old one first
+			if forcePlayer.gui.screen.map_selection_gui then
+				forcePlayer.gui.screen.map_selection_gui.destroy()
+			end
+			createMapSelectionGui(nil, forcePlayer)
+			forcePlayer.print("Challenge accepted! Slot " .. tostring(slot.id) .. " vs Slot " .. tostring(enemySlot.id) .. ". Choose a map.")
+		end
+	end
+end
+
 local function createSnapshotInventory(player, tickOverride)
 	if not player then
 		return
@@ -1469,36 +1533,30 @@ script.on_event(defines.events.on_entity_died, function(event)
 		end
 
 		slot.isDead = true
-		local playerThatLost = nil
+		local playerThatLost = getSlotDisplayName(slot)
 
-		if slot.id == 1 then
-			playerThatLost = "Public Slot "..tostring(slot.id)
-		else
-			playerThatLost = "Slot "..tostring(slot.id)
-			if slot.slotOwnerIndex then
-				playerThatLost = game.get_player(tonumber(slot.slotOwnerIndex))
-				if playerThatLost and playerThatLost.valid then
-					playerThatLost = playerThatLost.name
-				end
-			end
-		end
-
-		local findOtherForce = nil
 		local difficulty = mapModule.difficulties[tonumber(slot.difficulty)]
 		if not difficulty then
 			difficulty = "nil"
 		else
 			difficulty = difficulty.label
 		end
+
+		--in pvp the other team wins when this silo dies
+		local findOtherForce = nil
+		local otherForceSlot = nil
 		if slot.isPvp and slot.enemyForce ~= nil then
 			findOtherForce = game.forces[slot.enemyForce]
-			if not findOtherForce then
-				game.print(playerThatLost .. "'s team has been defeated! Map: " .. mapData.mapLabel .. " on " .. difficulty)
+			if findOtherForce then
+				otherForceSlot = mapModule.getSlotByForceName(findOtherForce.name)
 			end
-			game.print(playerThatLost .. "'s team has been defeated by " .. findOtherForce.name " Map: " .. mapData.mapLabel .. " on " .. difficulty)
-		else
-			game.print(playerThatLost .. "'s team has been defeated! Map: " .. mapData.mapLabel .. " on " .. difficulty)
 		end
+
+		local defeatedBy = "!"
+		if otherForceSlot then
+			defeatedBy = " by " .. getSlotDisplayName(otherForceSlot) .. "'s team!"
+		end
+		game.print(playerThatLost .. "'s team has been defeated" .. defeatedBy .. " Map: " .. mapData.mapLabel .. " on " .. difficulty)
 
 		table.insert(storage.delayedTickActions, {
 			tick = game.tick + 600, -- 300 = 5 seconds later
@@ -1900,6 +1958,142 @@ script.on_event(defines.events.on_gui_click, function(event)
 		end
 	end
 
+	if element.name:find("^challenge_slot_") then
+		local targetSlotId = tonumber(string.match(element.name, "^challenge_slot_(.+)$"))
+		local targetSlot = storage.mapSlots[targetSlotId]
+		local senderSlot = mapModule.getSlotByForceName(player.force.name)
+
+		--slot owners and anyone in the public slot can send a challenge
+		if not senderSlot or (senderSlot.id ~= 1 and senderSlot.slotOwnerIndex ~= player.index) then
+			player.print("Only the owner of a slot can send a challenge.")
+			return
+		end
+
+		if not targetSlot or targetSlot.id == senderSlot.id then
+			return
+		end
+
+		local blockedReason = getChallengeBlockedReason(senderSlot) or getChallengeBlockedReason(targetSlot)
+		if blockedReason then
+			player.print(blockedReason)
+			return
+		end
+
+		--public slot has no owner, so no confirmation needed
+		if targetSlot.id == 1 then
+			startPvpChallenge(senderSlot, targetSlot)
+			return
+		end
+
+		local targetOwner = targetSlot.slotOwnerIndex and game.get_player(targetSlot.slotOwnerIndex)
+		if not targetOwner or not targetOwner.valid or not targetOwner.connected then
+			player.print("Slot " .. tostring(targetSlot.id) .. " has no owner online to accept the challenge.")
+			return
+		end
+
+		local challengeId = tostring(senderSlot.id) .. "_" .. tostring(player.index)
+		local findGui = "challenge_request_" .. challengeId
+		if targetOwner.gui.screen[findGui] then
+			player.print("You already sent a challenge to " .. targetOwner.name .. ".")
+			return
+		end
+
+		local container = targetOwner.gui.screen.add {
+			type = "flow",
+			name = findGui,
+			direction = "horizontal"
+		}
+
+		container.style.width = targetOwner.display_resolution.width
+		container.style.height = targetOwner.display_resolution.height
+		container.style.vertical_align = "top"
+		container.style.horizontal_align = "center"
+
+		local frame = container.add {
+			type = "frame",
+			name = "challenge_frame",
+			direction = "vertical"
+		}
+
+		local titlebar = frame.add {
+			type = "flow",
+			name = "titlebar",
+			direction = "horizontal"
+		}
+
+		titlebar.add {
+			type = "label",
+			caption = player.name .. " (Slot " .. tostring(senderSlot.id) .. ") challenges you to a fight!",
+			style = "frame_title"
+		}
+
+		local row = frame.add {
+			type = "flow",
+			direction = "horizontal"
+		}
+
+		row.add {
+			type = "button",
+			name = "challenge_accept_" .. challengeId,
+			caption = "Yes"
+		}
+		row.add {
+			type = "button",
+			name = "challenge_decline_" .. challengeId,
+			caption = "No"
+		}
+
+		player.print("Challenge sent to " .. targetOwner.name .. " (Slot " .. tostring(targetSlot.id) .. ").")
+		return
+	end
+
+	if element.name:find("^challenge_accept_") or element.name:find("^challenge_decline_") then
+		local isAccepted = element.name:find("^challenge_accept_") ~= nil
+		local senderSlotId, senderPlayerIndex = string.match(element.name, "^challenge_%a+_(%d+)_(%d+)$")
+		senderSlotId = tonumber(senderSlotId)
+		senderPlayerIndex = tonumber(senderPlayerIndex)
+
+		local requestGui = player.gui.screen["challenge_request_" .. tostring(senderSlotId) .. "_" .. tostring(senderPlayerIndex)]
+		if requestGui and requestGui.valid then
+			requestGui.destroy()
+		end
+
+		local senderSlot = storage.mapSlots[senderSlotId]
+		local targetSlot = mapModule.getSlotByForceName(player.force.name)
+		if not senderSlot or not targetSlot then
+			return
+		end
+
+		local senderPlayer = senderPlayerIndex and game.get_player(senderPlayerIndex)
+
+		if not isAccepted then
+			if senderPlayer and senderPlayer.valid then
+				senderPlayer.print(player.name .. " (Slot " .. tostring(targetSlot.id) .. ") declined your challenge.")
+			end
+			return
+		end
+
+		if targetSlot.slotOwnerIndex ~= player.index then
+			player.print("Only the owner of your slot can accept a challenge.")
+			return
+		end
+
+		--the sender may have switched teams since sending the challenge
+		if not senderPlayer or not senderPlayer.valid or senderPlayer.force.name ~= senderSlot.forceName then
+			player.print("That challenge is no longer valid.")
+			return
+		end
+
+		local blockedReason = getChallengeBlockedReason(senderSlot) or getChallengeBlockedReason(targetSlot)
+		if blockedReason then
+			player.print(blockedReason)
+			return
+		end
+
+		startPvpChallenge(senderSlot, targetSlot)
+		return
+	end
+
 	if element.name == "play_button" or element.name == "back_to_map_gui_button" then
 		createMapSelectionGui(event, player)
 		return
@@ -1974,11 +2168,11 @@ script.on_event(defines.events.on_gui_click, function(event)
 				return
 			end
 
-			if (#slot.mapDifficultyVotes + #enemySlot.mapDifficultyVotes) >= (#force.players + #enemyForce.players) then
+			if (countTableEntries(slot.mapDifficultyVotes) + countTableEntries(enemySlot.mapDifficultyVotes)) >= (#force.players + #enemyForce.players) then
 				isEveryoneVoted = true
 			end
 		else
-			if #slot.mapDifficultyVotes >= #force.players then
+			if countTableEntries(slot.mapDifficultyVotes) >= #force.players then
 				isEveryoneVoted = true
 			end
 		end

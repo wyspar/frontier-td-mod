@@ -96,4 +96,30 @@ data:extend({
     results = {{type="item", name="tier-three-science-pack", amount=4}},
     allow_productivity = true
   },
+  {
+    type = "recipe",
+    name = "tier-four-science-pack",
+    enabled = false,
+    energy_required = 8,
+    ingredients =
+    {
+      {type = "item", name = "concrete", amount = 10},
+      {type = "item", name = "electric-furnace", amount = 1},
+    },
+    results = {{type="item", name="tier-four-science-pack", amount=3}},
+    allow_productivity = true
+  },
+  {
+    type = "recipe",
+    name = "tier-five-science-pack",
+    enabled = false,
+    energy_required = 10,
+    ingredients =
+    {
+      {type = "item", name = "concrete", amount = 10},
+      {type = "item", name = "electric-furnace", amount = 1},
+    },
+    results = {{type="item", name="tier-five-science-pack", amount=3}},
+    allow_productivity = true
+  },
 })

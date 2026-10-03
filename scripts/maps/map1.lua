@@ -89,15 +89,15 @@ map1.mapNormalWaves = {
     },
   },
   [5] = {
-    waveDuration = 20,
+    waveDuration = 25,
     groups = {
-      {name = "small-biter", count = 50, interval = 1, startDelay = 0},
+      {name = "small-biter", count = 40, interval = 1, startDelay = 0},
     },
   },
   [6] = {
-    waveDuration = 20,
+    waveDuration = 25,
     groups = {
-      {name = "small-biter", count = 80, interval = 1, startDelay = 0},
+      {name = "small-biter", count = 60, interval = 1, startDelay = 0},
     },
   },
   [7] = {
@@ -137,7 +137,8 @@ map1.mapNormalWaves = {
     waveDuration = 25,
     groups = {
       {name = "small-biter", count = 25, interval = 1, startDelay = 0},
-      {name = "medium-biter", count = 5, interval = 0, startDelay = 15},
+      {name = "medium-biter", count = 2, interval = 0, startDelay = 10},
+      {name = "medium-biter", count = 2, interval = 0, startDelay = 20},
     },
   },
   [13] = {
@@ -157,7 +158,9 @@ map1.mapNormalWaves = {
   [15] = {
     waveDuration = 60,
     groups = {
-      {name = "big-biter", count = 1, interval = 1, startDelay = 0},
+      {name = "big-biter", count = 1, interval = 0, startDelay = 5},
+      {name = "big-biter", count = 1, interval = 0, startDelay = 10},
+      {name = "big-biter", count = 1, interval = 0, startDelay = 15},
     },
   },
 }
@@ -195,9 +198,9 @@ map1.mapHardBiterPaths = {
 
 map1.mapHardWaves = {
   [1] = {
-    waveDuration = 5,
+    waveDuration = 60,
     groups = {
-      {name = "small-biter", count = 5, interval = 1, startDelay = 0},
+      {name = "big-biter", count = 1, interval = 0, startDelay = 0},
     },
   },
   -- [2] = {
