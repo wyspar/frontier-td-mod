@@ -630,6 +630,24 @@ local function updateWaveTimerGui(slot)
 	end
 end
 
+--places the hidden slot-radar (see entities.lua) that actively reveals the whole slot for radarForce
+local function placeSlotRadar(surface, position, radarForce)
+	if not surface or not position or not radarForce then
+		return
+	end
+
+	local radar = surface.create_entity({
+		name = "slot-radar",
+		position = position,
+		force = radarForce
+	})
+
+	if radar then
+		radar.destructible = false
+		radar.minable = false
+	end
+end
+
 local function startRoundForForce(slot, force)
 	if not force then
 		return
@@ -713,6 +731,15 @@ local function startRoundForForce(slot, force)
 
 	slotMapDef.biterPaths = biterPaths
 	mapModule.generateSlotLand(surface, slotMapDef, true);
+
+	-- radar inside the silo so this force always sees their whole slot
+	local siloPosition = mapModule.findSlotPlayerSpawnPoint(surface, force)
+	placeSlotRadar(surface, siloPosition, force)
+
+	-- in pvp the enemy force also gets a radar here so they can watch this slot
+	if slot.isPvp == true and slot.enemyForce ~= nil then
+		placeSlotRadar(surface, siloPosition, game.forces[slot.enemyForce])
+	end
 
   if not slot.mapTagId then
     local spawnPos = mapModule.findSlotPlayerSpawnPoint(surface, force)

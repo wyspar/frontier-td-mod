@@ -287,3 +287,41 @@ data:extend({
     }
   },
 })
+
+--hidden radar spawned inside each slot's silo, actively reveals the whole 200x200 slot
+data:extend({
+  {
+    type = "radar",
+    name = "slot-radar",
+    icon = "__base__/graphics/icons/radar.png",
+    flags = {
+      "placeable-off-grid",
+      "not-on-map",
+      "not-blueprintable",
+      "not-deconstructable",
+      "not-upgradable",
+      "not-in-kill-statistics",
+      "no-automated-item-removal",
+      "no-automated-item-insertion"
+    },
+    hidden = true,
+    max_health = 1,
+    --no collision so it can sit inside the silo
+    collision_box = {{-0.1, -0.1}, {0.1, 0.1}},
+    collision_mask = {layers = {}},
+    selectable_in_game = false,
+    --not a priority target for enemies, it is also made indestructible when placed
+    is_military_target = false,
+    energy_source = {
+      type = "void"
+    },
+    energy_usage = "1kW",
+    energy_per_sector = "1kJ",
+    energy_per_nearby_scan = "1J",
+    --no passive sector scanning, only the constant active area
+    max_distance_of_sector_revealed = 0,
+    --in chunks (32 tiles), 4 chunks around the radar covers the whole slot from the silo
+    max_distance_of_nearby_sector_revealed = 4,
+    connects_to_other_radars = false
+  }
+})
