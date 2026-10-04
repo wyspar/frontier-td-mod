@@ -27,6 +27,89 @@ local function scheduleDelayedAction(delayTicks, name, data)
   return action
 end
 
+--validates the player and returns the player, their running slot, the map, and the wave list
+--used by /wave, /wavenext and the wave button on the top bar
+local function getWaveInfoForPlayer(player)
+  if not player or not player.valid then
+    return nil
+  end
+
+  local slot = mapModule.getSlotByForceName(player.force.name)
+  if not slot then
+    player.print("You are not in a map slot.")
+    return nil
+  end
+
+  if not slot.isGameStarted or slot.isDead then
+    player.print("Slot " .. tostring(slot.id) .. " does not have a game running.")
+    return nil
+  end
+
+  local mapData = mapModule.getMapByName(slot.mapName)
+  if not mapData then
+    player.print("Could not find the map for slot " .. tostring(slot.id) .. ".")
+    return nil
+  end
+
+  local waves = mapModule.getMapWaveData(slot.mapName, slot.difficulty)
+  if not waves then
+    player.print("Could not find the waves for slot " .. tostring(slot.id) .. ".")
+    return nil
+  end
+
+  return player, slot, mapData, waves
+end
+
+--prints one wave: number, duration, and every enemy group in it
+local function printWaveInfo(player, title, waveNumber, wave, totalWaves)
+  player.print(title .. ": Wave " .. tostring(waveNumber) .. "/" .. tostring(totalWaves) ..
+    " (" .. tostring(wave.waveDuration) .. "s)")
+
+  for _, group in ipairs(wave.groups or {}) do
+    local spawnText = "all at once"
+    if group.interval and group.interval > 0 then
+      spawnText = "every " .. tostring(group.interval) .. "s"
+    end
+
+    player.print("  [entity=" .. group.name .. "] " .. group.name .. " x" .. tostring(group.count) ..
+      ", starts at " .. tostring(group.startDelay or 0) .. "s, " .. spawnText)
+  end
+end
+
+--/wave and the wave button
+local function showCurrentWave(player)
+  local player, slot, mapData, waves = getWaveInfoForPlayer(player)
+  if not player then
+    return
+  end
+
+  local wave = waves[slot.currentWave]
+  if not wave then
+    player.print("All " .. tostring(#waves) .. " waves have been sent on " .. mapData.mapLabel .. ". Kill the rest to win!")
+    return
+  end
+
+  printWaveInfo(player, mapData.mapLabel, slot.currentWave, wave, #waves)
+end
+
+--/wavenext
+local function showNextWave(player)
+  local player, slot, mapData, waves = getWaveInfoForPlayer(player)
+  if not player then
+    return
+  end
+
+  local nextWaveNumber = slot.currentWave + 1
+  local wave = waves[nextWaveNumber]
+  if not wave then
+    player.print("There are no more waves after wave " .. tostring(slot.currentWave) .. " on " .. mapData.mapLabel .. ".")
+    return
+  end
+
+  printWaveInfo(player, mapData.mapLabel, nextWaveNumber, wave, #waves)
+  player.print("  Starts in " .. tostring(math.ceil((slot.waveTimer or 0) / 60)) .. "s")
+end
+
 local function updateTeamMenuGui(player)
   if not player then
     return
@@ -683,7 +766,7 @@ local function updateWaveRoundGui(slot, waveCount)
 				local waveButton = menuBar.waveRound_button
 				if waveButton and waveButton.valid then
 					waveButton.caption = tostring(waveCount)
-					waveButton.tooltip = "Wave: " .. tostring(waveCount)
+					waveButton.tooltip = tostring(waveCount)
 				end
 			end
 		end
@@ -1653,6 +1736,27 @@ local function rewardFirstTurretToolUpgrade(force)
   end
 end
 
+--input actions that bring blueprints in from outside the map
+--making blueprints in game is still allowed, this only blocks importing them
+local blueprintImportActions = {
+	defines.input_action.import_blueprint_string,
+	defines.input_action.import_blueprint,
+	defines.input_action.import_blueprints_filtered,
+	defines.input_action.open_blueprint_library_gui,
+	defines.input_action.grab_blueprint_record,
+}
+
+--applies the "frontier-td-allow-blueprint-import" map setting to every permission group
+local function applyBlueprintImportSetting()
+	local allowed = settings.global["frontier-td-allow-blueprint-import"].value
+
+	for _, group in pairs(game.permissions.groups) do
+		for _, inputAction in pairs(blueprintImportActions) do
+			group.set_allows_action(inputAction, allowed)
+		end
+	end
+end
+
 script.on_init(function()
   if remote.interfaces["freeplay"] then
     remote.call("freeplay", "set_skip_intro", true)
@@ -1702,9 +1806,30 @@ script.on_init(function()
 	if surface then
 		surface.always_day = true;
 	end
+
+	applyBlueprintImportSetting()
 end)
 
 script.on_load(function()
+end)
+
+-- existing saves pick up the blueprint setting when the mod is added or updated
+script.on_configuration_changed(function()
+	applyBlueprintImportSetting()
+end)
+
+script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
+	if event.setting == "frontier-td-allow-blueprint-import" then
+		applyBlueprintImportSetting()
+
+		local allowed = settings.global["frontier-td-allow-blueprint-import"].value
+		game.print(allowed and "Blueprint importing is now enabled." or "Blueprint importing is now disabled.")
+	end
+end)
+
+-- admins can make new permission groups, they need the setting too
+script.on_event(defines.events.on_permission_group_added, function()
+	applyBlueprintImportSetting()
 end)
 
 --moves every player on a force back to public slot 1 with a clean inventory, then resets the force
@@ -1843,6 +1968,23 @@ script.on_nth_tick(60, function()
 	end
 end)
 
+--picks who gets the leftover coins/items that do not split evenly between players
+--the slot owner if they are online, otherwise a random online player (slot 1 never has an owner)
+local function getRemainderPlayer(players, slot)
+	for _, player in pairs(players) do
+		if player.index == slot.slotOwnerIndex then
+			return player
+		end
+	end
+
+	if #players > 0 then
+		-- math.random is deterministic in factorio, so this is multiplayer safe
+		return players[math.random(1, #players)]
+	end
+
+	return nil
+end
+
 script.on_event(defines.events.on_entity_died, function(event)
 	local entity = event.entity
 
@@ -1914,22 +2056,23 @@ script.on_event(defines.events.on_entity_died, function(event)
 						count = items_each
 					})
 				end
+			end
 
-				-- Give remainders to the owner
-				if tostring(player.index) == tostring(slot.slotOwnerIndex) then
-					if coins_remainder > 0 then
-						player.insert({
-							name = "coin",
-							count = coins_remainder
-						})
-					end
+			-- Give remainders to the owner, or a random player if there is no owner online
+			local remainderPlayer = getRemainderPlayer(players, slot)
+			if remainderPlayer then
+				if coins_remainder > 0 then
+					remainderPlayer.insert({
+						name = "coin",
+						count = coins_remainder
+					})
+				end
 
-					if items_remainder > 0 then
-						player.insert({
-							name = "boss-reward-item",
-							count = items_remainder
-						})
-					end
+				if items_remainder > 0 then
+					remainderPlayer.insert({
+						name = "boss-reward-item",
+						count = items_remainder
+					})
 				end
 			end
 		end
@@ -2027,16 +2170,15 @@ script.on_event(defines.events.on_entity_died, function(event)
 						count = coins_each
 					})
 				end
+			end
 
-				-- Give remainders to the owner
-				if tostring(player.index) == tostring(slot.slotOwnerIndex) then
-					if coins_remainder > 0 then
-						player.insert({
-							name = "coin",
-							count = coins_remainder
-						})
-					end
-				end
+			-- Give remainders to the owner, or a random player if there is no owner online
+			local remainderPlayer = getRemainderPlayer(players, slot)
+			if remainderPlayer and coins_remainder > 0 then
+				remainderPlayer.insert({
+					name = "coin",
+					count = coins_remainder
+				})
 			end
 		end
 		return
@@ -2773,6 +2915,12 @@ script.on_event(defines.events.on_gui_click, function(event)
 		return
 	end
 
+	-- wave button on the top bar, same as /wave
+	if element.name == "waveRound_button" then
+		showCurrentWave(player)
+		return
+	end
+
 	if element.name == "open_mainMenu_button" then
 		if not player.gui.screen.mainMenu_gui then
 			local frame = player.gui.screen.add {
@@ -3271,11 +3419,27 @@ if not commands.commands["dropinv"] then
   end)
 end
 
-if not commands.commands["canceldropinv"] then
-	commands.add_command("canceldropinv", "Cancel your inventory.", function(command)
-    local player = game.get_player(command.player_index)
-    if player and player.character and player.character.valid then
-      giveBackInventoryAndCancelRemovingInventory(player)
+-- if not commands.commands["canceldropinv"] then
+-- 	commands.add_command("canceldropinv", "Cancel your inventory.", function(command)
+--     local player = game.get_player(command.player_index)
+--     if player and player.character and player.character.valid then
+--       giveBackInventoryAndCancelRemovingInventory(player)
+--     end
+--   end)
+-- end
+
+if not commands.commands["wave"] then
+  commands.add_command("wave", "Shows the current wave for your map slot.", function(command)
+    if command.player_index then
+      showCurrentWave(game.get_player(command.player_index))
+    end
+  end)
+end
+
+if not commands.commands["wavenext"] then
+  commands.add_command("wavenext", "Shows the next wave for your map slot.", function(command)
+    if command.player_index then
+      showNextWave(game.get_player(command.player_index))
     end
   end)
 end

@@ -22,3 +22,14 @@
 --     order = "m[misc]-a[short-arms]"
 --   }
 -- })
+
+data:extend({
+  {
+    --map setting, an admin can change it mid game from Settings > Mod settings > Map
+    type = "bool-setting",
+    name = "frontier-td-allow-blueprint-import",
+    setting_type = "runtime-global",
+    default_value = true,
+    order = "a[blueprints]-a[import]"
+  }
+})
