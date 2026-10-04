@@ -9,6 +9,7 @@ add wind turbine, add wind turbine mod? steal that mod maybe
 make biters have resistances like 
   fire, acid, poison
 tier 5 tesla entity needs its own white sprite
+add dmg upgrades for tesla turret
 
 need to put a minimum placing range between tesla turrets cause op stun DONE
 add a command for getting the current and next wave info DONE
