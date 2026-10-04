@@ -3,3 +3,9 @@ Version: 1.0.0
 Date: 2026-09-01
   Changes:
     - Started frontier td
+Date: 2026-10-04
+  Changes:
+    - Released
+    - Updated the info.json
+    - One map, One difficulty
+    - 300 waves

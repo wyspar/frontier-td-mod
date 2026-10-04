@@ -1,7 +1,7 @@
 {
   "name": "frontier-td",
   "title": "Frontier Tower Defense",
-  "description": "To be used with the Frontier tower defense scenario.",
+  "description": "Frontier Tower Defense is an overhaul mod that turns the game into a tower defense. You start with a few coins to craft starting turrets. Kill enemies to get more coins, and stop them from reaching your silo. Singleplayer or Multiplayer works.",
   "author": "wyspar",
   "version": "1.0.0",
   "factorio_version": "2.0",
