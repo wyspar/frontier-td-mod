@@ -218,10 +218,10 @@ function map.getRelativeSlotPosition(slotDef, local_x, local_y)
     }
 end
 
-local function generate_structures(surface, slot)
+local function generate_structures(surface, slot, structures)
 	local mapSlot = storage.mapSlots[slot.id]
 	local force = game.forces[tostring(mapSlot.forceName)]
-	for _, structure in ipairs(slot.structures or {}) do
+	for _, structure in ipairs(structures or {}) do
 		local position = map.getRelativeSlotPosition(
 			slot,
 			structure.x,
@@ -264,7 +264,7 @@ local function generate_structures(surface, slot)
 	end
 
 	--generate stupid shit like decorations, trees, rocks
-	if slot.mapName and slot.mapName == 'map-1-sand' then
+	if mapSlot.mapName and mapSlot.mapName == 'map-1-sand' then
 		local random = game.create_random_generator()
 		local rockCount = random(50, 150)
 
@@ -371,6 +371,8 @@ end
 
 
 function map.generateSlotLand(surface, slot, generateStructures)
+	-- slot is the slot definition (layout only), per game data comes from storage.mapSlots
+	local mapSlot = storage.mapSlots[slot.id]
 	local area = {
 		{slot.x, slot.y},
 		{
@@ -401,11 +403,12 @@ function map.generateSlotLand(surface, slot, generateStructures)
 	})
 
 	local tiles = {}
-	local getMap = map.getMapByName(slot.mapName)
+	local getMap = map.getMapByName(mapSlot.mapName)
 	if not getMap then
 		game.print("Error getting getMap in map.generateSlotLand in map.lua")
 		return
 	end
+	local biterPaths = map.getMapBiterPaths(mapSlot.mapName, mapSlot.difficulty)
 
 	for x = slot.x, slot.x + slot.width - 1 do
 		for y = slot.y, slot.y + slot.height - 1 do
@@ -434,10 +437,10 @@ function map.generateSlotLand(surface, slot, generateStructures)
 		end
 	end
 
-	if (slot.biterPaths) then
+	if (biterPaths) then
 		local tiles = {}
 
-		for i, path in ipairs(slot.biterPaths) do
+		for i, path in ipairs(biterPaths) do
 			local position = map.getRelativeSlotPosition(slot, path.x, path.y)
 
 
@@ -461,7 +464,7 @@ function map.generateSlotLand(surface, slot, generateStructures)
 				spawner.destructible = false
 				spawner.active = false
 				spawner.minable = false
-			elseif i == #slot.biterPaths then
+			elseif i == #biterPaths then
 				-- last path
 				tiles[#tiles + 1] = {
 					name = "red-refined-concrete",
@@ -483,9 +486,9 @@ function map.generateSlotLand(surface, slot, generateStructures)
 	end
 	
 	if (generateStructures ) then
-		slot.structures = getMap.DefaultMapStructures
+		local structures = getMap.DefaultMapStructures
 
-		local silo = map.findStructureByName(slot.structures, "rocket-silo")
+		local silo = map.findStructureByName(structures, "rocket-silo")
 		-- Volcanic ash flats around silo
 		set_tile_area(
 			surface,
@@ -506,7 +509,7 @@ function map.generateSlotLand(surface, slot, generateStructures)
 		--     61, 5
 		-- )
 
-		generate_structures(surface, slot)
+		generate_structures(surface, slot, structures)
 	end
 end
 
@@ -771,6 +774,7 @@ function map.resetMapSlot(surface, slotId, isHardReset)
 	mapSlot.waveTimer = 0
 	mapSlot.waveStartTick = 0
 	mapSlot.waveGroups = nil
+	mapSlot.startingGearGiven = {}
 	local oldMapTagId = mapSlot.mapTagId
 	mapSlot.mapTagId = nil
 
@@ -784,9 +788,6 @@ function map.resetMapSlot(surface, slotId, isHardReset)
 	end
 
 	if isHardReset then
-		slotDef.structures = nil
-		slotDef.biterPaths = nil
-		slotDef.mapName = nil
 		mapSlot.isOccupied = false
 		mapSlot.slotOwnerIndex = nil
 	end

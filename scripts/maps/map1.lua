@@ -198,7 +198,7 @@ map1.mapHardBiterPaths = {
 
 map1.mapHardWaves = {
   [1] = {
-    waveDuration = 60,
+    waveDuration = 5,
     groups = {
       {name = "big-biter", count = 1, interval = 0, startDelay = 0},
     },

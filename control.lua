@@ -15,6 +15,126 @@ local function countTableEntries(tbl)
   return count
 end
 
+--delayed actions are stored as plain data, never functions
+--functions cannot be saved in storage, so players joining mid game would desync
+--name picks the handler in delayedActionHandlers (next to the on_tick handler)
+local function scheduleDelayedAction(delayTicks, name, data)
+  local action = data or {}
+  action.tick = game.tick + delayTicks
+  action.name = name
+  storage.delayedTickActions = storage.delayedTickActions or {}
+  table.insert(storage.delayedTickActions, action)
+  return action
+end
+
+local function updateTeamMenuGui(player)
+  if not player then
+    return
+  end
+
+  local frame = player.gui.screen.force_gui
+  if not frame then
+    return
+  end
+  local oldScrollPane = frame.force_list
+  if oldScrollPane then
+    oldScrollPane.destroy()
+  end
+
+  local scroll = frame.add {
+    type = "scroll-pane",
+    name = "force_list",
+    direction = "vertical"
+  }
+
+  scroll.style.maximal_height = 600
+  scroll.style.minimal_width = 500
+
+  for _, slot in pairs(storage.mapSlots) do
+    -- Slot container
+    local slotFlow = scroll.add {
+      type = "flow",
+      name = "slot_" .. tostring(slot.id),
+      direction = "vertical"
+    }
+
+    -- Slot header row
+    local row = slotFlow.add {
+      type = "flow",
+      name = "slot_header_" .. tostring(slot.id),
+      direction = "horizontal"
+    }
+
+    -- Slot label
+    local slotLabelCaption = "Slot " .. tostring(slot.id) .. " Private"
+    if slot.id == 1 then
+      slotLabelCaption = "Slot " .. tostring(slot.id) .. " Public"
+    end
+    row.add {
+      type = "label",
+      caption = slotLabelCaption
+    }.style.minimal_width = 200
+
+    -- Join / Challenge buttons
+    if slot.forceName ~= player.force.name then
+      row.add {
+        type = "button",
+        name = "join_slot_" .. tostring(slot.id),
+        caption = "Join"
+      }
+
+      row.add {
+        type = "button",
+        name = "challenge_slot_" .. tostring(slot.id),
+        caption = "Challenge"
+      }
+    end
+      
+    -- Slot owner
+    if slot.slotOwnerIndex then
+      local slotOwnerPlayer = game.get_player(
+        tonumber(slot.slotOwnerIndex)
+      )
+
+      if slotOwnerPlayer and slotOwnerPlayer.valid then
+        row.add {
+          type = "label",
+          caption = "Owner: "..slotOwnerPlayer.name
+        }.style.minimal_width = 200
+      end
+    end
+
+    -- Kick menu button, only for the owner on their own slot
+    if slot.id ~= 1 and slot.forceName == player.force.name and slot.slotOwnerIndex == player.index then
+      row.add {
+        type = "button",
+        name = "open_kick_menu_button",
+        caption = "Kick Players"
+      }
+    end
+
+    -- Connected players in this force
+    local playersFlow = slotFlow.add {
+      type = "flow",
+      name = "players_" .. tostring(slot.id),
+      direction = "vertical"
+    }
+    for _, forcePlayer in pairs(game.connected_players) do
+      if forcePlayer.force.name == slot.forceName then
+        playersFlow.add {
+          type = "label",
+          caption = "  " .. forcePlayer.name
+        }
+      end
+    end
+
+    -- Separator between slots
+    slotFlow.add {
+      type = "line"
+    }
+  end
+end
+
 local function getBiterKillsByForce(force)
   local kills = 0
   local surface = game.surfaces[main_surface_name]
@@ -444,10 +564,26 @@ local function fullClearPlayerInventory(player)
   if inventory then
     inventory.clear()
   end
-  player.get_inventory(defines.inventory.character_guns).clear()
-  player.get_inventory(defines.inventory.character_ammo).clear()
-  player.get_inventory(defines.inventory.character_armor).clear()
-  player.get_inventory(defines.inventory.character_trash).clear()
+
+  local gunInventory = player.get_inventory(defines.inventory.character_guns)
+  if gunInventory then
+    gunInventory.clear()
+  end
+
+  local ammoInventory = player.get_inventory(defines.inventory.character_ammo)
+  if ammoInventory then
+    ammoInventory.clear()
+  end
+
+  local armorInventory = player.get_inventory(defines.inventory.character_armor)
+  if armorInventory then
+    armorInventory.clear()
+  end
+
+  local trashInventory = player.get_inventory(defines.inventory.character_trash)
+  if trashInventory then
+    trashInventory.clear()
+  end
 end
 
 --name used in win/lose messages: "Public Slot 1", the slot owner's name, or "Slot N" if there is no valid owner
@@ -531,19 +667,11 @@ local function checkForWinnerSlot(slot, slotMapDef)
       end
     end
     force.reset()
+		for _, connectedPlayer in pairs(game.connected_players) do
+			updateTeamMenuGui(connectedPlayer)
+		end
   else
-    table.insert(storage.delayedTickActions, {
-			tick = game.tick + 600,
-			callback = function()
-        for _, slot in pairs(storage.mapSlots) do
-          local slotMapDef = mapModule.slotDefinitions[slot.id]
-
-          if slotMapDef then
-            checkForWinnerSlot(slot, slotMapDef)
-          end
-        end
-			end
-		})
+    scheduleDelayedAction(600, "checkAllWinners")
 	end
 end
 
@@ -577,18 +705,7 @@ local function startWave(slot, slotMapDef)
 	end
 
 	if not wave then
-    table.insert(storage.delayedTickActions, {
-			tick = game.tick + 600,
-			callback = function()
-        for _, slot in pairs(storage.mapSlots) do
-          local slotMapDef = mapModule.slotDefinitions[slot.id]
-
-          if slotMapDef then
-            checkForWinnerSlot(slot, slotMapDef)
-          end
-        end
-			end
-		})
+    scheduleDelayedAction(600, "checkAllWinners")
 
 		slot.waveGroups = nil
     return
@@ -708,6 +825,25 @@ local function placeSlotRadar(surface, position, radarForce)
 	end
 end
 
+--gives the starting gear once per player per round, so leaving and rejoining a slot cannot farm gear
+--call this after the player is on the slot's force and their old inventory was snapshotted
+local function giveStartingGearIfNeeded(player, slot)
+	if not player or not player.valid or not player.character then
+		return
+	end
+	if not slot or not slot.isGameStarted then
+		return
+	end
+
+	slot.startingGearGiven = slot.startingGearGiven or {}
+	if slot.startingGearGiven[player.index] then
+		return
+	end
+	slot.startingGearGiven[player.index] = true
+
+	mapModule.createStartingPlayer(player, mapModule.getSlotDefinitionById(slot.id))
+end
+
 local function startRoundForForce(slot, force)
 	if not force then
 		return
@@ -723,31 +859,30 @@ local function startRoundForForce(slot, force)
 		end
 		return
 	end
-	slotMapDef.mapName = slot.mapName
 
-	local getMap = mapModule.getMapByName(slotMapDef.mapName)
+	local getMap = mapModule.getMapByName(slot.mapName)
 	if not getMap then
 		for _, player in pairs(force.connected_players) do
-			player.print("Error finding getMap " .. tostring(slotMapDef.mapName) .. " " .. tostring(slot.difficulty) ..
+			player.print("Error finding getMap " .. tostring(slot.mapName) .. " " .. tostring(slot.difficulty) ..
 													" in control.lua ")
 		end
 		return
 	end
 
-	local biterPaths = mapModule.getMapBiterPaths(slotMapDef.mapName, slot.difficulty)
+	local biterPaths = mapModule.getMapBiterPaths(slot.mapName, slot.difficulty)
 	if not biterPaths then
 		for _, player in pairs(force.connected_players) do
 			player.print("Error finding biterPaths from getMapBiterPaths() in control.lua " ..
-        tostring(slotMapDef.mapName) .. " " .. tostring(slot.difficulty))
+        tostring(slot.mapName) .. " " .. tostring(slot.difficulty))
 		end
 		return
 	end
 
-	local waveData = mapModule.getMapWaveData(slotMapDef.mapName, slot.difficulty)
+	local waveData = mapModule.getMapWaveData(slot.mapName, slot.difficulty)
 	if not waveData then
 		for _, player in pairs(force.connected_players) do
 			player.print(
-        "Error finding waveData from getMapWaveData() in control.lua " .. tostring(slotMapDef.mapName) .. " " ..
+        "Error finding waveData from getMapWaveData() in control.lua " .. tostring(slot.mapName) .. " " ..
           tostring(slot.difficulty))
 		end
 		return
@@ -764,9 +899,10 @@ local function startRoundForForce(slot, force)
   storage.turretUpgradeRewarded[force.index] = false
 
 	slot.isGameStarted = true
-  
+	slot.startingGearGiven = {}
+
 	for _, player in pairs(force.connected_players) do
-		mapModule.createStartingPlayer(player, slot)
+		giveStartingGearIfNeeded(player, slot)
 
 		-- delete some of the default gui like play button
 		if player.gui.top.menu_bar ~= nil and player.gui.top.menu_bar.play_button ~= nil then
@@ -789,7 +925,6 @@ local function startRoundForForce(slot, force)
 		player.print("Game started!")
 	end
 
-	slotMapDef.biterPaths = biterPaths
 	mapModule.generateSlotLand(surface, slotMapDef, true);
 
 	-- radar inside the silo so this force always sees their whole slot
@@ -1012,105 +1147,6 @@ local function createDifficultyGui(event, player, availableDifficulties)
 	end
 end
 
-local function updateTeamMenuGui(player)
-  if not player then
-    return
-  end
-
-  local frame = player.gui.screen.force_gui
-  if not frame then
-    return
-  end
-  local oldScrollPane = frame.force_list
-  if oldScrollPane then
-    oldScrollPane.destroy()
-  end
-
-  local scroll = frame.add {
-    type = "scroll-pane",
-    name = "force_list",
-    direction = "vertical"
-  }
-
-  scroll.style.maximal_height = 600
-  scroll.style.minimal_width = 500
-
-  for _, slot in pairs(storage.mapSlots) do
-    -- Slot container
-    local slotFlow = scroll.add {
-      type = "flow",
-      name = "slot_" .. tostring(slot.id),
-      direction = "vertical"
-    }
-
-    -- Slot header row
-    local row = slotFlow.add {
-      type = "flow",
-      name = "slot_header_" .. tostring(slot.id),
-      direction = "horizontal"
-    }
-
-    -- Slot label
-    local slotLabelCaption = "Slot " .. tostring(slot.id) .. " Private"
-    if slot.id == 1 then
-      slotLabelCaption = "Slot " .. tostring(slot.id) .. " Public"
-    end
-    row.add {
-      type = "label",
-      caption = slotLabelCaption
-    }.style.minimal_width = 200
-
-    -- Join / Challenge buttons
-    if slot.forceName ~= player.force.name then
-      row.add {
-        type = "button",
-        name = "join_slot_" .. tostring(slot.id),
-        caption = "Join"
-      }
-
-      row.add {
-        type = "button",
-        name = "challenge_slot_" .. tostring(slot.id),
-        caption = "Challenge"
-      }
-    end
-      
-    -- Slot owner
-    if slot.slotOwnerIndex then
-      local slotOwnerPlayer = game.get_player(
-        tonumber(slot.slotOwnerIndex)
-      )
-
-      if slotOwnerPlayer and slotOwnerPlayer.valid then
-        row.add {
-          type = "label",
-          caption = "Owner: "..slotOwnerPlayer.name
-        }.style.minimal_width = 200
-      end
-    end
-
-    -- Connected players in this force
-    local playersFlow = slotFlow.add {
-      type = "flow",
-      name = "players_" .. tostring(slot.id),
-      direction = "vertical"
-    }
-    for _, forcePlayer in pairs(game.connected_players) do
-      if forcePlayer.force.name == slot.forceName then
-        playersFlow.add {
-          type = "label",
-          caption = "  " .. forcePlayer.name
-        }
-      end
-    end
-
-    -- Separator between slots
-    slotFlow.add {
-      type = "line"
-    }
-  end
-end
-
 --returns an error message if the slot cannot be part of a challenge, nil if it can
 local function getChallengeBlockedReason(slot)
 	if not slot then
@@ -1156,6 +1192,103 @@ local function startPvpChallenge(slot, enemySlot)
 	end
 end
 
+--drops a left/switched player's snapshot inventory in a corpse at their old slot
+--runs from the "dropLeftPlayerInventory" delayed action
+local function dropLeftPlayerInventory(action)
+	if not action or not storage.leftPlayers then
+		return
+	end
+
+	local playerIndex = action.playerIndex
+	local data = storage.leftPlayers[playerIndex]
+
+	-- Player rejoined / action was cancelled / replaced by a newer snapshot
+	if not data or data.action ~= action then
+		return
+	end
+
+	-- remove it from the queue in case this was called early
+	for i = #storage.delayedTickActions, 1, -1 do
+		if storage.delayedTickActions[i] == action then
+			table.remove(storage.delayedTickActions, i)
+			break
+		end
+	end
+
+	local snapshot = data.inventory
+
+	if snapshot then
+		local safePlacePos = data.surface.find_non_colliding_position(
+			"character",
+			data.position,
+			20,
+			1
+		) or data.position
+		local corpse = data.surface.create_entity({
+			name = "character-corpse",
+			position = safePlacePos,
+			inventory_size = #snapshot.main + #snapshot.guns + #snapshot.ammo + #snapshot.armor
+		})
+		if corpse then
+			local corpseInventory =
+				corpse.get_inventory(defines.inventory.character_corpse)
+
+			if corpseInventory then
+				local force = game.forces[tostring(data.forceName)]
+				if force and snapshot.main and #snapshot.main > 0 and not snapshot.main.is_empty() then
+					for i, forcePlayer in ipairs(force.connected_players) do
+						if forcePlayer and forcePlayer.valid then
+							forcePlayer.print(
+								"Player Inventory Here: [gps=" ..
+								math.floor(safePlacePos.x) .. "," ..
+								math.floor(safePlacePos.y) .. "," ..
+								data.surface.name ..
+								"]"
+							)
+						end
+					end
+				end
+
+				-- Main inventory
+				for i = 1, #snapshot.main do
+					if snapshot.main[i].valid_for_read then
+						corpseInventory.insert(snapshot.main[i])
+					end
+				end
+
+				-- Guns
+				for i = 1, #snapshot.guns do
+					if snapshot.guns[i].valid_for_read then
+						corpseInventory.insert(snapshot.guns[i])
+					end
+				end
+
+				-- Ammo
+				for i = 1, #snapshot.ammo do
+					if snapshot.ammo[i].valid_for_read then
+						corpseInventory.insert(snapshot.ammo[i])
+					end
+				end
+
+				-- Armor
+				for i = 1, #snapshot.armor do
+					if snapshot.armor[i].valid_for_read then
+						corpseInventory.insert(snapshot.armor[i])
+					end
+				end
+			end
+		end
+
+		-- Destroy the temporary inventories
+		snapshot.main.destroy()
+		snapshot.guns.destroy()
+		snapshot.ammo.destroy()
+		snapshot.armor.destroy()
+	end
+
+	storage.leftPlayers[playerIndex] = nil
+end
+
 local function createSnapshotInventory(player, tickOverride)
 	if not player then
 		return
@@ -1174,6 +1307,11 @@ local function createSnapshotInventory(player, tickOverride)
 	local gunInventory = player.get_inventory(defines.inventory.character_guns)
 	local ammoInventory = player.get_inventory(defines.inventory.character_ammo)
 	local armorInventory = player.get_inventory(defines.inventory.character_armor)
+
+	-- no character (dead or waiting to respawn), nothing to snapshot
+	if not mainInventory or not gunInventory or not ammoInventory or not armorInventory then
+		return
+	end
 
 	local snapshot = {
 		main = game.create_inventory(#mainInventory),
@@ -1210,105 +1348,29 @@ local function createSnapshotInventory(player, tickOverride)
 	end
 
 	storage.leftPlayers = storage.leftPlayers or {}
+
+	-- a snapshot is still pending from before, drop it now so those items are not lost
+	if storage.leftPlayers[playerIndex] then
+		dropLeftPlayerInventory(storage.leftPlayers[playerIndex].action)
+	end
+
 	storage.leftPlayers[playerIndex] = {
 		inventory = snapshot,
 		surface = player.surface,
-		position = spawnPos
+		position = spawnPos,
+		forceName = force.name
 	}
 
-	local tickWaitAmount = 18000	
+	local tickWaitAmount = 600 -- use 18000 for 5 minutes
 	if tickOverride then
 		tickWaitAmount = tickOverride
 	end
-	storage.leftPlayers[playerIndex].action = {
-		tick = game.tick + tickWaitAmount, -- use 18000 for 5 minutes
-		playerIndex = playerIndex,
 
-		callback = function()
-			local data = storage.leftPlayers[playerIndex]
-
-			-- Player rejoined / action was cancelled
-			if not data then
-				return
-			end
-
-			local snapshot = data.inventory
-
-			if snapshot then
-				local safePlacePos = data.surface.find_non_colliding_position(
-					"character",
-					data.position,
-					20,
-					1
-				)
-				local corpse = data.surface.create_entity({
-					name = "character-corpse",
-					position = safePlacePos,
-					inventory_size = #snapshot.main + #snapshot.guns + #snapshot.ammo + #snapshot.armor
-				})
-				if corpse then
-					local corpseInventory =
-						corpse.get_inventory(defines.inventory.character_corpse)
-
-					if corpseInventory then
-						if snapshot.main and #snapshot.main > 0 and not snapshot.main.is_empty() then
-							for i, forcePlayer in ipairs(force.connected_players) do
-								if forcePlayer and forcePlayer.valid then
-									forcePlayer.print(
-										"Player Inventory Here: [gps=" ..
-										math.floor(safePlacePos.x) .. "," ..
-										math.floor(safePlacePos.y) .. "," ..
-										data.surface.name ..
-										"]"
-									)
-								end
-							end
-						end
-
-						-- Main inventory
-						for i = 1, #snapshot.main do
-							if snapshot.main[i].valid_for_read then
-								corpseInventory.insert(snapshot.main[i])
-							end
-						end
-
-						-- Guns
-						for i = 1, #snapshot.guns do
-							if snapshot.guns[i].valid_for_read then
-								corpseInventory.insert(snapshot.guns[i])
-							end
-						end
-
-						-- Ammo
-						for i = 1, #snapshot.ammo do
-							if snapshot.ammo[i].valid_for_read then
-								corpseInventory.insert(snapshot.ammo[i])
-							end
-						end
-
-						-- Armor
-						for i = 1, #snapshot.armor do
-							if snapshot.armor[i].valid_for_read then
-								corpseInventory.insert(snapshot.armor[i])
-							end
-						end
-					end
-				end
-
-				-- Destroy the temporary inventories
-				snapshot.main.destroy()
-				snapshot.guns.destroy()
-				snapshot.ammo.destroy()
-				snapshot.armor.destroy()
-			end
-
-			storage.leftPlayers[playerIndex] = nil
-		end
-	}
-
-	table.insert(
-		storage.delayedTickActions,
-		storage.leftPlayers[playerIndex].action
+	-- the same table is kept on leftPlayers so it can be cancelled or fired early
+	storage.leftPlayers[playerIndex].action = scheduleDelayedAction(
+		tickWaitAmount,
+		"dropLeftPlayerInventory",
+		{ playerIndex = playerIndex }
 	)
 end
 
@@ -1396,6 +1458,188 @@ local function giveBackInventoryAndCancelRemovingInventory(player)
 	storage.leftPlayers[playerIndex] = nil
 end
 
+--removes join request popups ("bum_joining_") after a player switches slots:
+--requests this player sent to other owners, and requests other players sent to this player
+local function removeJoinRequestGuis(player)
+	local sentRequestName = "bum_joining_" .. tostring(player.index)
+
+	for _, otherPlayer in pairs(game.players) do
+		local sentRequest = otherPlayer.gui.screen[sentRequestName]
+		if sentRequest and sentRequest.valid then
+			sentRequest.destroy()
+		end
+	end
+
+	for _, child in pairs(player.gui.screen.children) do
+		if child.valid and child.name:find("bum_joining_", 1, true) then
+			child.destroy()
+		end
+	end
+end
+
+--kick menu for the slot owner, lists everyone else on their force
+local function createKickMenuGui(player)
+	if player.gui.screen.kick_menu_gui then
+		player.gui.screen.kick_menu_gui.destroy()
+	end
+
+	local slot = mapModule.getSlotByForceName(player.force.name)
+	if not slot or slot.id == 1 or slot.slotOwnerIndex ~= player.index then
+		return
+	end
+
+	local frame = player.gui.screen.add {
+		type = "frame",
+		name = "kick_menu_gui",
+		direction = "vertical"
+	}
+
+	local titlebar = frame.add {
+		type = "flow",
+		name = "titlebar",
+		direction = "horizontal"
+	}
+
+	titlebar.add {
+		type = "label",
+		caption = "Kick Players - Slot " .. tostring(slot.id),
+		style = "frame_title",
+		ignored_by_interaction = true
+	}
+
+	local dragger = titlebar.add {
+		type = "empty-widget",
+		style = "draggable_space_header",
+	}
+
+	dragger.style.horizontally_stretchable = true
+	dragger.style.height = 24
+	dragger.style.right_margin = 4
+	dragger.drag_target = frame
+
+	titlebar.add {
+		type = "sprite-button",
+		name = "close",
+		sprite = "utility/close",
+		style = "frame_action_button"
+	}
+
+	frame.force_auto_center()
+
+	local scroll = frame.add {
+		type = "scroll-pane",
+		name = "kick_list",
+		direction = "vertical"
+	}
+
+	scroll.style.maximal_height = 400
+	scroll.style.minimal_width = 300
+
+	local playerTable = scroll.add {
+		type = "table",
+		column_count = 2
+	}
+
+	local kickableCount = 0
+	for _, forcePlayer in pairs(player.force.players) do
+		if forcePlayer.index ~= player.index then
+			kickableCount = kickableCount + 1
+
+			local nameCaption = forcePlayer.name
+			if not forcePlayer.connected then
+				nameCaption = nameCaption .. " (offline)"
+			end
+			playerTable.add {
+				type = "label",
+				caption = nameCaption
+			}.style.minimal_width = 200
+
+			playerTable.add {
+				type = "button",
+				name = "kick_player_" .. tostring(forcePlayer.index),
+				caption = "Kick"
+			}
+		end
+	end
+
+	if kickableCount == 0 then
+		scroll.add {
+			type = "label",
+			caption = "No other players on your team."
+		}
+	end
+end
+
+--moves a player from the owner's slot back to the public slot 1
+local function kickPlayerFromSlot(owner, kickedPlayer)
+	local slot = mapModule.getSlotByForceName(owner.force.name)
+	if not slot or slot.id == 1 or slot.slotOwnerIndex ~= owner.index then
+		owner.print("Only the owner of a slot can kick players.")
+		return
+	end
+
+	if not kickedPlayer or not kickedPlayer.valid or kickedPlayer.index == owner.index then
+		return
+	end
+
+	if kickedPlayer.force.name ~= owner.force.name then
+		owner.print(kickedPlayer.name .. " is not on your team anymore.")
+		return
+	end
+
+	local surface = game.surfaces[main_surface_name]
+	local publicSlot = storage.mapSlots[1]
+	local publicSlotDef = mapModule.getSlotDefinitionById(1)
+	local publicForce = game.forces[publicSlot.forceName]
+	if not surface or not publicSlotDef or not publicForce then
+		return
+	end
+
+	-- items stay with the team they were kicked from, same as switching teams
+	if kickedPlayer.connected then
+		createSnapshotInventory(kickedPlayer, 0)
+	else
+		-- offline players already have a pending snapshot from leaving, drop it now
+		-- so they cannot get it back when they rejoin in the public slot
+		local leftData = storage.leftPlayers and storage.leftPlayers[kickedPlayer.index]
+		if leftData and leftData.action then
+			leftData.action.tick = game.tick
+		end
+	end
+
+	kickedPlayer.force = publicForce
+
+	if kickedPlayer.gui.screen.force_gui then
+		kickedPlayer.gui.screen.force_gui.destroy()
+	end
+	if kickedPlayer.gui.screen.kick_menu_gui then
+		kickedPlayer.gui.screen.kick_menu_gui.destroy()
+	end
+
+	createDefaultPlayerGui(kickedPlayer)
+	if publicSlot.isGameStarted then
+		local getMap = mapModule.getMapByName(publicSlot.mapName)
+		if getMap then
+			createIsGameStartedGui(kickedPlayer, publicSlot, getMap)
+		end
+	end
+
+	if kickedPlayer.character then
+		teleportPlayerToTheirSpawn(surface, publicForce, publicSlotDef, kickedPlayer)
+		giveStartingGearIfNeeded(kickedPlayer, publicSlot)
+	end
+
+	kickedPlayer.print("You were kicked from Slot " .. tostring(slot.id) .. " by " .. owner.name .. ".")
+	for _, forcePlayer in pairs(owner.force.connected_players) do
+		forcePlayer.print(kickedPlayer.name .. " was kicked from the team by " .. owner.name .. ".")
+	end
+
+	-- refresh anyone looking at the teams menu
+	for _, connectedPlayer in pairs(game.connected_players) do
+		updateTeamMenuGui(connectedPlayer)
+	end
+end
+
 local function rewardFirstTurretToolUpgrade(force)
   storage.turretUpgradeRewarded = storage.turretUpgradeRewarded or {}
   if storage.turretUpgradeRewarded[force.index] then
@@ -1463,6 +1707,96 @@ end)
 script.on_load(function()
 end)
 
+--moves every player on a force back to public slot 1 with a clean inventory, then resets the force
+local function sendForceBackToPublicSlot(surface, force)
+	local publicForce = game.forces["mapSlotDef_1"]
+	local publicSlotDef = mapModule.getSlotDefinitionById(1)
+	for _, player in pairs(force.players) do
+		if player.valid then
+			fullClearPlayerInventory(player)
+			player.force = publicForce
+			createDefaultPlayerGui(player)
+			teleportPlayerToTheirSpawn(surface, publicForce, publicSlotDef, player)
+		end
+	end
+	force.reset()
+end
+
+--handlers for storage.delayedTickActions, keyed by action.name (see scheduleDelayedAction)
+--each handler only gets the plain data that was stored on the action
+local delayedActionHandlers = {
+	-- after the last wave, keep checking every slot until one has no enemies left
+	checkAllWinners = function(action)
+		for _, slot in pairs(storage.mapSlots) do
+			local slotMapDef = mapModule.slotDefinitions[slot.id]
+
+			if slotMapDef then
+				checkForWinnerSlot(slot, slotMapDef)
+			end
+		end
+	end,
+
+	-- a left/switched player's inventory gets dropped at their old slot
+	dropLeftPlayerInventory = function(action)
+		dropLeftPlayerInventory(action)
+	end,
+
+	-- silo died: reset the slot, and the enemy slot too in pvp
+	resetSlotsAfterSiloDeath = function(action)
+		local surface = game.surfaces[main_surface_name]
+		local force = game.forces[tostring(action.forceName)]
+		if not surface or not force then
+			return
+		end
+
+		mapModule.resetMapSlot(surface, action.slotId, true)
+		sendForceBackToPublicSlot(surface, force)
+
+		local otherForce = action.otherForceName and game.forces[action.otherForceName]
+		if otherForce then
+			local otherForceSlot = mapModule.getSlotByForceName(otherForce.name)
+			if otherForceSlot then
+				mapModule.resetMapSlot(surface, otherForceSlot.id, true)
+				sendForceBackToPublicSlot(surface, otherForce)
+			else
+				for _, player in pairs(otherForce.connected_players) do
+					player.print("No slot found in otherForceSlot in isSilo died")
+				end
+			end
+		end
+
+		for _, connectedPlayer in pairs(game.connected_players) do
+			updateTeamMenuGui(connectedPlayer)
+		end
+	end,
+
+	-- everyone left a private slot, reset it if nobody came back
+	resetEmptySlot = function(action)
+		local currentSlot = storage.mapSlots[action.slotId]
+
+		if not currentSlot then
+			return
+		end
+
+		--check if the slot is a public one
+		if currentSlot.id == 1 then
+			return
+		end
+
+		--Check whether anyone is currently on the force.
+		local currentForce = game.forces[tostring(currentSlot.forceName)]
+
+		if currentForce and #currentForce.players > 0 then
+			return
+		end
+
+		local surface = game.surfaces[main_surface_name]
+		if surface then
+			mapModule.resetMapSlot(surface, action.slotId, true)
+		end
+	end,
+}
+
 script.on_event(defines.events.on_tick, function(event)
 	for _, slot in pairs(storage.mapSlots) do
 		if slot.isGameStarted and slot.isDead == false then
@@ -1479,9 +1813,13 @@ script.on_event(defines.events.on_tick, function(event)
 		for i = #storage.delayedTickActions, 1, -1 do
 			local action = storage.delayedTickActions[i]
 
-			if event.tick >= action.tick then
+			if action and event.tick >= action.tick then
 				table.remove(storage.delayedTickActions, i)
-				action.callback()
+				-- old saves can still have function callbacks without a name, those are dropped
+				local handler = action.name and delayedActionHandlers[action.name]
+				if handler then
+					handler(action)
+				end
 			end
 		end
 	end
@@ -1647,48 +1985,11 @@ script.on_event(defines.events.on_entity_died, function(event)
 		end
 		game.print(playerThatLost .. "'s team has been defeated" .. defeatedBy .. " Map: " .. mapData.mapLabel .. " on " .. difficulty)
 
-		table.insert(storage.delayedTickActions, {
-			tick = game.tick + 600, -- 300 = 5 seconds later
-      -- reset map slot, reset players on each force
-			callback = function()
-        mapModule.resetMapSlot(surface, slot.id, true)
-        local publicForce = game.forces["mapSlotDef_1"]
-        local publicSlotDef = mapModule.getSlotDefinitionById(1)
-        for _, player in pairs(force.players) do
-          if player.valid then
-            fullClearPlayerInventory(player)
-            player.force = publicForce
-            createDefaultPlayerGui(player)
-            teleportPlayerToTheirSpawn(surface, publicForce, publicSlotDef, player)
-          end
-        end
-        force.reset()
-
-				if findOtherForce ~= nil then
-					local otherForceSlot = mapModule.getSlotByForceName(findOtherForce.name)
-					if not otherForceSlot then
-						for _, player in pairs(findOtherForce.connected_players) do
-							if player.valid then
-								player.print("No slot found in otherForceSlot in isSilo died")
-							end
-						end
-						return
-					end
-					mapModule.resetMapSlot(surface, otherForceSlot.id, true)
-          local publicSlotDef = mapModule.getSlotDefinitionById(1)
-
-					for _, player in pairs(findOtherForce.players) do
-						if player.valid then
-							fullClearPlayerInventory(player)
-							player.force = publicForce
-              createDefaultPlayerGui(player)
-              teleportPlayerToTheirSpawn(surface, publicForce, publicSlotDef, player)
-						end
-					end
-					findOtherForce.reset()
-				end--end of findOtherForce
-
-			end--callback func
+		-- reset map slot, reset players on each force, 600 ticks = 10 seconds later
+		scheduleDelayedAction(600, "resetSlotsAfterSiloDeath", {
+			slotId = slot.id,
+			forceName = force.name,
+			otherForceName = findOtherForce and findOtherForce.name or nil
 		})
 		return
 	end--end of isSilo
@@ -1881,10 +2182,6 @@ script.on_event(defines.events.on_gui_click, function(event)
 
     local currentForce = player.force
     local currentSlot = mapModule.getSlotByForceName(currentForce.name)
-    local currentForcePlayers = #currentForce.connected_players
-    if currentForcePlayers and currentForcePlayers <= 1 and currentSlot then
-      currentSlot.slotOwnerIndex = nil
-    end
 
     --check if the slot is not public, and check if empty. if so make player the owner
     if playersOnJoiningForce and playersOnJoiningForce <= 0 and slot.id ~= 1 then
@@ -1895,7 +2192,7 @@ script.on_event(defines.events.on_gui_click, function(event)
 
 			createDefaultPlayerGui(player)
       if slot.isGameStarted then
-				local getMap = mapModule.getMapByName(slotDef.mapName)
+				local getMap = mapModule.getMapByName(slot.mapName)
 				if not getMap then
 					return
 				end
@@ -1904,8 +2201,8 @@ script.on_event(defines.events.on_gui_click, function(event)
 
       createSnapshotInventory(player, 0)
       assignPlayerToEmptySlot(player,slot)
-      updateTeamMenuGui(player)
-      return
+      giveStartingGearIfNeeded(player, slot)
+      removeJoinRequestGuis(player)
     else--joiningForce has players and is not a public slot
       if slot.id == 1 then -- public slot to join, no owner to ask just join
 		    local surface = game.surfaces[main_surface_name]
@@ -1916,7 +2213,7 @@ script.on_event(defines.events.on_gui_click, function(event)
 
 				createDefaultPlayerGui(player)
         if slot.isGameStarted then
-          local getMap = mapModule.getMapByName(slotDef.mapName)
+          local getMap = mapModule.getMapByName(slot.mapName)
           if not getMap then
             return
           end
@@ -1926,8 +2223,13 @@ script.on_event(defines.events.on_gui_click, function(event)
 				createSnapshotInventory(player, 0)
         player.force = joiningForce
         teleportPlayerToTheirSpawn(surface, joiningForce, slotDef, player)
-        updateTeamMenuGui(player)
+        giveStartingGearIfNeeded(player, slot)
+        removeJoinRequestGuis(player)
       else--ask to join the force
+				if slot.slotOwnerIndex == nil then
+					player.print('No owner of that slot.')
+					return
+				end
         local findPlayerToJoin = game.get_player(slot.slotOwnerIndex)
         if not findPlayerToJoin then
           player.print("Cannot find that player in element.name:find(join_slot_)")
@@ -1992,59 +2294,130 @@ script.on_event(defines.events.on_gui_click, function(event)
         end
       end
     end--end of checking playersOnForce
+
+    -- the player left their old slot, if they owned it hand ownership to someone still on that force
+    -- (skipped when they only sent a join request, they are still on currentForce then)
+    if currentSlot and currentSlot.id ~= 1 and player.force.name ~= currentForce.name
+      and currentSlot.slotOwnerIndex == player.index then
+      local newOwner = currentForce.connected_players[1]
+      if newOwner then
+        currentSlot.slotOwnerIndex = newOwner.index
+        newOwner.print("You are now the owner of Slot " .. tostring(currentSlot.id) .. ".")
+      else
+        currentSlot.slotOwnerIndex = nil
+      end
+    end
+
+    -- refresh after ownership is updated, otherwise the old slot still shows the old owner
+    for _, connectedPlayer in pairs(game.connected_players) do
+      updateTeamMenuGui(connectedPlayer)
+    end
+
     return
 	end
 
 	if element.name:find("^player_request_") then
-		local player = game.get_player(event.player_index)
-		if not player then
-			return
-		end
+		-- player is the slot owner who pressed Yes, requestingPlayer is who wants to join
 		local requestingPlayerIndex = tonumber(string.match(element.name, "^player_request_(.+)$"))
 		if not requestingPlayerIndex then
 			return
 		end
+
+		-- close this popup (and any other stale requests from this player) no matter what happens below
+		local requestFrame = player.gui.screen["bum_joining_" .. requestingPlayerIndex]
+		if requestFrame and requestFrame.valid then
+			requestFrame.destroy()
+		end
+
 		local requestingPlayer = game.get_player(requestingPlayerIndex)
-		if not requestingPlayer then
+		if not requestingPlayer or not requestingPlayer.valid then
 			return
 		end
-		if not requestingPlayer.valid then
+		if not requestingPlayer.connected then
+			player.print(requestingPlayer.name .. " is not online anymore.")
 			return
 		end
+
 		local surface = game.surfaces[main_surface_name]
-		local force = game.forces[tostring(player.force.name)]
-		if force and surface then
-			local slot = mapModule.getSlotByForceName(force.name)
-			if not slot then
-				return
-			end
-			local slotDef = mapModule.getSlotDefinitionById(slot.id)
-			if not slotDef then
-				return
-			end
+		local force = player.force
+		local slot = mapModule.getSlotByForceName(force.name)
+		if not surface or not slot then
+			return
+		end
 
-			createDefaultPlayerGui(player)
-			if slot.isGameStarted then
-				local getMap = mapModule.getMapByName(slotDef.mapName)
-				if not getMap then
-					return
-				end
-				createIsGameStartedGui(player, slot, getMap)
-			end
+		-- ownership could have changed since the request was sent
+		if slot.slotOwnerIndex ~= player.index then
+			player.print("Only the owner of your slot can accept join requests.")
+			return
+		end
 
-			createSnapshotInventory(player, 0)
-			requestingPlayer.force = force
-			teleportPlayerToTheirSpawn(surface, force, slotDef, requestingPlayer)
-      updateTeamMenuGui(player)
+		if requestingPlayer.force.name == force.name then
+			return
+		end
+
+		local slotDef = mapModule.getSlotDefinitionById(slot.id)
+		if not slotDef then
+			return
+		end
+
+		-- remember where the requesting player is coming from before switching
+		local oldForce = requestingPlayer.force
+		local oldSlot = mapModule.getSlotByForceName(oldForce.name)
+
+		-- leave inventory behind in the old slot, then switch force and teleport
+		createSnapshotInventory(requestingPlayer, 0)
+		requestingPlayer.force = force
+		teleportPlayerToTheirSpawn(surface, force, slotDef, requestingPlayer)
+		giveStartingGearIfNeeded(requestingPlayer, slot)
+
+		createDefaultPlayerGui(requestingPlayer)
+		if slot.isGameStarted then
+			local getMap = mapModule.getMapByName(slot.mapName)
+			if getMap then
+				createIsGameStartedGui(requestingPlayer, slot, getMap)
+			end
+		end
+
+		-- if the requesting player owned their old slot, hand it to someone still there
+		if oldSlot and oldSlot.id ~= 1 and oldSlot.slotOwnerIndex == requestingPlayer.index then
+			local newOwner = oldForce.connected_players[1]
+			if newOwner then
+				oldSlot.slotOwnerIndex = newOwner.index
+				newOwner.print("You are now the owner of Slot " .. tostring(oldSlot.id) .. ".")
+			else
+				oldSlot.slotOwnerIndex = nil
+			end
+		end
+
+		removeJoinRequestGuis(requestingPlayer)
+		requestingPlayer.print("You joined Slot " .. tostring(slot.id) .. ".")
+
+		for _, connectedPlayer in pairs(game.connected_players) do
+			updateTeamMenuGui(connectedPlayer)
+		end
+
+		return
+	end
+
+	if element.name == "open_kick_menu_button" then
+		if player.gui.screen.kick_menu_gui then
+			player.gui.screen.kick_menu_gui.destroy()
 		else
-			return
+			createKickMenuGui(player)
 		end
+		return
+	end
 
-		local frame = player.gui.screen["bum_joining_" .. player.index]
-		if frame and frame.valid then
-			frame.destroy()
-			return
+	if element.name:find("^kick_player_") then
+		local kickedPlayerIndex = tonumber(string.match(element.name, "^kick_player_(%d+)$"))
+		local kickedPlayer = kickedPlayerIndex and game.get_player(kickedPlayerIndex)
+		kickPlayerFromSlot(player, kickedPlayer)
+
+		-- rebuild the list so the kicked player is gone
+		if player.gui.screen.kick_menu_gui then
+			createKickMenuGui(player)
 		end
+		return
 	end
 
 	if element.name:find("^challenge_slot_") then
@@ -2268,7 +2641,7 @@ script.on_event(defines.events.on_gui_click, function(event)
 
 		if player.gui.screen.difficulty_selection_gui then
 			local scroll = player.gui.screen.difficulty_selection_gui.difficulty_list
-			if scroll then
+			if scroll and not scroll.force_start_game_button then
 				local startRoundButton = scroll.add {
 					type = "sprite-button",
 					name = "force_start_game_button",
@@ -2825,10 +3198,13 @@ script.on_event(defines.events.on_player_left_game, function(event)
 		return
 	end
 
+	for _, connectedPlayer in pairs(game.connected_players) do
+    updateTeamMenuGui(connectedPlayer)
+  end
+
 	local remainingPlayers = {}
 	for _, forcePlayer in pairs(force.players) do
 		if forcePlayer.index ~= player_index then
-      updateTeamMenuGui(forcePlayer)
 			table.insert(remainingPlayers, forcePlayer)
 		end
 	end
@@ -2837,37 +3213,7 @@ script.on_event(defines.events.on_player_left_game, function(event)
 	if #remainingPlayers == 0 then
 		-- Don't reset immediately.
 		-- Give the player 5 minutes to reconnect.
-		table.insert(storage.delayedTickActions, {
-			tick = game.tick + 600, --18000 is 5 minutes
-			callback = function()
-				local currentSlot = storage.mapSlots[slotId]
-
-				if not currentSlot then
-					return
-				end
-
-				--check if the slot is a public one
-				if currentSlot.id == 1 then
-					return
-				end
-
-				--Check whether anyone is currently on the force.
-				local currentForce = game.forces[tostring(currentSlot.forceName)]
-
-				if currentForce and #currentForce.players > 0 then
-					return
-				end
-				
-				local surface = game.surfaces[main_surface_name]
-				if surface then
-					map.resetMapSlot(
-						surface,
-						slotId,
-						true
-					)
-				end
-			end
-		})
+		scheduleDelayedAction(600, "resetEmptySlot", { slotId = slotId }) --18000 is 5 minutes
 
 		return
 	end

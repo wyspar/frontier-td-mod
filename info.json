@@ -9,7 +9,9 @@
     "base >= 2.0.42",
     "space-age >= 2.0.77",
     "fdsl >= 0.3.7",
-    "aai-loaders >= 0.2.11"
+    "aai-loaders >= 0.2.11",
+    "l9m2-flyer-enemy >= 1.3.0",
+    "ArmouredBiters = 2.0.2"
   ],
   "space_travel_required": true
 }
