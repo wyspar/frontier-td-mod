@@ -22,5 +22,11 @@ data:extend({
     name = "tesla-turrets",
     group = "combat",
     order = "a[turrets]-d[tesla]"
+  },
+  {
+    type = "item-subgroup",
+    name = "poison-turrets",
+    group = "combat",
+    order = "a[turrets]-e[poison]"
   }
 })

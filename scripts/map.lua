@@ -795,7 +795,7 @@ end
 
 local bossRewardData = {
 	["boss-biter-1"] = {
-		coins = 200,
+		coins = 250,
 		rewardItemAmount = 1
 	},
 	--boss-biter-2 will probably be ultra-flyer

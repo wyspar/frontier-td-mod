@@ -76,7 +76,7 @@ local bossBiter1 = {
   order="b-a-c",
   icon = "__base__/graphics/icons/big-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 5000,
+  max_health = 25000,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_big_biter,
   impact_category = "organic",
@@ -133,7 +133,7 @@ local smallPhysicalBiter = {
   order="b-a-c",
   icon = "__base__/graphics/icons/small-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 40,
+  max_health = 60,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_big_biter,
   impact_category = "organic",
@@ -188,7 +188,7 @@ local mediumPhysicalBiter = {
   order="b-a-c",
   icon = "__base__/graphics/icons/medium-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 200,
+  max_health = 250,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_big_biter,
   impact_category = "organic",
@@ -243,7 +243,7 @@ local bigPhysicalBiter = {
   order="b-a-c",
   icon = "__base__/graphics/icons/big-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 800,
+  max_health = 1000,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_big_biter,
   impact_category = "organic",
@@ -298,7 +298,7 @@ local behemothPhysicalBiter = {
   order="b-a-c",
   icon = "__base__/graphics/icons/behemoth-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 7000,
+  max_health = 9000,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_behemoth_biter,
   impact_category = "organic",
@@ -413,35 +413,62 @@ behemothBiter.attack_parameters.animation = biterattackanimation(
 --tint1 is the main body color, tint2 is the secondary/accent color
 local spitterTiers = {
 	["small-spitter"] = {
-		maxHealth = 30,
+		maxHealth = 50,
+		fireResistance = {decrease = 0, percent = 10},
 		scale = scale_spitter_small,
 		tint1 = {0.5, 0.5, 0.5, 1},
 		tint2 = {0.3, 0.3, 0.3, 0.8}
 	},
 	["medium-spitter"] = {
-		maxHealth = 150,
+		maxHealth = 200,
+		fireResistance = {decrease = 2, percent = 20},
 		scale = scale_spitter_medium,
 		tint1 = {0.2, 0.75, 0.2, 1},
 		tint2 = {0.1, 0.45, 0.1, 0.8}
 	},
 	["big-spitter"] = {
-		maxHealth = 750,
+		maxHealth = 850,
+		fireResistance = {decrease = 4, percent = 30},
 		scale = scale_spitter_big,
 		tint1 = {0.2, 0.35, 0.9, 1},
 		tint2 = {0.1, 0.2, 0.55, 0.8}
 	},
 	["behemoth-spitter"] = {
 		maxHealth = 6000,
+		fireResistance = {decrease = 8, percent = 40},
 		scale = scale_spitter_behemoth,
 		tint1 = {0.9, 0.15, 0.15, 1},
 		tint2 = {0.55, 0.05, 0.05, 0.8}
 	},
 }
 
+--adds or replaces one damage type in an entity's resistances, keeping the others (vanilla spitters resist explosion)
+local function setResistance(entity, damageType, resistance)
+	if not resistance then
+		return
+	end
+
+	entity.resistances = entity.resistances or {}
+	for _, existing in pairs(entity.resistances) do
+		if existing.type == damageType then
+			existing.decrease = resistance.decrease
+			existing.percent = resistance.percent
+			return
+		end
+	end
+
+	table.insert(entity.resistances, {
+		type = damageType,
+		decrease = resistance.decrease,
+		percent = resistance.percent
+	})
+end
+
 for spitterName, tier in pairs(spitterTiers) do
 	local spitter = data.raw["unit"][spitterName]
 	if spitter then
 		spitter.max_health = tier.maxHealth
+		setResistance(spitter, "fire", tier.fireResistance)
 		spitter.run_animation = spitterrunanimation(tier.scale, tier.tint1, tier.tint2)
 		spitter.attack_parameters.animation = spitterattackanimation(tier.scale, tier.tint1, tier.tint2)
 	end

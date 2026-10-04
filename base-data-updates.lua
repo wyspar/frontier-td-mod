@@ -318,6 +318,18 @@ steelAxe_tech.research_trigger =
   count = 25
 }
 
+local fastInserter_tech = data.raw.technology["fast-inserter"]
+fastInserter_tech.prerequisites = {"automation"}
+fastInserter_tech.unit =
+{
+  count = 50,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+  },
+  time = 20
+}
+
 local miningProd1_tech = data.raw.technology["mining-productivity-1"]
 miningProd1_tech.prerequisites = {"biter-progress-tier-one-science"}
 miningProd1_tech.effects =

@@ -61,19 +61,60 @@ local function getWaveInfoForPlayer(player)
 end
 
 --prints one wave: number, duration, and every enemy group in it
+--how many enemies a wave group really spawns, following the same rules as processWave:
+--  interval 0: everything spawns at once at startDelay
+--  otherwise: floor(count / waveDuration) spawn every interval, starting at startDelay,
+--  until the count runs out or the wave timer ends (the next wave clears unspawned groups)
+local function getActualGroupSpawnCount(group, waveDuration)
+  local durationTicks = waveDuration * TICKS_PER_SECOND
+  local startDelayTicks = (group.startDelay or 0) * TICKS_PER_SECOND
+  local intervalTicks = (group.interval or 0) * TICKS_PER_SECOND
+
+  -- the wave ends before this group starts
+  if startDelayTicks > durationTicks then
+    return 0
+  end
+
+  if intervalTicks == 0 then
+    return group.count
+  end
+
+  local perSpawn = math.floor(group.count / waveDuration)
+  if perSpawn <= 0 then
+    return 0
+  end
+
+  local spawned = 0
+  local remaining = group.count
+  local spawnTick = startDelayTicks
+  while remaining > 0 and spawnTick <= durationTicks do
+    spawned = spawned + perSpawn
+    remaining = remaining - perSpawn
+    spawnTick = spawnTick + intervalTicks
+  end
+
+  return spawned
+end
+
 local function printWaveInfo(player, title, waveNumber, wave, totalWaves)
   player.print(title .. ": Wave " .. tostring(waveNumber) .. "/" .. tostring(totalWaves) ..
     " (" .. tostring(wave.waveDuration) .. "s)")
 
+  local totalEnemies = 0
   for _, group in ipairs(wave.groups or {}) do
+    local actualCount = getActualGroupSpawnCount(group, wave.waveDuration)
+    totalEnemies = totalEnemies + actualCount
+
     local spawnText = "all at once"
     if group.interval and group.interval > 0 then
       spawnText = "every " .. tostring(group.interval) .. "s"
     end
 
-    player.print("  [entity=" .. group.name .. "] " .. group.name .. " x" .. tostring(group.count) ..
+    player.print("  [entity=" .. group.name .. "] " .. group.name .. " x" .. tostring(actualCount) ..
       ", starts at " .. tostring(group.startDelay or 0) .. "s, " .. spawnText)
   end
+
+  player.print("  Total enemies: " .. tostring(totalEnemies))
 end
 
 --/wave and the wave button
@@ -1723,6 +1764,19 @@ local function kickPlayerFromSlot(owner, kickedPlayer)
 	end
 end
 
+--first boss-reward-item a force gets unlocks the poison cannon recipe (through its scripted tech)
+--force.reset() after a game clears it again, so every new game has to earn it
+local function unlockBossRewardRecipes(force)
+  local tech = force.technologies["ut-poison-cannon-one"]
+  if tech and not tech.researched then
+    force.script_trigger_research("ut-poison-cannon-one")
+
+    for _, player in pairs(force.connected_players) do
+      player.print("Boss reward collected! [recipe=ut-poison-cannon-one] UT Poison Cannon recipe unlocked.")
+    end
+  end
+end
+
 local function rewardFirstTurretToolUpgrade(force)
   storage.turretUpgradeRewarded = storage.turretUpgradeRewarded or {}
   if storage.turretUpgradeRewarded[force.index] then
@@ -2074,6 +2128,10 @@ script.on_event(defines.events.on_entity_died, function(event)
 						count = items_remainder
 					})
 				end
+			end
+
+			if total_items > 0 then
+				unlockBossRewardRecipes(killedByForce)
 			end
 		end
 

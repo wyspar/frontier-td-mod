@@ -458,3 +458,24 @@ data:extend({
   tierFourFlamerTurret,
   tierFiveFlamerTurret
 })
+
+
+--poison turrets
+local utPoisonCannonOne = table.deepcopy(data.raw.item["gun-turret"])
+utPoisonCannonOne.name = "ut-poison-cannon-one"
+utPoisonCannonOne.place_result = "ut-poison-cannon-one"
+utPoisonCannonOne.subgroup = "poison-turrets"
+utPoisonCannonOne.order = "a[ut-poison-cannon-one]"
+utPoisonCannonOne.stack_size = 10
+utPoisonCannonOne.icon = nil
+utPoisonCannonOne.icons = {
+  {
+    icon = "__frontier-td__/graphics/entity/cannon-turret/cannon-turret-icon.png",
+    icon_size = 64,
+    tint = {0.3, 0.1, 0.7, 1}
+  }
+}
+
+data:extend({
+  utPoisonCannonOne
+})

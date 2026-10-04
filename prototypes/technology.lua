@@ -923,4 +923,23 @@ data:extend({
       trigger_description = {"technology-description.biter-progress-tier-five-science"}
     }
   },
+  --unlocked by script the first time the force gets a boss-reward-item (control.lua)
+  {
+    type = "technology",
+    name = "ut-poison-cannon-one",
+    icon = "__frontier-td__/graphics/entity/cannon-turret/cannon-turret-tech.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "ut-poison-cannon-one"
+      }
+    },
+    research_trigger =
+    {
+      type = "scripted",
+      trigger_description = {"technology-description.ut-poison-cannon-one"}
+    }
+  },
 })

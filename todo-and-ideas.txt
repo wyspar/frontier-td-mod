@@ -2,16 +2,15 @@ IDEAS AND TODO:
 2nd map can be all trees, toxic lol
 handle player leaving DONE?
   could be more issues that i dont see yet
-handle player joining back, check if they have a force, check if they have a slot HALF
+handle player joining back, check if they have a force, check if they have a slot HALFDONE
 add a surrender button, everyone needs to vote 
 maybe a 2nd public slot so both publics can fight
 add wind turbine, add wind turbine mod? steal that mod maybe
 make biters have resistances like 
   fire, acid, poison
 tier 5 tesla entity needs its own white sprite
-need to put a minimum placing range between tesla turrets cause op stun
 
-
+need to put a minimum placing range between tesla turrets cause op stun DONE
 add a command for getting the current and next wave info DONE
 owner of force should accept request, not instant join DONE
 handle players respawning DONE

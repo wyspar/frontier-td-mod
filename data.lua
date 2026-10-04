@@ -48,6 +48,8 @@ require("prototypes.entity.myTurrets.fire.tier-three-flamer-turret")
 require("prototypes.entity.myTurrets.fire.tier-four-flamer-turret")
 require("prototypes.entity.myTurrets.fire.tier-five-flamer-turret")
 
+require("prototypes.entity.myTurrets.poison.ut-poison-cannon-one")
+
 
 require("base-data-updates")
 
@@ -68,7 +70,8 @@ local enabledTechnologies = {
   ["concrete"] = true,
   ["steel-axe"] = true,
   ["steel-processing"] = true,
-  ["effect-transmission"] = true
+  ["effect-transmission"] = true,
+  ["fast-inserter"] = true
 }
 
 for _, technology in pairs(data.raw.technology) do

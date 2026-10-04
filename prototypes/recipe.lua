@@ -150,4 +150,16 @@ data:extend({
     results = {{type="item", name="tier-five-science-pack", amount=4}},
     allow_productivity = true
   },
+  {
+    type = "recipe",
+    name = "ut-poison-cannon-one",
+    enabled = false, -- unlocked by the ut-poison-cannon-one technology
+    energy_required = 5,
+    ingredients =
+    {
+      {type = "item", name = "boss-reward-item", amount = 1},
+      {type = "item", name = "coin", amount = 250},
+    },
+    results = {{type = "item", name = "ut-poison-cannon-one", amount = 1}}
+  },
 })
