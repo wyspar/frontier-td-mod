@@ -660,6 +660,7 @@ function map.createStartingPlayer(player, slot)
 	end
 
 	player.insert({name = "iron-plate", count = 100})
+	player.insert({name = "coal", count = 50})
 	player.insert({name = "coin", count = 16})
 	player.insert({name = "stone-furnace", count = 16})
 	player.insert({name = "burner-mining-drill", count = 16})
@@ -697,6 +698,7 @@ function map.createStartingPlayer(player, slot)
 	player.set_quick_bar_slot(3, "tier-one-laser-turret")
 	player.set_quick_bar_slot(4, "tier-one-flamer-turret")
 	player.set_quick_bar_slot(5, "tier-one-tesla-turret")
+	player.set_quick_bar_slot(9, "boss-reward-item")
 	player.set_quick_bar_slot(10, "coin")
 
 end

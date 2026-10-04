@@ -23,6 +23,10 @@ data:extend({
       {
         type = "character-crafting-speed",
         modifier = 0.25
+      },
+      {
+        type = "create-ghost-on-entity-death",
+        modifier = true
       }
     },
     research_trigger =
@@ -312,6 +316,29 @@ data:extend({
   },
   {
     type = "technology",
+    name = "worker-robots-speed-1",
+    icons = util.technology_icon_constant_movement_speed("__base__/graphics/technology/worker-robots-speed.png"),
+    effects =
+    {
+      {
+        type = "worker-robot-speed",
+        modifier = 0.35
+      }
+    },
+    prerequisites = {"biter-progress-tier-one-science"},
+    unit =
+    {
+      count = 50,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+      },
+      time = 25
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
     name = "bigger-backpack-1",
     icons = util.technology_icon_constant_capacity("__base__/graphics/technology/toolbelt.png"),
     prerequisites = {"biter-progress-tier-one-science"},
@@ -337,7 +364,7 @@ data:extend({
     type = "technology",
     name = "bigger-backpack-2",
     icons = util.technology_icon_constant_capacity("__base__/graphics/technology/toolbelt.png"),
-    prerequisites = {"bigger-backpack-1","biter-progress-tier-one-science"},
+    prerequisites = {"bigger-backpack-1"},
     effects =
     {
       {
@@ -479,6 +506,102 @@ data:extend({
   },
   {
     type = "technology",
+    name = "bigger-backpack-3",
+    icons = util.technology_icon_constant_capacity("__base__/graphics/technology/toolbelt.png"),
+    prerequisites = {"bigger-backpack-2"},
+    effects =
+    {
+      {
+        type = "character-inventory-slots-bonus",
+        modifier = 10
+      }
+    },
+    unit =
+    {
+      count = 75,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "bigger-backpack-4",
+    icons = util.technology_icon_constant_capacity("__base__/graphics/technology/toolbelt.png"),
+    prerequisites = {"bigger-backpack-3"},
+    effects =
+    {
+      {
+        type = "character-inventory-slots-bonus",
+        modifier = 10
+      }
+    },
+    unit =
+    {
+      count = 125,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+      },
+      time = 25
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "worker-robots-speed-2",
+    icons = util.technology_icon_constant_movement_speed("__base__/graphics/technology/worker-robots-speed.png"),
+    effects =
+    {
+      {
+        type = "worker-robot-speed",
+        modifier = 0.45
+      }
+    },
+    prerequisites = {"worker-robots-speed-1"},
+    unit =
+    {
+      count = 50,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+      },
+      time = 25
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "chem-plant",
+    icon = "__base__/graphics/technology/oil-processing.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "chemical-plant"
+      }
+    },
+    prerequisites = {"biter-progress-tier-two-science","steel-processing"},
+    unit =
+    {
+      count = 100,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+      },
+      time = 25
+    }
+  },
+  {
+    type = "technology",
     name = "compressed-coal",
     icon = "__frontier-td__/graphics/technology/compressed-coal.png",
     icon_size = 256,
@@ -489,7 +612,7 @@ data:extend({
         recipe = "compressed-coal"
       }
     },
-    prerequisites = {"biter-progress-tier-two-science"},
+    prerequisites = {"chem-plant"},
     unit =
     {
       count = 100,
@@ -762,6 +885,31 @@ data:extend({
   },
   {
     type = "technology",
+    name = "worker-robots-speed-3",
+    icons = util.technology_icon_constant_movement_speed("__base__/graphics/technology/worker-robots-speed.png"),
+    effects =
+    {
+      {
+        type = "worker-robot-speed",
+        modifier = 0.5
+      }
+    },
+    prerequisites = {"worker-robots-speed-2"},
+    unit =
+    {
+      count = 75,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+      },
+      time = 25
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
     name = "tesla-turrets",
     icon = "__frontier-td__/graphics/technology/tesla-research-icon.png",
     icon_size = 256,
@@ -826,6 +974,39 @@ data:extend({
       time = 25
     },
     upgrade = true
+  },
+  {
+    type = "technology",
+    name = "construction-robotics",
+    icon = "__base__/graphics/technology/construction-robotics.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "roboport"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "passive-provider-chest"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "storage-chest"
+      },
+    },
+    prerequisites = {"biter-progress-tier-three-science", "advanced-circuit","steel-processing","electric-engine"},
+    unit =
+    {
+      count = 100,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+      },
+      time = 30
+    }
   },
   --tier four science shit
   {

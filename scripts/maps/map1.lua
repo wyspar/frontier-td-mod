@@ -5564,35 +5564,35 @@ map1.DefaultMapStructures = {
   },
   {
     name = "iron-ore",
-    x = 139,
-    y = 60,
+    x = 142,
+    y = 57,
     amount = 1000000,
     isOreTile = true,
-    size=19
+    size=16
   },
   {
     name = "copper-ore",
-    x = 139,
-    y = 20,
+    x = 142,
+    y = 17,
     amount = 1000000,
     isOreTile = true,
-    size=19
+    size=16
   },
   {
     name = "stone",
-    x = 179,
-    y = 20,
+    x = 182,
+    y = 17,
     amount = 1000000,
     isOreTile = true,
-    size=19
+    size=16
   },
   {
     name = "coal",
-    x = 179,
-    y = 60,
+    x = 182,
+    y = 57,
     amount = 1000000,
     isOreTile = true,
-    size=19
+    size=16
   },
   {
     name = "calcite",

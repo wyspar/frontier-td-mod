@@ -204,7 +204,7 @@ turret.icons = {
     icon_size = 64
   }
 }
-turret.max_health = 500
+turret.max_health = 250
 turret.attack_parameters = {
   type = "beam",
   cooldown = 40,

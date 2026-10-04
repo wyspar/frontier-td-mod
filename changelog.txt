@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.0.1
+Version: 1.0.2
 Date: 2026-09-01
   Changes:
     - Started frontier td
@@ -9,3 +9,10 @@ Date: 2026-10-04
     - Updated the info.json
     - One map, One difficulty
     - 300 waves
+    - 1.0.2 fixes
+    - added chem plant, automation-3, roboports, landfill, bot-speed researches
+    - moved researches around
+    - 50 coal to starting inventory
+    - decreased cost of modules, bulk-inserter
+    - increased biolab speed
+    - increased assembler speed

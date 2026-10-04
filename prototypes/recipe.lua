@@ -158,7 +158,7 @@ data:extend({
     ingredients =
     {
       {type = "item", name = "boss-reward-item", amount = 1},
-      {type = "item", name = "coin", amount = 250},
+      {type = "item", name = "coin", amount = 500},
     },
     results = {{type = "item", name = "ut-poison-cannon-one", amount = 1}}
   },

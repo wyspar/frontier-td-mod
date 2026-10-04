@@ -10,6 +10,25 @@ make biters have resistances like
   fire, acid, poison
 tier 5 tesla entity needs its own white sprite
 add dmg upgrades for tesla turret
+make current normal to easy difficulty
+  make normal harder
+add ammo only for the UT turrets
+bullet modules? shoot a bullet, or a chance to shoot something at the enemy when something finishes crafting
+  maybe like spawn a friendly biter to fight for you?
+
+when upgrading a turret, make the current hp = max hp DONE
+add bot speed research DONE
+add more bigger backpack, maybe add qqs name DONE
+add chem plant recipe/tech DONE
+move beacons to tier 4 sci, DONE
+buff lab speed DONE
+decrease the cost of modules DONE
+add automation 3, stack inserters to tier 4 sci DONE
+add roboport/construction bot tech DONE
+make the ore patches a tiny bit smaller DONE
+increase the timer for players leaving inventory DONE
+make the assembler 2 and 3 faster crafting DONE
+add landfill DONE
 
 need to put a minimum placing range between tesla turrets cause op stun DONE
 add a command for getting the current and next wave info DONE

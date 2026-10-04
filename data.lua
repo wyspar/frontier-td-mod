@@ -71,7 +71,10 @@ local enabledTechnologies = {
   ["steel-axe"] = true,
   ["steel-processing"] = true,
   ["effect-transmission"] = true,
-  ["fast-inserter"] = true
+  ["fast-inserter"] = true,
+  ["bulk-inserter"] = true,
+  ["automation-3"] = true,
+  ["landfill"] = true
 }
 
 for _, technology in pairs(data.raw.technology) do

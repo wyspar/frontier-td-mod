@@ -7,11 +7,6 @@ local nauvisAndGlebaPressure = {
   max = 2000
 }
 
-ftech.add_unlock("tree-seeding", "agricultural-tower")
-ftech.remove_unlock("tree-seeding", "wood-processing")
-data.raw.recipe["wood-processing"].energy_required = 0.5
-ftech.remove_unlock("agriculture", "agricultural-tower")
-
 local tree_plant = data.raw.plant["tree-plant"]
 tree_plant.minable.results = {{type="item", name="wood", amount=10}}
   tree_plant.growth_ticks = 5 * minute
@@ -35,6 +30,8 @@ agricultural_tower.crane_energy_usage = "500kW"
 
 --Assembler changes
 table.insert(data.raw["assembling-machine"]["assembling-machine-1"].crafting_categories, "organic-or-assembling")
+data.raw['assembling-machine']['assembling-machine-2'].crafting_speed = 1
+data.raw['assembling-machine']['assembling-machine-3'].crafting_speed = 2
 
 frep.set_surface_condition("agricultural-tower", nauvisAndGlebaPressure)
 frep.set_surface_condition("pentapod-egg", nauvisAndGlebaPressure)
@@ -74,6 +71,7 @@ biolab.inputs = {
   "tier-four-science-pack",
   "tier-five-science-pack",
 }
+biolab.researching_speed = 6
 
 local biolab_recipe = data.raw.recipe["biolab"]
 biolab_recipe.ingredients = {
@@ -89,7 +87,7 @@ bigMiner_recipe.ingredients = {
   {type = "item", name = "iron-gear-wheel", amount = 6},
   {type = "item", name = "electronic-circuit", amount = 4},
 }
-bigMiner_recipe.energy_required = 20
+bigMiner_recipe.energy_required = 10
 bigMiner_recipe.category = "electronics"
 
 local heatEx_recipe = data.raw.recipe["heat-exchanger"]
@@ -220,6 +218,46 @@ battery_recipe.ingredients =
 {
   {type = "item", name = "iron-plate", amount = 1},
   {type = "item", name = "copper-plate", amount = 1}
+}
+
+local roboport_recipe = data.raw.recipe['roboport']
+roboport_recipe.ingredients =
+{
+  {type = "item", name = "steel-plate", amount = 25},
+  {type = "item", name = "iron-gear-wheel", amount = 15},
+  {type = "item", name = "electric-engine-unit", amount = 4},
+  {type = "item", name = "advanced-circuit", amount = 15}
+}
+
+local speedMod_recipe = data.raw.recipe['speed-module']
+speedMod_recipe.ingredients =
+{
+  {type = "item", name = "advanced-circuit", amount = 3},
+  {type = "item", name = "electronic-circuit", amount = 3}
+}
+speedMod_recipe.energy_required = 10
+
+local prodMod_recipe = data.raw.recipe['productivity-module']
+prodMod_recipe.ingredients =
+{
+  {type = "item", name = "advanced-circuit", amount = 3},
+  {type = "item", name = "electronic-circuit", amount = 3}
+}
+prodMod_recipe.energy_required = 10
+
+local bulkInserter_recipe = data.raw.recipe['bulk-inserter']
+bulkInserter_recipe.ingredients =
+{
+  {type = "item", name = "iron-gear-wheel", amount = 10},
+  {type = "item", name = "electronic-circuit", amount = 10},
+  {type = "item", name = "advanced-circuit", amount = 1},
+  {type = "item", name = "fast-inserter", amount = 1}
+}
+
+local landfill_recipe = data.raw.recipe['landfill']
+landfill_recipe.ingredients =
+{
+  {type = "item", name = "stone", amount = 10}
 }
 
 data.raw.technology["electronics"].effects =
@@ -402,6 +440,18 @@ electricPoles_tech.unit =
   time = 20
 }
 
+local landfill_tech = data.raw.technology["landfill"]
+landfill_tech.prerequisites = {"biter-progress-tier-two-science"}
+landfill_tech.unit =
+{
+  count = 50,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+  },
+  time = 20
+}
 local heatingTower_tech = data.raw.technology["heating-tower"]
 heatingTower_tech.prerequisites = {"biter-progress-tier-three-science","steam-power"}
 heatingTower_tech.unit =
@@ -506,7 +556,7 @@ modules_tech.effects =
 }
 
 local beacon_tech = data.raw.technology["effect-transmission"]
-beacon_tech.prerequisites = {"biter-progress-tier-three-science","electronics","advanced-circuit","modules","steel-processing"}
+beacon_tech.prerequisites = {"biter-progress-tier-four-science","electronics","advanced-circuit","modules","steel-processing"}
 beacon_tech.unit =
 {
   count = 50,
@@ -515,27 +565,47 @@ beacon_tech.unit =
     {"tier-one-science-pack", 1},
     {"tier-two-science-pack", 1},
     {"tier-three-science-pack", 1},
+    {"tier-four-science-pack", 1},
   },
   time = 20
-}
-modules_tech.effects =
-{
-  {
-    type = "unlock-recipe",
-    recipe = "speed-module"
-  },
-  {
-    type = "unlock-recipe",
-    recipe = "productivity-module"
-  }
 }
 
 local blueChip_tech = data.raw.technology["processing-unit"]
 blueChip_tech.prerequisites = {"biter-progress-tier-four-science","advanced-circuit"}
 blueChip_tech.category = nil
-blueChip_tech.unit =
+blueChip_tech.unit = 
 {
   count = 200,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+    {"tier-four-science-pack", 1},
+  },
+  time = 20
+}
+
+local automation3_tech = data.raw.technology["automation-3"]
+automation3_tech.prerequisites = {"biter-progress-tier-four-science","electronics","advanced-circuit","modules","steel-processing","automation-2"}
+automation3_tech.unit =
+{
+  count = 150,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+    {"tier-four-science-pack", 1},
+  },
+  time = 25
+}
+
+local bulkInserter_tech = data.raw.technology["bulk-inserter"]
+bulkInserter_tech.prerequisites = {"biter-progress-tier-four-science","electronics","advanced-circuit"}
+bulkInserter_tech.unit =
+{
+  count = 100,
   ingredients =
   {
     {"tier-one-science-pack", 1},

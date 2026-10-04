@@ -1485,7 +1485,7 @@ local function createSnapshotInventory(player, tickOverride)
 		forceName = force.name
 	}
 
-	local tickWaitAmount = 600 -- use 18000 for 5 minutes
+	local tickWaitAmount = 18000 --18000 for 5 minutes
 	if tickOverride then
 		tickWaitAmount = tickOverride
 	end
@@ -3604,7 +3604,6 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         local position = old_turret.position
         local force = old_turret.force
         local direction = old_turret.direction
-        local health = old_turret.health
 
         local new_turret = surface.create_entity{
           name = towerCostDto.upgradeToName,
@@ -3614,11 +3613,6 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         }
 
         if new_turret then
-          new_turret.health = math.min(
-            health,
-            new_turret.max_health
-          )
-
           old_turret.destroy()
         end
       end
