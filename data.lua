@@ -58,6 +58,17 @@ local enabledTechnologies = {
   ["automation-2"] = true,
   ["electric-energy-distribution-1"] = true,
   ["heating-tower"] = true,
+  ["processing-unit"] = true,
+  ["advanced-circuit"] = true,
+  ["mining-productivity-1"] = true,
+  ["mining-productivity-2"] = true,
+  ["modules"] = true,
+  ["battery"] = true,
+  ["electric-engine"] = true,
+  ["concrete"] = true,
+  ["steel-axe"] = true,
+  ["steel-processing"] = true,
+  ["effect-transmission"] = true
 }
 
 for _, technology in pairs(data.raw.technology) do

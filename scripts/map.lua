@@ -797,16 +797,17 @@ local bossRewardData = {
 		coins = 200,
 		rewardItemAmount = 1
 	},
-	["boss-biter-2"] = {
-		coins = 1000,
+	--boss-biter-2 will probably be ultra-flyer
+	["ultra-flyer"] = {
+		coins = 500,
 		rewardItemAmount = 1
 	},
 	["boss-biter-3"] = {
-		coins = 2500,
-		rewardItemAmount = 2
+		coins = 1500,
+		rewardItemAmount = 1
 	},
 	["boss-biter-4"] = {
-		coins = 5000,
+		coins = 2500,
 		rewardItemAmount = 2
 	}
 }
@@ -888,7 +889,63 @@ local enemyRewardData = {
 	},
 	["behemoth-biter"] = {
 		coins = 15
-	}
+	},
+
+	--spitters
+	["small-spitter"] = {
+		coins = 1
+	},
+	["medium-spitter"] = {
+		coins = 5
+	},
+	["big-spitter"] = {
+		coins = 10
+	},
+	["behemoth-spitter"] = {
+		coins = 16
+	},
+
+	--physical biters (enemies.lua)
+	["small-physical-biter"] = {
+		coins = 2
+	},
+	["medium-physical-biter"] = {
+		coins = 5
+	},
+	["big-physical-biter"] = {
+		coins = 10
+	},
+	["behemoth-physical-biter"] = {
+		coins = 16
+	},
+
+	--modded armoured biters
+	["small-armoured-biter"] = {
+		coins = 3
+	},
+	["medium-armoured-biter"] = {
+		coins = 6
+	},
+	["big-armoured-biter"] = {
+		coins = 12
+	},
+	["behemoth-armoured-biter"] = {
+		coins = 18
+	},
+
+	--modded flyers
+	["small-flyer"] = {
+		coins = 1
+	},
+	["medium-flyer"] = {
+		coins = 4
+	},
+	["big-flyer"] = {
+		coins = 9
+	},
+	["behemoth-flyer"] = {
+		coins = 15
+	},
 }
 
 function map.getEnemyRewardData(entityName)

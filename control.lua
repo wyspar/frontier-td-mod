@@ -67,6 +67,8 @@ local kill_requirements = {
   ["biter-progress-tier-one-science"] = 10,
   ["biter-progress-tier-two-science"] = 50,
   ["biter-progress-tier-three-science"] = 200,
+  ["biter-progress-tier-four-science"] = 500,
+  ["biter-progress-tier-five-science"] = 1000,
 }
 
 --find an empty slot and make sure its not the public one
@@ -377,6 +379,64 @@ local function send_biter_path(surface, spawn, path, count, biter_name, slot)
 	set_biter_waypoint(group, storage.biter_paths[group.unique_id], surface, slotDef)
 
 	return group
+end
+
+--when a spitter dies it spawns the next weaker spitter, small spitters spawn nothing
+local spitterSplitInto = {
+	["medium-spitter"] = "small-spitter",
+	["big-spitter"] = "medium-spitter",
+	["behemoth-spitter"] = "big-spitter",
+}
+
+local function spawnSpitterChild(entity)
+	local childName = spitterSplitInto[entity.name]
+	if not childName then
+		return
+	end
+
+	local surface = entity.surface
+	local position = surface.find_non_colliding_position(childName, entity.position, 5, 0.5) or entity.position
+
+	local child = surface.create_entity({
+		name = childName,
+		position = position,
+		force = entity.force
+	})
+	if not child then
+		return
+	end
+
+	-- find the path the dead spitter's group was following
+	local commandable = entity.commandable
+	local parentGroup = commandable and commandable.parent_group
+	local pathData = parentGroup and storage.biter_paths and storage.biter_paths[parentGroup.unique_id]
+
+	-- no path left (group already attacking the silo), let the default ai handle it
+	if not pathData then
+		return
+	end
+
+	local slot = mapModule.getSlotByForceName(pathData.targetForceName)
+	local slotDef = slot and mapModule.getSlotDefinitionById(slot.id)
+	if not slotDef then
+		return
+	end
+
+	-- new group so the child keeps walking the path from the same waypoint
+	local group = surface.create_unit_group({
+		position = position,
+		force = entity.force
+	})
+	group.add_member(child)
+
+	storage.biter_paths[group.unique_id] = {
+		group = group,
+		path = pathData.path,
+		waypoint = pathData.waypoint,
+		targetForceName = pathData.targetForceName
+	}
+
+	set_biter_waypoint(group, storage.biter_paths[group.unique_id], surface, slotDef)
 end
 
 local function fullClearPlayerInventory(player)
@@ -1451,6 +1511,8 @@ script.on_event(defines.events.on_entity_died, function(event)
 	if not entity or not entity.valid then
 		return
 	end
+
+	spawnSpitterChild(entity)
 
 	local isBoss = string.find(entity.name:lower(), "boss")
 	local isSilo = entity.name == "rocket-silo"

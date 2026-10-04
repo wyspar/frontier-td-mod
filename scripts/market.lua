@@ -9,12 +9,31 @@ local attackMarketItems = {
 
 local weaponMarketItems = {
   { price = { { name = 'coin', count = 45 } },    offer = { type = 'give-item', item = 'submachine-gun', count = 1 } },
-  { price = { { name = 'coin', count = 30 } },    offer = { type = 'give-item', item = 'slowdown-capsule', count = 1 } },
-  { price = { { name = 'coin', count = 100 } },  offer = { type = 'give-item', item = 'fission-reactor-equipment', count = 1 } },
-  { price = { { name = 'coin', count = 250 } },  offer = { type = 'give-item', item = 'fusion-reactor-equipment', count = 1 } },
+  { price = { { name = 'coin', count = 25 } },    offer = { type = 'give-item', item = 'slowdown-capsule', count = 1 } },
+  { 
+		price = { { name = 'coin', count = 100 } },  
+		offer = { type = 'give-item', item = 'fission-reactor-equipment', count = 1 } 
+	},
+  { 
+		price = { { name = 'coin', count = 175 },{ name = 'fission-reactor-equipment', count = 1 } },  
+		offer = { type = 'give-item', item = 'fusion-reactor-equipment', count = 1 } 
+	},
   { price = { { name = 'coin', count = 50 } },   offer = { type = 'give-item', item = 'personal-roboport-equipment', count = 1 } },
-  { price = { { name = 'coin', count = 150 } },   offer = { type = 'give-item', item = 'personal-roboport-mk2-equipment', count = 1 } },
+  { 
+		price = { { name = 'coin', count = 100 },{ name = 'personal-roboport-equipment', count = 1 } },   
+		offer = { type = 'give-item', item = 'personal-roboport-mk2-equipment', count = 1 } 
+	},
   { price = { { name = 'coin', count = 10 } },    offer = { type = 'give-item', item = 'construction-robot', count = 5 } },
+  { price = { { name = 'coin', count = 1 } },    offer = { type = 'give-item', item = 'mech-armor', count = 1 } },
+  { price = { { name = 'coin', count = 5 } },    offer = { type = 'give-item', item = 'toolbelt-equipment', count = 1 } },
+  { 
+		price = { { name = 'coin', count = 50 },{ name = 'productivity-module', count = 1 } },    
+		offer = { type = 'give-item', item = 'productivity-module-3', count = 1 } 
+	},
+	{ 
+		price = { { name = 'coin', count = 40 },{ name = 'speed-module', count = 1 } },    
+		offer = { type = 'give-item', item = 'speed-module-3', count = 1 } 
+	},
 }
 
 local landMarket_Items = {

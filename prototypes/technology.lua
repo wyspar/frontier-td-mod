@@ -468,20 +468,37 @@ data:extend({
       {
         type = "unlock-recipe",
         recipe = "tier-two-science-pack"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "steel-plate"
-      },
-      {
-        type = "unlock-recipe",
-        recipe = "steel-chest"
       }
     },
+    prerequisites = {"automation","biter-progress-tier-one-science"},
     research_trigger =
     {
       type = "scripted",
       trigger_description = {"technology-description.biter-progress-tier-two-science"}
+    }
+  },
+  {
+    type = "technology",
+    name = "compressed-coal",
+    icon = "__frontier-td__/graphics/technology/compressed-coal.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "compressed-coal"
+      }
+    },
+    prerequisites = {"biter-progress-tier-two-science"},
+    unit =
+    {
+      count = 100,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+      },
+      time = 30
     }
   },
   {
@@ -508,7 +525,7 @@ data:extend({
         recipe = "aai-fast-loader"
       }
     },
-    prerequisites = {"biter-progress-tier-two-science"},
+    prerequisites = {"biter-progress-tier-two-science","yellow-loader"},
     unit =
     {
       count = 200,
@@ -711,10 +728,36 @@ data:extend({
         recipe = "tier-three-science-pack"
       }
     },
+    prerequisites = {"biter-progress-tier-two-science","electric-energy-distribution-1","steam-power","electric-furnace"},
     research_trigger =
     {
       type = "scripted",
       trigger_description = {"technology-description.biter-progress-tier-three-science"}
+    }
+  },
+  {
+    type = "technology",
+    name = "electromagnetic-plant",
+    icon = "__space-age__/graphics/technology/electromagnetic-plant.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "electromagnetic-plant"
+      },
+    },
+    prerequisites = {"biter-progress-tier-three-science","steel-processing","advanced-circuit","concrete"},
+    unit =
+    {
+      count = 150,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+      },
+      time = 20
     }
   },
   {
@@ -783,5 +826,101 @@ data:extend({
       time = 25
     },
     upgrade = true
+  },
+  --tier four science shit
+  {
+    type = "technology",
+    name = "biter-progress-tier-four-science",
+    icon = "__frontier-td__/graphics/technology/tier-four-science-pack.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "tier-four-science-pack"
+      }
+    },
+    prerequisites = {"biter-progress-tier-three-science","electric-engine","concrete","battery"},
+    research_trigger =
+    {
+      type = "scripted",
+      trigger_description = {"technology-description.biter-progress-tier-four-science"}
+    }
+  },
+  {
+    type = "technology",
+    name = "crusher",
+    icon = "__frontier-td__/graphics/technology/crusher.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "fine-stone"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "crusher"
+      },
+    },
+    prerequisites = {"biter-progress-tier-four-science","steel-processing","advanced-circuit","electric-engine"},
+    unit =
+    {
+      count = 200,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+      },
+      time = 20
+    }
+  },
+  {
+    type = "technology",
+    name = "ice-making",
+    icon = "__frontier-td__/graphics/technology/ice-making.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "ice-making"
+      },
+    },
+    prerequisites = {"biter-progress-tier-four-science","crusher"},
+    unit =
+    {
+      count = 250,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+      },
+      time = 20
+    }
+  },
+  --tier five science shit
+  {
+    type = "technology",
+    name = "biter-progress-tier-five-science",
+    icon = "__frontier-td__/graphics/technology/tier-five-science-pack.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "tier-five-science-pack"
+      }
+    },
+    prerequisites = {"biter-progress-tier-four-science","processing-unit","ice-making"},
+    research_trigger =
+    {
+      type = "scripted",
+      trigger_description = {"technology-description.biter-progress-tier-five-science"}
+    }
   },
 })

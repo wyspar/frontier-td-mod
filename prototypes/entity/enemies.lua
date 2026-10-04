@@ -113,8 +113,8 @@ local bossBiter1 = {
   distance_per_frame = 0.30,
   -- in pu
   absorptions_to_join_attack = { pollution = 80 },
-  corpse = "big-biter-corpse",
-  dying_explosion = "big-biter-die",
+  corpse = "boss-biter-1-corpse",
+  dying_explosion = "boss-biter-1-die",
   working_sound = sounds.biter_calls_big(0.4, 0.7),
   dying_sound = sounds.biter_dying_big(0.45),
   run_animation = biterrunanimation(bossBiter1Scale, bossBiter1Tint1, bossBiter1Tint2),
@@ -133,7 +133,7 @@ local smallPhysicalBiter = {
   order="b-a-c",
   icon = "__base__/graphics/icons/small-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 25,
+  max_health = 40,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_big_biter,
   impact_category = "organic",
@@ -170,8 +170,8 @@ local smallPhysicalBiter = {
   distance_per_frame = 0.1,
   -- in pu
   absorptions_to_join_attack = { pollution = 80 },
-  corpse = "small-biter-corpse",
-  dying_explosion = "small-biter-die",
+  corpse = "small-physical-biter-corpse",
+  dying_explosion = "small-physical-biter-die",
     dying_sound = sounds.biter_dying(0.5),
     working_sound = sounds.biter_calls(0.4, 0.75),
   run_animation = biterrunanimation(smallPhysicalBiterScale, smallPhysicalBiterTint1, smallPhysicalBiterTint2),
@@ -188,7 +188,7 @@ local mediumPhysicalBiter = {
   order="b-a-c",
   icon = "__base__/graphics/icons/medium-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 125,
+  max_health = 200,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_big_biter,
   impact_category = "organic",
@@ -225,8 +225,8 @@ local mediumPhysicalBiter = {
   distance_per_frame = 0.188,
   -- in pu
   absorptions_to_join_attack = { pollution = 80 },
-  corpse = "small-biter-corpse",
-  dying_explosion = "small-biter-die",
+  corpse = "medium-physical-biter-corpse",
+  dying_explosion = "medium-physical-biter-die",
     dying_sound = sounds.biter_dying(0.5),
     working_sound = sounds.biter_calls(0.4, 0.75),
   run_animation = biterrunanimation(mediumPhysicalBiterScale, smallPhysicalBiterTint1, smallPhysicalBiterTint2),
@@ -243,7 +243,7 @@ local bigPhysicalBiter = {
   order="b-a-c",
   icon = "__base__/graphics/icons/big-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 450,
+  max_health = 800,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_big_biter,
   impact_category = "organic",
@@ -280,8 +280,8 @@ local bigPhysicalBiter = {
   distance_per_frame = 0.30,
   -- in pu
   absorptions_to_join_attack = { pollution = 80 },
-  corpse = "big-biter-corpse",
-  dying_explosion = "big-biter-die",
+  corpse = "big-physical-biter-corpse",
+  dying_explosion = "big-physical-biter-die",
   working_sound = sounds.biter_calls_big(0.4, 0.7),
   dying_sound = sounds.biter_dying_big(0.45),
   run_animation = biterrunanimation(bigPhysicalBiterScale, smallPhysicalBiterTint1, smallPhysicalBiterTint2),
@@ -298,7 +298,7 @@ local behemothPhysicalBiter = {
   order="b-a-c",
   icon = "__base__/graphics/icons/behemoth-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 3500,
+  max_health = 7000,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_behemoth_biter,
   impact_category = "organic",
@@ -306,6 +306,7 @@ local behemothPhysicalBiter = {
   {
     {
       type = "physical",
+      decrease = 10,
       percent = 75
     }
   },
@@ -335,8 +336,8 @@ local behemothPhysicalBiter = {
   distance_per_frame = 0.32,
   -- in pu
   absorptions_to_join_attack = { pollution = 80 },
-  corpse = "big-biter-corpse",
-  dying_explosion = "big-biter-die",
+  corpse = "behemoth-physical-biter-corpse",
+  dying_explosion = "behemoth-physical-biter-die",
   working_sound = sounds.biter_calls_behemoth(0.5, 0.9),
   dying_sound = sounds.biter_dying_big(0.5),
   run_animation = biterrunanimation(behemothPhysicalBiterScale, smallPhysicalBiterTint1, smallPhysicalBiterTint2),
@@ -406,3 +407,48 @@ behemothBiter.attack_parameters.animation = biterattackanimation(
 	bossBiter1Tint1,
 	bossBiter1Tint2
 )
+
+--spitters recolored to the tier colors
+--T1 gray, T2 green, T3 blue, T4 red
+--tint1 is the main body color, tint2 is the secondary/accent color
+local spitterTiers = {
+	["small-spitter"] = {
+		maxHealth = 30,
+		scale = scale_spitter_small,
+		tint1 = {0.5, 0.5, 0.5, 1},
+		tint2 = {0.3, 0.3, 0.3, 0.8}
+	},
+	["medium-spitter"] = {
+		maxHealth = 150,
+		scale = scale_spitter_medium,
+		tint1 = {0.2, 0.75, 0.2, 1},
+		tint2 = {0.1, 0.45, 0.1, 0.8}
+	},
+	["big-spitter"] = {
+		maxHealth = 750,
+		scale = scale_spitter_big,
+		tint1 = {0.2, 0.35, 0.9, 1},
+		tint2 = {0.1, 0.2, 0.55, 0.8}
+	},
+	["behemoth-spitter"] = {
+		maxHealth = 6000,
+		scale = scale_spitter_behemoth,
+		tint1 = {0.9, 0.15, 0.15, 1},
+		tint2 = {0.55, 0.05, 0.05, 0.8}
+	},
+}
+
+for spitterName, tier in pairs(spitterTiers) do
+	local spitter = data.raw["unit"][spitterName]
+	if spitter then
+		spitter.max_health = tier.maxHealth
+		spitter.run_animation = spitterrunanimation(tier.scale, tier.tint1, tier.tint2)
+		spitter.attack_parameters.animation = spitterattackanimation(tier.scale, tier.tint1, tier.tint2)
+	end
+
+	--the dying/decaying body is drawn by the corpse
+	local corpse = data.raw["corpse"][spitterName .. "-corpse"]
+	if corpse then
+		add_spitter_die_animation(tier.scale, tier.tint1, tier.tint2, corpse)
+	end
+end

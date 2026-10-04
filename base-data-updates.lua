@@ -53,7 +53,7 @@ frep.set_surface_condition("quantum-processor", nauvisAndGlebaPressure)
 data.raw.recipe["electromagnetic-plant"].surface_conditions = {nauvisAndGlebaPressure}
 data.raw.recipe["recycler"].surface_conditions = {nauvisAndGlebaPressure}
 data.raw.recipe["electromagnetic-science-pack"].surface_conditions = {nauvisAndGlebaPressure}
-data.raw.recipe["electromagnetic-plant"].surface_conditions = {nauvisAndGlebaPressure}
+data.raw.recipe["crusher"].surface_conditions = {nauvisAndGlebaPressure}
 data.raw.recipe["cryogenic-plant"].surface_conditions = {nauvisAndGlebaPressure}
 data.raw.recipe["fusion-reactor"].surface_conditions = {nauvisAndGlebaPressure}
 data.raw.recipe["fusion-generator"].surface_conditions = {nauvisAndGlebaPressure}
@@ -130,6 +130,39 @@ electricFurnace_recipe.ingredients = {
   {type = "item", name = "electronic-circuit", amount = 5}
 }
 
+local concrete_recipe = data.raw.recipe['concrete']
+concrete_recipe.ingredients =
+{
+  {type = "item", name = "stone-brick", amount = 5},
+  {type = "item", name = "calcite", amount = 1},
+  {type = "fluid", name = "water", amount = 100}
+}
+
+local electricUnit_recipe = data.raw.recipe['electric-engine-unit']
+electricUnit_recipe.category = nil
+electricUnit_recipe.ingredients =
+{
+  {type = "item", name = "engine-unit", amount = 1},
+  {type = "item", name = "electronic-circuit", amount = 1},
+  {type = "item", name = "advanced-circuit", amount = 1}
+}
+
+local redChip_recipe = data.raw.recipe['advanced-circuit']
+redChip_recipe.ingredients =
+{
+  {type = "item", name = "electronic-circuit", amount = 1},
+  {type = "item", name = "compressed-coal", amount = 2},
+  {type = "item", name = "copper-cable", amount = 5}
+}
+
+local blueChip_recipe = data.raw.recipe['processing-unit']
+blueChip_recipe.category = nil
+blueChip_recipe.ingredients =
+{
+  {type = "item", name = "electronic-circuit", amount = 10},
+  {type = "item", name = "advanced-circuit", amount = 2},
+}
+
 local heatingTower_recipe = data.raw.recipe['heating-tower']
 heatingTower_recipe.ingredients = {
   {type = "item", name = "iron-plate", amount = 5},
@@ -144,6 +177,49 @@ mediumPowerPole_recipe.ingredients =
   {type = "item", name = "steel-plate", amount = 1},
   {type = "item", name = "copper-cable", amount = 2},
   {type = "item", name = "small-electric-pole-iron", amount = 1}
+}
+
+local crusher_recipe = data.raw.recipe['crusher']
+crusher_recipe.ingredients =
+{
+  {type = "item", name = "advanced-circuit", amount = 10},
+  {type = "item", name = "steel-plate", amount = 10},
+  {type = "item", name = "electric-engine-unit", amount = 10}
+}
+
+local electromagneticPlant_recipe = data.raw.recipe['electromagnetic-plant']
+electromagneticPlant_recipe.ingredients =
+{
+  {type = "item", name = "advanced-circuit", amount = 25},
+  {type = "item", name = "steel-plate", amount = 25},
+  {type = "item", name = "concrete", amount = 25}
+}
+
+local aaiLoader = data.raw.recipe["aai-loader"]
+if aaiLoader then
+  aaiLoader.ingredients = {
+    {type = "item", name = "transport-belt", amount = 1},
+    {type = "item", name = "iron-gear-wheel", amount = 25},
+    {type = "item", name = "electronic-circuit", amount = 25}
+  }
+  aaiLoader.energy_required = 2
+end
+
+local aaiFastLoader = data.raw.recipe["aai-fast-loader"]
+if aaiFastLoader then
+  aaiFastLoader.ingredients = {
+    {type = "item", name = "fast-transport-belt", amount = 1},
+    {type = "item", name = "aai-loader", amount = 1},
+    {type = "item", name = "electronic-circuit", amount = 25}
+  }
+  aaiFastLoader.energy_required = 2
+end
+
+local battery_recipe = data.raw.recipe['battery']
+battery_recipe.ingredients =
+{
+  {type = "item", name = "iron-plate", amount = 1},
+  {type = "item", name = "copper-plate", amount = 1}
 }
 
 data.raw.technology["electronics"].effects =
@@ -199,8 +275,90 @@ automation_tech.unit =
   time = 20
 }
 
+local steel_tech = data.raw.technology["steel-processing"]
+steel_tech.prerequisites = {"biter-progress-tier-one-science"}
+steel_tech.effects =
+{
+  {
+    type = "unlock-recipe",
+    recipe = "steel-plate"
+  },
+  {
+    type = "unlock-recipe",
+    recipe = "engine-unit"
+  },
+  {
+    type = "unlock-recipe",
+    recipe = "steel-chest"
+  }
+}
+steel_tech.unit =
+{
+  count = 35,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1}
+  },
+  time = 20
+}
+
+local steelAxe_tech = data.raw.technology["steel-axe"]
+steelAxe_tech.prerequisites = {"biter-progress-tier-one-science","steel-processing"}
+steelAxe_tech.effects =
+{
+  {
+    type = "character-mining-speed",
+    modifier = 2
+  }
+}
+steelAxe_tech.research_trigger =
+{
+  type = "craft-item",
+  item = "steel-plate",
+  count = 25
+}
+
+local miningProd1_tech = data.raw.technology["mining-productivity-1"]
+miningProd1_tech.prerequisites = {"biter-progress-tier-one-science"}
+miningProd1_tech.effects =
+{
+  {
+    type = "mining-drill-productivity-bonus",
+    modifier = 0.5
+  }
+}
+miningProd1_tech.unit =
+{
+  count = 50,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+  },
+  time = 20
+}
+
+local miningProd2_tech = data.raw.technology["mining-productivity-2"]
+miningProd2_tech.prerequisites = {"mining-productivity-1"}
+miningProd2_tech.effects =
+{
+  {
+    type = "mining-drill-productivity-bonus",
+    modifier = 1
+  }
+}
+miningProd2_tech.unit =
+{
+  count = 100,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+  },
+  time = 20
+}
+
 local automationTwo_tech = data.raw.technology["automation-2"]
-automationTwo_tech.prerequisites = {"automation","biter-progress-tier-two-science"}
+automationTwo_tech.prerequisites = {"automation","biter-progress-tier-two-science", "steel-processing"}
 automationTwo_tech.unit =
 {
   count = 50,
@@ -220,7 +378,7 @@ electricPoles_tech.effects =
     recipe = "medium-electric-pole"
   },
 }
-electricPoles_tech.prerequisites = {"biter-progress-tier-two-science"}
+electricPoles_tech.prerequisites = {"biter-progress-tier-two-science", "steel-processing"}
 electricPoles_tech.unit =
 {
   count = 75,
@@ -233,7 +391,7 @@ electricPoles_tech.unit =
 }
 
 local heatingTower_tech = data.raw.technology["heating-tower"]
-heatingTower_tech.prerequisites = {"biter-progress-tier-three-science"}
+heatingTower_tech.prerequisites = {"biter-progress-tier-three-science","steam-power"}
 heatingTower_tech.unit =
 {
   count = 200,
@@ -246,6 +404,135 @@ heatingTower_tech.unit =
   time = 20
 }
 heatingTower_tech.research_trigger = nil
+
+local concrete_tech = data.raw.technology["concrete"]
+concrete_tech.prerequisites = {"biter-progress-tier-three-science"}
+concrete_tech.effects =
+{
+  {
+    type = "unlock-recipe",
+    recipe = "concrete"
+  }
+}
+concrete_tech.unit =
+{
+  count = 75,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+  },
+  time = 20
+}
+
+local electricEngine_tech = data.raw.technology["electric-engine"]
+electricEngine_tech.prerequisites = {"biter-progress-tier-three-science", "steel-processing","electronics","advanced-circuit"}
+electricEngine_tech.unit =
+{
+  count = 150,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+  },
+  time = 20
+}
+
+local battery_tech = data.raw.technology["battery"]
+battery_tech.prerequisites = {"biter-progress-tier-three-science"}
+battery_tech.unit =
+{
+  count = 100,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+  },
+  time = 20
+}
+
+local redChip_tech = data.raw.technology["advanced-circuit"]
+redChip_tech.prerequisites = {"biter-progress-tier-three-science","electronics","compressed-coal"}
+redChip_tech.unit =
+{
+  count = 125,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+  },
+  time = 20
+}
+
+local modules_tech = data.raw.technology["modules"]
+modules_tech.prerequisites = {"biter-progress-tier-three-science","electronics","advanced-circuit"}
+modules_tech.unit =
+{
+  count = 200,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+  },
+  time = 20
+}
+modules_tech.effects =
+{
+  {
+    type = "unlock-recipe",
+    recipe = "speed-module"
+  },
+  {
+    type = "unlock-recipe",
+    recipe = "productivity-module"
+  }
+}
+
+local beacon_tech = data.raw.technology["effect-transmission"]
+beacon_tech.prerequisites = {"biter-progress-tier-three-science","electronics","advanced-circuit","modules","steel-processing"}
+beacon_tech.unit =
+{
+  count = 50,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+  },
+  time = 20
+}
+modules_tech.effects =
+{
+  {
+    type = "unlock-recipe",
+    recipe = "speed-module"
+  },
+  {
+    type = "unlock-recipe",
+    recipe = "productivity-module"
+  }
+}
+
+local blueChip_tech = data.raw.technology["processing-unit"]
+blueChip_tech.prerequisites = {"biter-progress-tier-four-science","advanced-circuit"}
+blueChip_tech.category = nil
+blueChip_tech.unit =
+{
+  count = 200,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+    {"tier-four-science-pack", 1},
+  },
+  time = 20
+}
 
 data.raw["linked-container"]["linked-chest"].inventory_size = 48
 data.raw["linked-container"]["linked-chest"].gui_mode = "all"
@@ -265,9 +552,23 @@ local heatingTower_entity = data.raw.reactor['heating-tower']
 heatingTower_entity.consumption = "32MW"
 heatingTower_entity.energy_source.effectivity = 2
 
+local beacon_entity = data.raw.beacon['beacon']
+beacon_entity.supply_area_distance = 5
+beacon_entity.module_slots = 3
+beacon_entity.allowed_effects = {"productivity", "consumption", "speed", "pollution"}
+
+local crusher_entity = data.raw['assembling-machine']['crusher']
+crusher_entity.surface_conditions = {nauvisAndGlebaPressure}
+
+local steelChest_entity = data.raw.container['steel-chest']
+steelChest_entity.max_health = 100
+
+local ironChest_entity = data.raw.container['iron-chest']
+ironChest_entity.max_health = 100
+
 local stoneFurnace_entity = data.raw.furnace['stone-furnace']
 stoneFurnace_entity.crafting_speed = 2
-
+stoneFurnace_entity.max_health = 100
 local electricFurnace_item = data.raw.item['electric-furnace']
 electricFurnace_item.icon = "__frontier-td__/graphics/icons/electric-furnace.png"
 local electricFurnace_entity = data.raw.furnace['electric-furnace']
@@ -369,3 +670,15 @@ electricFurnace_entity.graphics_set.working_visualisations =
     }
   }
 }
+
+local slowdownSticker = data.raw["sticker"]["slowdown-sticker"]
+slowdownSticker.duration_in_ticks = 10 * 60 --10 seconds (60 ticks = 1 second)
+--slowdownSticker.target_movement_modifier = 0.5 --how much they're slowed
+
+local stunSticker = data.raw["sticker"]["stun-sticker"]
+stunSticker.duration_in_ticks = 20
+stunSticker.target_movement_modifier = 0
+
+local electricStunSticker = data.raw["sticker"]["electric-mini-stun"]
+electricStunSticker.duration_in_ticks = 20
+electricStunSticker.target_movement_modifier = 0.1

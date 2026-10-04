@@ -29,16 +29,16 @@ new power source, steam engine boring but maybe use steam still? DONE
 add mod setting for turning on/off blueprints
 sub item groups for each turret group DONE
 tier 3 water science
-  calcite ore for concrete, remove iron ore
+  calcite ore for concrete, remove iron ore DONE
   maybe special water recipe like purifed water or salt
   assembler 2 lol
   then use tier 3 science to research a water treating thing to get more ores
 
-send a challenge to another team
+send a challenge to another team DONE
 destroy the start button for each player involved in each force DONE
   for isPvp = true DONE
 start button function needs to also create the slot for the isPvp team DONE
-handle clean up of map when losing/winning when two teams
+handle clean up of map when losing/winning when two teams DONE
 add a kick menu for the owner of force
 
 add mods for more biters models
@@ -64,7 +64,7 @@ T5  White
 UT could be black, purple, yellow
 gray is the shitter basic gun turret that can lead into other things DONE
 new science packs / receipes to match the tier colors
-biter like the heart balloon, medium spawns 1 small, maybe use spitters for this
+biter like the heart balloon, medium spawns 1 small, maybe use spitters for this DONE
 
 add a command for getting the current and next wave info
 
