@@ -39,7 +39,8 @@ data:extend({
       {type = "item", name = "coal", amount = 2},
       {type = "fluid", name = "water", amount = 25}
     },
-    results = {{type="item", name="compressed-coal", amount=1}}
+    results = {{type="item", name="compressed-coal", amount=1}},
+    allow_productivity = true
   },
   {
     type = "recipe",
@@ -52,7 +53,8 @@ data:extend({
       {type = "item", name = "fine-stone", amount = 1},
       {type = "fluid", name = "water", amount = 100}
     },
-    results = {{type="item", name="ice", amount=1}}
+    results = {{type="item", name="ice", amount=1}},
+    allow_productivity = true
   },
   {
     type = "recipe",
@@ -65,7 +67,8 @@ data:extend({
     {
       {type = "item", name = "stone", amount = 3}
     },
-    results = {{type="item", name="fine-stone", amount=1}}
+    results = {{type="item", name="fine-stone", amount=1}},
+    allow_productivity = true
   },
   {
     type = "recipe",
@@ -77,7 +80,8 @@ data:extend({
       {type = "item", name = "iron-stick", amount = 2},
       {type = "item", name = "copper-cable", amount = 1}
     },
-    results = {{type="item", name="small-electric-pole-iron", amount=1}}
+    results = {{type="item", name="small-electric-pole-iron", amount=1}},
+    allow_productivity = true
   },
   {
     type = "recipe",

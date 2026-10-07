@@ -34,6 +34,7 @@ local weaponMarketItems = {
 		price = { { name = 'coin', count = 40 },{ name = 'speed-module', count = 1 } },    
 		offer = { type = 'give-item', item = 'speed-module-3', count = 1 } 
 	},
+  { price = { { name = 'coin', count = 20 } },    offer = { type = 'give-item', item = 'exoskeleton-equipment', count = 1 } },
 }
 
 local landMarket_Items = {

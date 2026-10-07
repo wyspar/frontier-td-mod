@@ -72,6 +72,7 @@ local enabledTechnologies = {
   ["steel-processing"] = true,
   ["effect-transmission"] = true,
   ["fast-inserter"] = true,
+  ["inserter-capacity-bonus-1"] = true,
   ["bulk-inserter"] = true,
   ["automation-3"] = true,
   ["landfill"] = true

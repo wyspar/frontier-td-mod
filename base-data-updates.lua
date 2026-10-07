@@ -33,6 +33,19 @@ table.insert(data.raw["assembling-machine"]["assembling-machine-1"].crafting_cat
 data.raw['assembling-machine']['assembling-machine-2'].crafting_speed = 1
 data.raw['assembling-machine']['assembling-machine-3'].crafting_speed = 2
 
+-- The quality mod's "quality-factoriopedia" tip simulation looks for the vanilla
+-- assembling-machine-3 crafting speed label ("1.25") and crashes when it's missing.
+local qualityFactoriopediaTip = data.raw["tips-and-tricks-item"] and data.raw["tips-and-tricks-item"]["quality-factoriopedia"]
+if qualityFactoriopediaTip and qualityFactoriopediaTip.simulation and qualityFactoriopediaTip.simulation.init then
+  local init = qualityFactoriopediaTip.simulation.init
+  init = init:gsub('data = "1%.25"', 'data = "2"')
+  init = init:gsub(
+    'return game%.simulation%.move_cursor%(%{position = target, speed = 0%.15%}%)',
+    'if not target then return true end return game.simulation.move_cursor({position = target, speed = 0.15})'
+  )
+  qualityFactoriopediaTip.simulation.init = init
+end
+
 frep.set_surface_condition("agricultural-tower", nauvisAndGlebaPressure)
 frep.set_surface_condition("pentapod-egg", nauvisAndGlebaPressure)
 frep.set_surface_condition("biochamber", nauvisAndGlebaPressure)
@@ -80,6 +93,7 @@ biolab_recipe.ingredients = {
   {type = "item", name = "copper-plate", amount = 10},
   {type = "item", name = "electronic-circuit", amount = 10},
 }
+biolab_recipe.category = "electronics"
 
 local bigMiner_recipe = data.raw.recipe["big-mining-drill"]
 bigMiner_recipe.ingredients = {
@@ -127,6 +141,11 @@ electricFurnace_recipe.ingredients = {
   {type = "item", name = "steel-plate", amount = 5},
   {type = "item", name = "electronic-circuit", amount = 5}
 }
+electricFurnace_recipe.category = "electronics"
+electricFurnace_recipe.allow_productivity = true
+
+data.raw.recipe['chemical-plant'].category = "electronics"
+data.raw.recipe['assembling-machine-3'].category = "electronics"
 
 local concrete_recipe = data.raw.recipe['concrete']
 concrete_recipe.ingredients =
@@ -154,11 +173,12 @@ redChip_recipe.ingredients =
 }
 
 local blueChip_recipe = data.raw.recipe['processing-unit']
-blueChip_recipe.category = nil
+blueChip_recipe.category = "electronics"
 blueChip_recipe.ingredients =
 {
   {type = "item", name = "electronic-circuit", amount = 10},
   {type = "item", name = "advanced-circuit", amount = 2},
+  {type = "item", name = "copper-cable", amount = 6}
 }
 
 local heatingTower_recipe = data.raw.recipe['heating-tower']
@@ -176,6 +196,7 @@ mediumPowerPole_recipe.ingredients =
   {type = "item", name = "copper-cable", amount = 2},
   {type = "item", name = "small-electric-pole-iron", amount = 1}
 }
+mediumPowerPole_recipe.allow_productivity = true
 
 local crusher_recipe = data.raw.recipe['crusher']
 crusher_recipe.ingredients =
@@ -228,6 +249,7 @@ roboport_recipe.ingredients =
   {type = "item", name = "electric-engine-unit", amount = 4},
   {type = "item", name = "advanced-circuit", amount = 15}
 }
+roboport_recipe.category = "electronics"
 
 local speedMod_recipe = data.raw.recipe['speed-module']
 speedMod_recipe.ingredients =
@@ -259,6 +281,7 @@ landfill_recipe.ingredients =
 {
   {type = "item", name = "stone", amount = 10}
 }
+landfill_recipe.allow_productivity = true
 
 data.raw.technology["electronics"].effects =
 {
@@ -364,6 +387,30 @@ fastInserter_tech.unit =
   ingredients =
   {
     {"tier-one-science-pack", 1},
+  },
+  time = 20
+}
+
+local inserterCapacity1_tech = data.raw.technology["inserter-capacity-bonus-1"]
+inserterCapacity1_tech.prerequisites = {"fast-inserter"}
+inserterCapacity1_tech.effects =
+{
+  {
+    type = "inserter-stack-size-bonus",
+    modifier = 1 -- result of 2
+  },
+  {
+    type = "bulk-inserter-capacity-bonus",
+    modifier = 3 -- result of 5
+  }
+}
+inserterCapacity1_tech.unit =
+{
+  count = 100,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
   },
   time = 20
 }

@@ -479,3 +479,22 @@ utPoisonCannonOne.icons = {
 data:extend({
   utPoisonCannonOne
 })
+
+--portals have no recipe, they come from the map and can be picked up and moved
+local function portalItem(name, order)
+  return {
+    type = "item",
+    name = name,
+    icon = "__frontier-td__/graphics/icons/" .. name .. ".png",
+    icon_size = 64,
+    subgroup = "other",
+    order = order,
+    place_result = name,
+    stack_size = 1
+  }
+end
+
+data:extend({
+  portalItem("portal-1", "z[portal-1]"),
+  portalItem("portal-2", "z[portal-2]"),
+})

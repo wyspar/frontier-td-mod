@@ -11,6 +11,7 @@ local weapon_shooting_speed_1_icon = "__base__/graphics/technology/weapon-shooti
 local weapon_shooting_speed_2_icon = "__base__/graphics/technology/weapon-shooting-speed-2.png"
 local weapon_shooting_speed_3_icon = "__base__/graphics/technology/weapon-shooting-speed-3.png"
 local laser_shooting_speed_icon = "__base__/graphics/technology/laser-shooting-speed.png"
+local electric_weapons_damage_icon = "__space-age__/graphics/technology/electric-weapons-damage.png"
 
 data:extend({
   {
@@ -392,7 +393,7 @@ data:extend({
     {
       {
         type = "character-running-speed",
-        modifier = 0.6
+        modifier = 0.45
       }
     },
     unit =
@@ -579,7 +580,7 @@ data:extend({
   {
     type = "technology",
     name = "chem-plant",
-    icon = "__base__/graphics/technology/oil-processing.png",
+    icon = "__frontier-td__/graphics/technology/chemical-plant.png",
     icon_size = 256,
     effects =
     {
@@ -733,7 +734,7 @@ data:extend({
     {
       {
         type = "character-running-speed",
-        modifier = 0.9
+        modifier = 0.6
       }
     },
     unit =
@@ -939,7 +940,7 @@ data:extend({
     prerequisites = {"biter-progress-tier-three-science"},
     unit =
     {
-      count = 500,
+      count = 350,
       ingredients =
       {
         {"tier-one-science-pack", 1},
@@ -948,6 +949,42 @@ data:extend({
       },
       time = 20
     }
+  },
+  {
+    type = "technology",
+    name = "electric-weapons-damage-1",
+    icons = util.technology_icon_constant_damage(electric_weapons_damage_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "tesla",
+        modifier = 0.5
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "electric",
+        modifier = 0.5
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "beam",
+        modifier = 0.5
+      }
+    },
+    prerequisites = {"tesla-turrets"},
+    unit =
+    {
+      count = 100,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
   },
   {
     type = "technology",
@@ -1084,6 +1121,43 @@ data:extend({
       time = 20
     }
   },
+  {
+    type = "technology",
+    name = "electric-weapons-damage-2",
+    icons = util.technology_icon_constant_damage(electric_weapons_damage_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "tesla",
+        modifier = 0.7
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "electric",
+        modifier = 0.7
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "beam",
+        modifier = 0.7
+      }
+    },
+    prerequisites = {"electric-weapons-damage-1","biter-progress-tier-four-science"},
+    unit =
+    {
+      count = 250,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
   --tier five science shit
   {
     type = "technology",
@@ -1103,6 +1177,44 @@ data:extend({
       type = "scripted",
       trigger_description = {"technology-description.biter-progress-tier-five-science"}
     }
+  },
+  {
+    type = "technology",
+    name = "electric-weapons-damage-3",
+    icons = util.technology_icon_constant_damage(electric_weapons_damage_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "tesla",
+        modifier = 1
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "electric",
+        modifier = 1
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "beam",
+        modifier = 1
+      }
+    },
+    prerequisites = {"electric-weapons-damage-2","biter-progress-tier-five-science"},
+    unit =
+    {
+      count = 300,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+        {"tier-five-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
   },
   --unlocked by script the first time the force gets a boss-reward-item (control.lua)
   {

@@ -325,3 +325,40 @@ data:extend({
     connects_to_other_radars = false
   }
 })
+
+--teleport pads placed by the map, players of the owning force walk onto one to go to the other (control.lua)
+local function portalEntity(name, filename)
+  return {
+    type = "simple-entity-with-owner",
+    name = name,
+    icon = "__frontier-td__/graphics/icons/" .. name .. ".png",
+    icon_size = 64,
+    flags = {"placeable-neutral", "player-creation", "not-on-map"},
+    order = "d-a-b",
+    subgroup = "other",
+    max_health = 150,
+    minable = {mining_time = 0.5, result = name}, --no recipe, the map places them and players move them
+    collision_box = {{-0.9, -0.9}, {0.9, 0.9}},
+    collision_mask = {layers = {}}, --players walk over it
+    selection_box = {{-1, -1}, {1, 1}},
+    render_layer = "lower-object",
+    picture =
+    {
+      filename = "__frontier-td__/graphics/entity/" .. filename,
+      width = 151,
+      height = 146,
+      scale = 0.66
+    }
+  }
+end
+
+data:extend({
+  portalEntity("portal-1", "portal.png"),
+  portalEntity("portal-2", "portal2.png"),
+  {
+    type = "sound",
+    name = "frontier-teleport",
+    filename = "__frontier-td__/sounds/teleport.ogg",
+    volume = 0.4
+  }
+})

@@ -5563,6 +5563,16 @@ map1.DefaultMapStructures = {
     y = 100
   },
   {
+    name = "portal-1",
+    x = 107,
+    y = 97
+  },
+  {
+    name = "portal-2",
+    x = 107,
+    y = 104
+  },
+  {
     name = "iron-ore",
     x = 142,
     y = 57,

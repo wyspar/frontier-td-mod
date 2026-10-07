@@ -9,12 +9,14 @@ add wind turbine, add wind turbine mod? steal that mod maybe
 make biters have resistances like 
   fire, acid, poison
 tier 5 tesla entity needs its own white sprite
-add dmg upgrades for tesla turret
+add dmg upgrades for tesla turret DONE
 make current normal to easy difficulty
   make normal harder
 add ammo only for the UT turrets
 bullet modules? shoot a bullet, or a chance to shoot something at the enemy when something finishes crafting
   maybe like spawn a friendly biter to fight for you?
+add a teleporter, make it invinceable, only have one pair DONE
+max hp of enemies needs to increase by wave count
 
 when upgrading a turret, make the current hp = max hp DONE
 add bot speed research DONE
@@ -94,7 +96,6 @@ need to test saving game and reload, do waves still work? DONE, yes waves still 
 
 ISSUES:
 when two or more slots are in the checking for winner function, has to wait for each other to finish or die HALF DONE?
-public slot doesnt get the 1 coin that goes to an owner. Need to randomly give the 1 coin i guess DONE
 
 OTHER:
 to make something white

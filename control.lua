@@ -684,6 +684,13 @@ local function spawnSpitterChild(entity)
 end
 
 local function fullClearPlayerInventory(player)
+  -- the item held on the cursor is not part of any inventory, clear it too
+  local cursorStack = player.cursor_stack
+  if cursorStack and cursorStack.valid_for_read then
+    cursorStack.clear()
+  end
+  player.cursor_ghost = nil
+
   local inventory = player.get_main_inventory()
   if inventory then
     inventory.clear()
@@ -1437,6 +1444,9 @@ local function createSnapshotInventory(player, tickOverride)
 		return
 	end
 
+	-- put the held item back in the inventory so it is part of the snapshot
+	player.clear_cursor()
+
 	local snapshot = {
 		main = game.create_inventory(#mainInventory),
 		guns = game.create_inventory(#gunInventory),
@@ -1862,6 +1872,7 @@ script.on_init(function()
 	end
 
 	applyBlueprintImportSetting()
+	game.map_settings.pollution.enabled = false
 end)
 
 script.on_load(function()
@@ -1870,6 +1881,10 @@ end)
 -- existing saves pick up the blueprint setting when the mod is added or updated
 script.on_configuration_changed(function()
 	applyBlueprintImportSetting()
+	game.map_settings.pollution.enabled = false
+	for _, surface in pairs(game.surfaces) do
+		surface.clear_pollution()
+	end
 end)
 
 script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
@@ -2015,6 +2030,60 @@ script.on_nth_tick(60, function()
 				if technology and not technology.researched then
 					if kills >= required_kills then
 						force.script_trigger_research(name)
+					end
+				end
+			end
+		end
+	end
+end)
+
+local portalPairs = {
+	["portal-1"] = "portal-2",
+	["portal-2"] = "portal-1"
+}
+local portalNames = {"portal-1", "portal-2"}
+local portalCooldownTicks = 60
+
+--players standing on a portal get sent to the other portal of their own force
+script.on_nth_tick(10, function(event)
+	storage.portalCooldowns = storage.portalCooldowns or {}
+
+	for _, player in pairs(game.connected_players) do
+		local character = player.character
+		if character and character.valid and not player.vehicle
+		and (storage.portalCooldowns[player.index] or 0) <= event.tick then
+			local surface = character.surface
+			local portal = surface.find_entities_filtered({
+				name = portalNames,
+				position = character.position,
+				radius = 0.9,
+				force = player.force,
+				limit = 1
+			})[1]
+
+			if portal and portal.valid and portal.force == player.force then
+				local destination = surface.find_entities_filtered({
+					name = portalPairs[portal.name],
+					force = player.force,
+					limit = 1
+				})[1]
+
+				if destination and destination.valid then
+					--land just below the other portal so the player is not sent straight back
+					local landing = surface.find_non_colliding_position(
+						"character",
+						{destination.position.x, destination.position.y + 2},
+						5,
+						0.5
+					)
+
+					if landing then
+						local origin = character.position
+						if player.teleport(landing, surface) then
+							storage.portalCooldowns[player.index] = event.tick + portalCooldownTicks
+							surface.play_sound({path = "frontier-teleport", position = origin})
+							surface.play_sound({path = "frontier-teleport", position = landing})
+						end
 					end
 				end
 			end
@@ -3147,8 +3216,16 @@ script.on_event(defines.events.on_gui_click, function(event)
 end)
 
 -- Listen for player-built entities
+local function keepPortalIndestructible(event)
+	local entity = event.entity
+	if entity and entity.valid and (entity.name == "portal-1" or entity.name == "portal-2") then
+		entity.destructible = false
+	end
+end
+
 script.on_event(defines.events.on_built_entity, function(event)
 	buildingModule.preventBuilding(event)
+	keepPortalIndestructible(event)
 
 	-- local success, result = pcall(function()
 	--     buildingModule.preventBuilding(event)
@@ -3160,6 +3237,7 @@ script.on_event(defines.events.on_robot_built_entity, function(event)
 	local success, result = pcall(function()
 		buildingModule.preventBuilding(event)
 	end)
+	keepPortalIndestructible(event)
 end)
 
 script.on_event(defines.events.on_market_item_purchased, function(event)
@@ -3418,9 +3496,7 @@ script.on_event(defines.events.on_player_left_game, function(event)
 	-- No players left on the force.
 	if #remainingPlayers == 0 then
 		-- Don't reset immediately.
-		-- Give the player 5 minutes to reconnect.
-		scheduleDelayedAction(600, "resetEmptySlot", { slotId = slotId }) --18000 is 5 minutes
-
+		--scheduleDelayedAction(18000, "resetEmptySlot", { slotId = slotId }) --18000 is 5 minutes
 		return
 	end
 

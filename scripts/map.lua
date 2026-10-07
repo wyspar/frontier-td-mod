@@ -249,7 +249,8 @@ local function generate_structures(surface, slot, structures)
 				force = force
 			})
 
-			entity.minable = false
+			--portals can be picked up and moved by the slot owners
+			entity.minable = (entity.name == "portal-1" or entity.name == "portal-2")
 			if (entity.name ~= "rocket-silo") then
 				entity.destructible = false
 			end
@@ -718,8 +719,8 @@ function map.resetMapSlot(surface, slotId, isHardReset)
 	local area = {
 		{slotDef.x, slotDef.y},
 		{
-			slotDef.x + slotDef.width - 1,
-			slotDef.y + slotDef.height - 1
+			slotDef.x + slotDef.width,
+			slotDef.y + slotDef.height
 		}
 	}
 
