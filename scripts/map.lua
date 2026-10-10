@@ -1,6 +1,7 @@
 local map = {}
 local market = require("scripts.market")
 local map1 = require("scripts.maps.map1")
+local map2 = require("scripts.maps.map2")
 local main_surface_name = "frontier"
 
 --this is where player spawns their map
@@ -100,7 +101,11 @@ map.difficulties = {
 	[3] = {
 		id = 3,
 		label = "Hard"
-	}
+	},
+	-- [4] = {
+	-- 	id = 4,
+	-- 	label = "Test"
+	-- }
 }
 
 map.allMaps = {
@@ -110,6 +115,13 @@ map.allMaps = {
 		label = map1.mapLabel,
 		tile = map1.mapTile,
 		icon = map1.mapIcon,
+	},
+	[2] = {
+		id = 2,
+		name = map2.mapName,
+		label = map2.mapLabel,
+		tile = map2.mapTile,
+		icon = map2.mapIcon,
 	}
 }
 
@@ -124,6 +136,116 @@ local forbiddenTilesForSpawningRocksOn = {
 	["yellow-refined-concrete"] = true,
 	["out-of-map"] = true
 }
+
+--map-2-trees: the whole slot is filled with these, see generateForest
+local forestTreeNames = {
+	"tree-01", "tree-02", "tree-03", "tree-04", "tree-05", "tree-06", "tree-07", "tree-09",
+}
+--one tree is tried per FOREST_TREE_SPACING x FOREST_TREE_SPACING square, placed somewhere random inside it
+local FOREST_TREE_SPACING = 2
+--chance that a square gets a tree at all
+local FOREST_TREE_CHANCE = 0.75
+--no trees this close to a biter path waypoint (a small circle around every path tile)
+local FOREST_WAYPOINT_CLEAR_RADIUS = 6
+--no trees this close to the line between two waypoints, so the biters can walk from one to the next
+local FOREST_PATH_CLEAR_RADIUS = 3
+--no trees this close to the silo, room for the player spawn, portals and markets
+local FOREST_SILO_CLEAR_RADIUS = 14
+
+local forbiddenTilesForTrees = {
+	["water"] = true,
+	["deepwater"] = true,
+	["red-refined-concrete"] = true,
+	["yellow-refined-concrete"] = true,
+	["volcanic-ash-flats"] = true,
+	["out-of-map"] = true,
+	["foundation"] = true
+}
+
+--squared distance from point p to the line segment a-b
+local function distanceToSegmentSquared(px, py, ax, ay, bx, by)
+	local dx = bx - ax
+	local dy = by - ay
+	local lengthSquared = dx * dx + dy * dy
+	local t = 0
+	if lengthSquared > 0 then
+		t = math.max(0, math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSquared))
+	end
+	local cx = ax + t * dx - px
+	local cy = ay + t * dy - py
+	return cx * cx + cy * cy
+end
+
+--x, y and the paths are all slot relative
+local function isNearBiterPath(x, y, biterPaths)
+	local waypointRadiusSquared = FOREST_WAYPOINT_CLEAR_RADIUS * FOREST_WAYPOINT_CLEAR_RADIUS
+	local pathRadiusSquared = FOREST_PATH_CLEAR_RADIUS * FOREST_PATH_CLEAR_RADIUS
+	for i, point in ipairs(biterPaths) do
+		local dx = x - point.x
+		local dy = y - point.y
+		if dx * dx + dy * dy < waypointRadiusSquared then
+			return true
+		end
+		local previous = biterPaths[i - 1]
+		if previous and distanceToSegmentSquared(x, y, previous.x, previous.y, point.x, point.y) < pathRadiusSquared then
+			return true
+		end
+	end
+	return false
+end
+
+--fills the slot with trees, runs after the structures and ores are placed.
+--skips: entities already there (can_place_entity), ores, path tiles and other forbidden tiles,
+--a circle around every biter path waypoint, the line between waypoints and the area around the silo
+local function generateForest(surface, slot, mapSlot, structures)
+	local biterPaths = map.getMapBiterPaths(mapSlot.mapName, mapSlot.difficulty) or {}
+	local silo = map.findStructureByName(structures, "rocket-silo")
+	local siloRadiusSquared = FOREST_SILO_CLEAR_RADIUS * FOREST_SILO_CLEAR_RADIUS
+
+	local treeNames = {}
+	for _, treeName in ipairs(forestTreeNames) do
+		if prototypes.entity[treeName] then
+			table.insert(treeNames, treeName)
+		end
+	end
+	if #treeNames == 0 then
+		game.print("No tree prototypes found for map-2-trees in generateForest in map.lua")
+		return
+	end
+
+	local random = game.create_random_generator()
+	for cellX = 1, slot.width - 2, FOREST_TREE_SPACING do
+		for cellY = 1, slot.height - 2, FOREST_TREE_SPACING do
+			if random() < FOREST_TREE_CHANCE then
+				--slot relative, somewhere inside this square
+				local x = cellX + random() * FOREST_TREE_SPACING
+				local y = cellY + random() * FOREST_TREE_SPACING
+
+				local nearSilo = false
+				if silo then
+					local dx = x - silo.x
+					local dy = y - silo.y
+					nearSilo = dx * dx + dy * dy < siloRadiusSquared
+				end
+
+				if not nearSilo and not isNearBiterPath(x, y, biterPaths) then
+					local position = map.getRelativeSlotPosition(slot, x, y)
+					local tile = surface.get_tile(position)
+					local treeName = treeNames[random(1, #treeNames)]
+
+					if tile and tile.valid and not forbiddenTilesForTrees[tile.name]
+						and surface.count_entities_filtered({position = position, radius = 1, type = "resource"}) == 0
+						and surface.can_place_entity({name = treeName, position = position}) then
+						surface.create_entity({
+							name = treeName,
+							position = position
+						})
+					end
+				end
+			end
+		end
+	end
+end
 
 function map.create_main_surface(player)
 	local surface_name = "frontier"
@@ -254,10 +376,13 @@ local function generate_structures(surface, slot, structures)
 			if (entity.name ~= "rocket-silo") then
 				entity.destructible = false
 			end
+			--the attack market only sells biters to send to the other team in pvp
 			if entity and entity.name == 'attack-market' then
-				market.fillMarket(surface, entity.name, entity.name)
+				market.fillAttackMarket(entity, mapSlot.isPvp == true)
 			end
 			if entity and entity.name == 'weapons-market' then
+				--new round on this slot: the slowdown capsule goes back to its base price
+				market.resetSlowdownCapsulePrice(force.name)
 				market.fillMarket(surface, entity.name, entity.name)
 			end
 		end
@@ -292,6 +417,11 @@ local function generate_structures(surface, slot, structures)
 				end
 			end
 		end
+	end
+
+	--fill the whole map with trees
+	if mapSlot.mapName and mapSlot.mapName == 'map-2-trees' then
+		generateForest(surface, slot, mapSlot, structures)
 	end
 end
 
@@ -605,6 +735,9 @@ function map.getMapByName(mapName)
 	if(tostring(mapName) == "map-1-sand")then
 		return map1
 	end
+	if(tostring(mapName) == "map-2-trees")then
+		return map2
+	end
 end
 
 function map.getMapWaveData(mapName, difficulty)
@@ -813,6 +946,14 @@ local bossRewardData = {
 	["boss-biter-4"] = {
 		coins = 2500,
 		rewardItemAmount = 2
+	},
+	["boss-biter-5"] = {
+		coins = 4000,
+		rewardItemAmount = 3
+	},
+	["boss-biter-6"] = {
+		coins = 6000,
+		rewardItemAmount = 4
 	}
 }
 
@@ -858,23 +999,69 @@ function map.getWinningMapNameAndMapDifficulty(slot, enemySlot)
 	-- Count votes from enemy slot, if it exists
 	countVotes(enemySlot)
 
-	-- Find winning map
-	local winningMap
-	local winningMapVotes = 0
-	for mapName, voteCount in pairs(mapVoteCounts) do
-		if voteCount > winningMapVotes then
-			winningMap = mapName
-			winningMapVotes = voteCount
+	-- simple majority: the option with the most votes wins, a tie between the top options is picked at random.
+	-- a fresh generator seeded with the tick gives nearly the same first roll every time, so ties kept going
+	-- the same way. instead every vote's generator makes the seed for the next vote (kept in storage),
+	-- and the first few rolls are thrown away
+	local random = game.create_random_generator(storage.voteSeed or (game.tick + 341))
+	for _ = 1, 10 do
+		random()
+	end
+	storage.voteSeed = random(341, 2147483647)
+
+	local function pickWinner(voteCounts)
+		local mostVotes = 0
+		local tied = {}
+		for option, voteCount in pairs(voteCounts) do
+			if voteCount > mostVotes then
+				mostVotes = voteCount
+				tied = {option}
+			elseif voteCount == mostVotes then
+				table.insert(tied, option)
+			end
 		end
+		if #tied == 0 then
+			return nil, false
+		end
+		-- sorted so the random pick does not depend on the order pairs visits them in
+		table.sort(tied, function(a, b) return tostring(a) < tostring(b) end)
+		return tied[random(1, #tied)], #tied > 1
 	end
 
-	-- Find winning difficulty
-	local winningDifficulty
-	local winningDifficultyVotes = 0
-	for difficultyName, voteCount in pairs(difficultyVoteCounts) do
-		if voteCount > winningDifficultyVotes then
-			winningDifficulty = difficultyName
-			winningDifficultyVotes = voteCount
+	local winningMap, mapTie = pickWinner(mapVoteCounts)
+	local winningDifficulty, difficultyTie = pickWinner(difficultyVoteCounts)
+
+	-- tell the voters the counts, so it is clear why a map or difficulty won
+	local function describe(voteCounts, winner, tie, labelOf)
+		local parts = {}
+		for option, voteCount in pairs(voteCounts) do
+			table.insert(parts, labelOf(option) .. " " .. voteCount)
+		end
+		table.sort(parts)
+		local text = table.concat(parts, ", ") .. " -> " .. labelOf(winner)
+		if tie then
+			text = text .. " (tie, picked at random)"
+		end
+		return text
+	end
+	local function mapLabel(mapName)
+		local mapData = map.getMapByName(mapName)
+		return mapData and mapData.mapLabel or tostring(mapName)
+	end
+	local function difficultyLabel(difficulty)
+		local data = map.difficulties[tonumber(difficulty)]
+		return data and data.label or tostring(difficulty)
+	end
+	if winningMap then
+		local message = "Map vote: " .. describe(mapVoteCounts, winningMap, mapTie, mapLabel)
+		if winningDifficulty then
+			message = message .. ". Difficulty vote: " .. describe(difficultyVoteCounts, winningDifficulty, difficultyTie, difficultyLabel)
+		end
+		for _, voteSlot in pairs({slot, enemySlot}) do
+			local force = voteSlot and game.forces[voteSlot.forceName]
+			if force then
+				force.print(message)
+			end
 		end
 	end
 
@@ -889,10 +1076,10 @@ local enemyRewardData = {
 		coins = 4
 	},
 	["big-biter"] = {
-		coins = 9
+		coins = 7
 	},
 	["behemoth-biter"] = {
-		coins = 15
+		coins = 12
 	},
 
 	--spitters
@@ -903,38 +1090,52 @@ local enemyRewardData = {
 		coins = 5
 	},
 	["big-spitter"] = {
-		coins = 10
+		coins = 8
 	},
 	["behemoth-spitter"] = {
-		coins = 16
+		coins = 14
 	},
 
 	--physical biters (enemies.lua)
 	["small-physical-biter"] = {
-		coins = 2
+		coins = 1
 	},
 	["medium-physical-biter"] = {
-		coins = 5
+		coins = 4
 	},
 	["big-physical-biter"] = {
-		coins = 10
+		coins = 9
 	},
 	["behemoth-physical-biter"] = {
-		coins = 16
+		coins = 14
+	},
+
+	--fire biters (enemies.lua)
+	["small-fire-biter"] = {
+		coins = 1
+	},
+	["medium-fire-biter"] = {
+		coins = 4
+	},
+	["big-fire-biter"] = {
+		coins = 9
+	},
+	["behemoth-fire-biter"] = {
+		coins = 14
 	},
 
 	--modded armoured biters
 	["small-armoured-biter"] = {
-		coins = 3
+		coins = 0
 	},
 	["medium-armoured-biter"] = {
-		coins = 6
+		coins = 0
 	},
 	["big-armoured-biter"] = {
-		coins = 12
+		coins = 0
 	},
 	["behemoth-armoured-biter"] = {
-		coins = 18
+		coins = 0
 	},
 
 	--modded flyers
@@ -942,13 +1143,13 @@ local enemyRewardData = {
 		coins = 1
 	},
 	["medium-flyer"] = {
-		coins = 4
+		coins = 3
 	},
 	["big-flyer"] = {
-		coins = 9
+		coins = 7
 	},
 	["behemoth-flyer"] = {
-		coins = 15
+		coins = 12
 	},
 }
 

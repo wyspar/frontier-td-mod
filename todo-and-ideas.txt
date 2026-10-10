@@ -6,18 +6,18 @@ handle player joining back, check if they have a force, check if they have a slo
 add a surrender button, everyone needs to vote 
 maybe a 2nd public slot so both publics can fight
 add wind turbine, add wind turbine mod? steal that mod maybe
-make biters have resistances like 
-  fire, acid, poison
-tier 5 tesla entity needs its own white sprite
-add dmg upgrades for tesla turret DONE
-make current normal to easy difficulty
-  make normal harder
 add ammo only for the UT turrets
-bullet modules? shoot a bullet, or a chance to shoot something at the enemy when something finishes crafting
-  maybe like spawn a friendly biter to fight for you?
-add a teleporter, make it invinceable, only have one pair DONE
-max hp of enemies needs to increase by wave count
+need a big cool final boss
+I like the idea of a two spawners, two lanes, a fork in the road.
+  fork in the road map, might be a big redo of everything cause two spawners, then the biters need to know which is their path, left or right
+  Use 'volcanic-folds-warm' as the map tile
 
+bullet modules?  maybe like spawn a friendly biter to fight for you? DONE
+make biters have resistances DONE, still missing like acid
+redo wave gen script, then make waves for easy, normal, hard DONE
+add dmg upgrades for tesla turret DONE
+add a teleporter, make it invinceable, only have one pair DONE
+max hp of enemies needs to increase by wave count DONE
 when upgrading a turret, make the current hp = max hp DONE
 add bot speed research DONE
 add more bigger backpack, maybe add qqs name DONE

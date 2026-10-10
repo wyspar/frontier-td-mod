@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.0.2
+Version: 1.1.0
 Date: 2026-09-01
   Changes:
     - Started frontier td
@@ -25,3 +25,16 @@ Date: 2026-10-06
     - Added some more techs
     - New chem plant tech icon
     - Turned off pollution
+    - Stronger enemies based on wave count, uses dmg reduction scaling
+    - Lowered enemies coins rewarded
+    - Increased prices of upgrading towers
+    - Fire Biters
+    - New bosses
+    - New UT acid shooter turret
+    - Boss biters no longer affected by belts, entites, still blocked by water
+    - Easy, Hard added
+    - Damage reduction scaling for enemies. 0.02, 0.04, 0.06
+    - Slowdown capsule price now doubles each time, 128k max
+    - Biter modules
+    - New Map, Deep Forest
+    - Added money tree

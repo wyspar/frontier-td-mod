@@ -784,6 +784,79 @@ data:extend({
     },
     upgrade = true
   },
+  {
+    type = "technology",
+    name = "physical-projectile-damage-4",
+    icons = util.technology_icon_constant_damage(physical_projectile_damage_2_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "bullet",
+        modifier = 0.4
+      },
+      {
+        type = "turret-attack",
+        turret_id = "gun-turret",
+        modifier = 0.4
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "shotgun-shell",
+        modifier = 0.4
+      }
+    },
+    prerequisites = {"physical-projectile-damage-3","biter-progress-tier-three-science"},
+    unit =
+    {
+      count = 200,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1}
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "physical-projectile-damage-5",
+    icons = util.technology_icon_constant_damage(physical_projectile_damage_2_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "bullet",
+        modifier = 0.4
+      },
+      {
+        type = "turret-attack",
+        turret_id = "gun-turret",
+        modifier = 0.4
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "shotgun-shell",
+        modifier = 0.4
+      }
+    },
+    prerequisites = {"physical-projectile-damage-4","biter-progress-tier-four-science"},
+    unit =
+    {
+      count = 200,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1}
+      },
+      time = 20
+    },
+    upgrade = true
+  },
     {
     type = "technology",
     name = "weapon-shooting-speed-3",
@@ -1014,6 +1087,33 @@ data:extend({
   },
   {
     type = "technology",
+    name = "laser-shooting-speed-5",
+    icons = util.technology_icon_constant_speed(laser_shooting_speed_icon),
+    effects =
+    {
+      {
+        type = "gun-speed",
+        ammo_category = "laser",
+        modifier = 0.4
+      }
+    },
+    prerequisites = {"laser-shooting-speed-4","biter-progress-tier-four-science"},
+    unit =
+    {
+      count = 200,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+      },
+      time = 25
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
     name = "construction-robotics",
     icon = "__base__/graphics/technology/construction-robotics.png",
     icon_size = 256,
@@ -1227,12 +1327,226 @@ data:extend({
       {
         type = "unlock-recipe",
         recipe = "ut-poison-cannon-one"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "ut-acid-shooter"
       }
     },
     research_trigger =
     {
       type = "scripted",
       trigger_description = {"technology-description.ut-poison-cannon-one"}
+    }
+  },
+  --biter module 1 is in the modules tech (base-data-updates.lua), 2 and 3 have their own
+  {
+    type = "technology",
+    name = "biter-module-2",
+    icon = "__base__/graphics/technology/efficiency-module-2.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "biter-module-2"
+      }
+    },
+    prerequisites = {"modules","biter-progress-tier-four-science"},
+    unit =
+    {
+      count = 250,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+      },
+      time = 20
+    }
+  },
+  {
+    type = "technology",
+    name = "biter-module-3",
+    icon = "__base__/graphics/technology/efficiency-module-3.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "biter-module-3"
+      }
+    },
+    prerequisites = {"biter-module-2","biter-progress-tier-five-science"},
+    unit =
+    {
+      count = 300,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+        {"tier-five-science-pack", 1},
+      },
+      time = 20
+    }
+  },
+  --our own stronger explosives (replace the disabled vanilla ones): rockets, grenades and landmines
+  {
+    type = "technology",
+    name = "stronger-explosives-1",
+    icons = util.technology_icon_constant_damage(stronger_explosives_3_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "rocket",
+        modifier = 0.35
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "grenade",
+        modifier = 0.35
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "landmine",
+        modifier = 0.35
+      },
+      {
+        type = "turret-attack",
+        turret_id = "ut-poison-cannon-one",
+        modifier = 0.35
+      }
+    },
+    prerequisites = {"biter-progress-tier-two-science"},
+    unit =
+    {
+      count = 125,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "stronger-explosives-2",
+    icons = util.technology_icon_constant_damage(stronger_explosives_3_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "rocket",
+        modifier = 0.5
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "grenade",
+        modifier = 0.5
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "landmine",
+        modifier = 0.5
+      },
+      {
+        type = "turret-attack",
+        turret_id = "ut-poison-cannon-one",
+        modifier = 0.5
+      }
+    },
+    prerequisites = {"stronger-explosives-1","biter-progress-tier-three-science"},
+    unit =
+    {
+      count = 200,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "stronger-explosives-3",
+    icons = util.technology_icon_constant_damage(stronger_explosives_3_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "rocket",
+        modifier = 0.7
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "grenade",
+        modifier = 0.7
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "landmine",
+        modifier = 0.7
+      },
+      {
+        type = "turret-attack",
+        turret_id = "ut-poison-cannon-one",
+        modifier = 0.7
+      }
+    },
+    prerequisites = {"stronger-explosives-2","biter-progress-tier-four-science"},
+    unit =
+    {
+      count = 300,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  --our own agriculture: agricultural tower and money tree seeds (prototypes/money-tree.lua)
+  {
+    type = "technology",
+    name = "agriculture",
+    icon = "__space-age__/graphics/technology/agriculture.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "agricultural-tower"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "money-tree-seeds"
+      },
+    },
+    -- the techs that unlock the agricultural tower's ingredients (steel, electronic/advanced circuits, electric engines, landfill)
+    prerequisites = {"biter-progress-tier-four-science", "steel-processing", "electronics", "advanced-circuit", "electric-engine", "landfill"},
+    unit =
+    {
+      count = 300,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+      },
+      time = 30
     }
   },
 })

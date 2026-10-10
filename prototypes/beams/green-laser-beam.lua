@@ -22,7 +22,7 @@ function make_laser_beam(sound)
         {
           {
             type = "damage",
-            damage = { amount = 20, type = "laser"}
+            damage = { amount = 25, type = "laser"}
           }
         }
       }

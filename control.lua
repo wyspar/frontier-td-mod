@@ -1,8 +1,30 @@
 local towerCoinCosts = require('models.tower-coin-costs')
 local buildingModule = require('scripts.building')
 local mapModule = require('scripts.map')
+local market = require('scripts.market')
+local biterModules = require('scripts.biter-modules')
+local corpseButton = require('scripts.corpse-button')
+local moneyTree = require('scripts.money-tree')
 local TICKS_PER_SECOND = 60
 local main_surface_name = "frontier"
+
+--biters bought in the pvp attack market go in their own force, killing them gives no coins or boss rewards
+local SENT_ENEMY_FORCE_NAME = "enemy-sent"
+--minimum time between two attack market buys on the same force
+local SEND_BITER_COOLDOWN_TICKS = TICKS_PER_SECOND * 2
+--minimum time between two "silo under attack" alert sounds for the same force
+local SILO_ALERT_COOLDOWN_TICKS = 5 * TICKS_PER_SECOND
+
+--creates the sent enemy force if needed, it never fights the normal enemy force
+local function getSentEnemyForce()
+	local sentForce = game.forces[SENT_ENEMY_FORCE_NAME] or game.create_force(SENT_ENEMY_FORCE_NAME)
+	local enemyForce = game.forces["enemy"]
+	sentForce.set_cease_fire(enemyForce, true)
+	enemyForce.set_cease_fire(sentForce, true)
+	sentForce.set_friend(enemyForce, true)
+	enemyForce.set_friend(sentForce, true)
+	return sentForce
+end
 
 --counts every entry in a table, # only works for tables with keys 1..n with no gaps
 local function countTableEntries(tbl)
@@ -100,18 +122,25 @@ local function printWaveInfo(player, title, waveNumber, wave, totalWaves)
   player.print(title .. ": Wave " .. tostring(waveNumber) .. "/" .. tostring(totalWaves) ..
     " (" .. tostring(wave.waveDuration) .. "s)")
 
+  --one line per enemy type with its total, the generated waves split a type into lots of small groups.
+  --types are listed in the order they first show up in the wave
   local totalEnemies = 0
+  local countsByName = {}
+  local nameOrder = {}
   for _, group in ipairs(wave.groups or {}) do
     local actualCount = getActualGroupSpawnCount(group, wave.waveDuration)
     totalEnemies = totalEnemies + actualCount
-
-    local spawnText = "all at once"
-    if group.interval and group.interval > 0 then
-      spawnText = "every " .. tostring(group.interval) .. "s"
+    if not countsByName[group.name] then
+      countsByName[group.name] = 0
+      table.insert(nameOrder, group.name)
     end
+    countsByName[group.name] = countsByName[group.name] + actualCount
+  end
 
-    player.print("  [entity=" .. group.name .. "] " .. group.name .. " x" .. tostring(actualCount) ..
-      ", starts at " .. tostring(group.startDelay or 0) .. "s, " .. spawnText)
+  for _, name in ipairs(nameOrder) do
+    if countsByName[name] > 0 then
+      player.print("  [entity=" .. name .. "] " .. name .. " x" .. tostring(countsByName[name]))
+    end
   end
 
   player.print("  Total enemies: " .. tostring(totalEnemies))
@@ -284,12 +313,28 @@ local function getBiterKillsByForce(force)
   kills = kills + (inputCounts["big-strafer-pentapod"] or 0)
   --bosses
   kills = kills + (inputCounts["boss-biter-1"] or 0)
+  kills = kills + (inputCounts["boss-biter-3"] or 0)
+  kills = kills + (inputCounts["boss-biter-4"] or 0)
+  kills = kills + (inputCounts["boss-biter-5"] or 0)
+  kills = kills + (inputCounts["boss-biter-6"] or 0)
 
   --modded shit
   kills = kills + (inputCounts["small-physical-biter"] or 0)
   kills = kills + (inputCounts["medium-physical-biter"] or 0)
   kills = kills + (inputCounts["big-physical-biter"] or 0)
   kills = kills + (inputCounts["behemoth-physical-biter"] or 0)
+  kills = kills + (inputCounts["small-fire-biter"] or 0)
+  kills = kills + (inputCounts["medium-fire-biter"] or 0)
+  kills = kills + (inputCounts["big-fire-biter"] or 0)
+  kills = kills + (inputCounts["behemoth-fire-biter"] or 0)
+  kills = kills + (inputCounts["small-explosion-biter"] or 0)
+  kills = kills + (inputCounts["medium-explosion-biter"] or 0)
+  kills = kills + (inputCounts["big-explosion-biter"] or 0)
+  kills = kills + (inputCounts["behemoth-explosion-biter"] or 0)
+  kills = kills + (inputCounts["small-laser-biter"] or 0)
+  kills = kills + (inputCounts["medium-laser-biter"] or 0)
+  kills = kills + (inputCounts["big-laser-biter"] or 0)
+  kills = kills + (inputCounts["behemoth-laser-biter"] or 0)
   kills = kills + (inputCounts["small-armoured-biter"] or 0)
   kills = kills + (inputCounts["medium-armoured-biter"] or 0)
   kills = kills + (inputCounts["big-armoured-biter"] or 0)
@@ -301,15 +346,18 @@ local function getBiterKillsByForce(force)
   kills = kills + (inputCounts["ultra-flyer"] or 0)
 
   -- for _, surface in pairs(game.surfaces) do
-    
+
   -- end
+
+  --friendly armoured biters from biter modules that died to their own self damage are not real kills
+  kills = kills - biterModules.getSelfKills(force.name)
 
   return kills
 end
 
 local kill_requirements = {
   ["biter-progress-tier-one-science"] = 10,
-  ["biter-progress-tier-two-science"] = 50,
+  ["biter-progress-tier-two-science"] = 100,
   ["biter-progress-tier-three-science"] = 200,
   ["biter-progress-tier-four-science"] = 500,
   ["biter-progress-tier-five-science"] = 1000,
@@ -573,7 +621,62 @@ local function set_biter_waypoint(group, path_data, surface, slotDef)
 	return true
 end
 
-local function send_biter_path(surface, spawn, path, count, biter_name, slot)
+--enemies get tougher each wave: max_health is read-only at runtime, so the damage they take
+--is divided by the wave's multiplier instead (see on_entity_damaged)
+--growth per wave by slot.difficulty (mapModule.difficulties), 0.05 is wave 20 = 2x, wave 100 = 6x
+local ENEMY_HEALTH_GROWTH_PER_WAVE = {
+	[1] = 0.04, -- normal
+	[2] = 0.02, -- easy
+	[3] = 0.06, -- hard
+	[4] = 0.06, -- test
+}
+
+local function getWaveHealthMultiplier(wave, difficulty)
+	local growth = ENEMY_HEALTH_GROWTH_PER_WAVE[tonumber(difficulty)] or ENEMY_HEALTH_GROWTH_PER_WAVE[1]
+	return 1 + growth * math.max(0, tonumber(wave) or 0)
+end
+
+--storage.enemyHealthScaling[unit_number] = {multiplier, health}, health is the last known health
+--and is used when a hit would kill the unit outright
+local function applyEnemyHealthMultiplier(unit, multiplier)
+	if not unit or not unit.valid or not unit.unit_number or multiplier <= 1 then
+		return
+	end
+
+	storage.enemyHealthScaling = storage.enemyHealthScaling or {}
+	storage.enemyHealthScaling[unit.unit_number] = {
+		multiplier = multiplier,
+		health = unit.health
+	}
+	-- entry is removed in on_object_destroyed
+	script.register_on_object_destroyed(unit)
+end
+
+local function scaleEnemyDamageTaken(event)
+	local entity = event.entity
+	local scaling = storage.enemyHealthScaling and entity.unit_number and storage.enemyHealthScaling[entity.unit_number]
+	if not scaling then
+		return
+	end
+
+	local damage = event.final_damage_amount
+	local healthBefore
+	if event.final_health > 0 then
+		healthBefore = event.final_health + damage
+	else
+		-- lethal hit, the health it had before is not in the event
+		healthBefore = math.min(scaling.health or entity.max_health, damage)
+	end
+
+	local newHealth = healthBefore - damage / scaling.multiplier
+	if newHealth > 0 then
+		entity.health = newHealth
+		scaling.health = entity.health
+	end
+end
+
+--unitForce is optional, it defaults to the normal enemy force (sent biters use the "enemy-sent" force)
+local function send_biter_path(surface, spawn, path, count, biter_name, slot, unitForce)
   local slotDef = mapModule.getSlotDefinitionById(slot.id)
   if not slotDef then
     return
@@ -584,10 +687,14 @@ local function send_biter_path(surface, spawn, path, count, biter_name, slot)
     spawn.y
   )
 
+	unitForce = unitForce or game.forces.enemy
+
 	local group = surface.create_unit_group {
 		position = spawn,
-		force = game.forces.enemy
+		force = unitForce
 	}
+
+	local healthMultiplier = getWaveHealthMultiplier(slot.currentWave, slot.difficulty)
 
 	for i = 1, count do
 		local position = surface.find_non_colliding_position(biter_name, spawn, 1, 1)
@@ -596,9 +703,10 @@ local function send_biter_path(surface, spawn, path, count, biter_name, slot)
 			local unit = surface.create_entity {
 				name = biter_name,
 				position = position,
-				force = game.forces.enemy
+				force = unitForce
 			}
 
+			applyEnemyHealthMultiplier(unit, healthMultiplier)
 			group.add_member(unit)
 		end
 	end
@@ -650,13 +758,40 @@ local function spawnSpitterChild(entity)
 		return
 	end
 
+	-- the child is as tough as the wave its parent came from
+	local parentScaling = storage.enemyHealthScaling and storage.enemyHealthScaling[entity.unit_number]
+	if parentScaling then
+		applyEnemyHealthMultiplier(child, parentScaling.multiplier)
+	end
+
 	-- find the path the dead spitter's group was following
 	local commandable = entity.commandable
 	local parentGroup = commandable and commandable.parent_group
 	local pathData = parentGroup and storage.biter_paths and storage.biter_paths[parentGroup.unique_id]
 
-	-- no path left (group already attacking the silo), let the default ai handle it
+	-- no path left (group already attacking the silo), the default ai would go for turrets,
+	-- so send the child at the silo of the slot it died in
 	if not pathData then
+		for _, slotDef in pairs(mapModule.slotDefinitions) do
+			if mapModule.getPositionInSlot(position, slotDef) then
+				local mapSlot = storage.mapSlots[slotDef.id]
+				local targetForce = mapSlot and game.forces[tostring(mapSlot.forceName)]
+				local silo = targetForce and surface.find_entities_filtered({
+					name = "rocket-silo",
+					force = targetForce,
+					limit = 1
+				})[1]
+
+				if silo then
+					child.commandable.set_command({
+						type = defines.command.attack,
+						target = silo,
+						distraction = defines.distraction.none
+					})
+				end
+				break
+			end
+		end
 		return
 	end
 
@@ -1058,13 +1193,14 @@ local function startRoundForForce(slot, force)
 
 	mapModule.generateSlotLand(surface, slotMapDef, true);
 
-	-- radar inside the silo so this force always sees their whole slot
-	local siloPosition = mapModule.findSlotPlayerSpawnPoint(surface, force)
-	placeSlotRadar(surface, siloPosition, force)
+	-- hidden radar in the middle of the slot (not at the silo, which can be in a corner on some maps)
+	-- so this force always sees their whole slot. it has no collision, so players can build over it
+	local slotCenter = mapModule.getRelativeSlotPosition(slotMapDef, slotMapDef.width / 2, slotMapDef.height / 2)
+	placeSlotRadar(surface, slotCenter, force)
 
 	-- in pvp the enemy force also gets a radar here so they can watch this slot
 	if slot.isPvp == true and slot.enemyForce ~= nil then
-		placeSlotRadar(surface, siloPosition, game.forces[slot.enemyForce])
+		placeSlotRadar(surface, slotCenter, game.forces[slot.enemyForce])
 	end
 
   if not slot.mapTagId then
@@ -1774,15 +1910,15 @@ local function kickPlayerFromSlot(owner, kickedPlayer)
 	end
 end
 
---first boss-reward-item a force gets unlocks the poison cannon recipe (through its scripted tech)
---force.reset() after a game clears it again, so every new game has to earn it
+--first boss-reward-item a force gets unlocks the poison cannon and acid shooter recipes (through the scripted
+--ut-poison-cannon-one tech). force.reset() after a game clears it again, so every new game has to earn it
 local function unlockBossRewardRecipes(force)
   local tech = force.technologies["ut-poison-cannon-one"]
   if tech and not tech.researched then
     force.script_trigger_research("ut-poison-cannon-one")
 
     for _, player in pairs(force.connected_players) do
-      player.print("Boss reward collected! [recipe=ut-poison-cannon-one] UT Poison Cannon recipe unlocked.")
+      player.print("Boss reward collected! [recipe=ut-poison-cannon-one] UT Poison Cannon and [recipe=ut-acid-shooter] UT Acid Shooter recipes unlocked.")
     end
   end
 end
@@ -1885,7 +2021,23 @@ script.on_configuration_changed(function()
 	for _, surface in pairs(game.surfaces) do
 		surface.clear_pollution()
 	end
+	--existing saves: give everyone the clear corpses button
+	for _, player in pairs(game.players) do
+		corpseButton.ensure(player)
+	end
 end)
+
+--armoured biter corpses are removed 20 seconds after they die (scripts/biter-modules.lua)
+script.on_event(defines.events.on_post_entity_died, biterModules.onPostEntityDied, {
+	{filter = "type", type = "unit"}
+})
+
+--money trees only pay out when fully grown (scripts/money-tree.lua)
+script.on_event(defines.events.on_player_mined_entity, moneyTree.onMined, {{filter = "name", name = "coin-tree"}})
+script.on_event(defines.events.on_robot_mined_entity, moneyTree.onMined, {{filter = "name", name = "coin-tree"}})
+
+script.on_event(defines.events.on_player_display_resolution_changed, corpseButton.onResolutionOrScaleChanged)
+script.on_event(defines.events.on_player_display_scale_changed, corpseButton.onResolutionOrScaleChanged)
 
 script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
 	if event.setting == "frontier-td-allow-blueprint-import" then
@@ -2003,6 +2155,11 @@ script.on_event(defines.events.on_tick, function(event)
 		end
 	end
 
+	--friendly armoured biters from biter modules, only for machines of forces that own a map slot
+	biterModules.onTick(event.tick, game.surfaces[main_surface_name], function(forceName)
+		return mapModule.getSlotByForceName(forceName) ~= nil
+	end)
+
 	if storage.delayedTickActions then
 		for i = #storage.delayedTickActions, 1, -1 do
 			local action = storage.delayedTickActions[i]
@@ -2021,7 +2178,7 @@ end)
 
 script.on_nth_tick(60, function()
 	for _, force in pairs(game.forces) do
-		if force.name ~= "enemy" and force.name ~= "neutral" then
+		if force.name ~= "enemy" and force.name ~= "neutral" and force.name ~= SENT_ENEMY_FORCE_NAME then
 			local kills = getBiterKillsByForce(force)
 
 			for name, required_kills in pairs(kill_requirements) do
@@ -2116,6 +2273,12 @@ script.on_event(defines.events.on_entity_died, function(event)
 	end
 
 	spawnSpitterChild(entity)
+	biterModules.onEntityDied(event)
+
+	--biters sent by the other pvp team give no coins or boss reward items
+	if entity.force.name == SENT_ENEMY_FORCE_NAME then
+		return
+	end
 
 	local isBoss = string.find(entity.name:lower(), "boss")
 	local isSilo = entity.name == "rocket-silo"
@@ -2365,6 +2528,7 @@ script.on_event(defines.events.on_player_created, function(event)
 	end
 
 	teleportPlayerToTheirSpawn(surface, force, slotDef, player)
+	corpseButton.ensure(player)
 
 	player.print("Welcome to Frontier!")
 end)
@@ -2379,6 +2543,10 @@ script.on_event(defines.events.on_gui_click, function(event)
 	local player = game.get_player(event.player_index)
 
 	if not player then
+		return
+	end
+
+	if corpseButton.onClick(element, player) then
 		return
 	end
 
@@ -2856,7 +3024,8 @@ script.on_event(defines.events.on_gui_click, function(event)
 		local mapBiterWaveData = mapData.mapBiterWaveData
 		local availableDifficulties = {}
 		for difficultyId, difficulty in pairs(mapModule.difficulties) do
-			if mapBiterWaveData[difficultyId] then
+			-- the test difficulty is only offered to admins
+			if mapBiterWaveData[difficultyId] and (difficultyId ~= 4 or player.admin) then
 				table.insert(availableDifficulties, difficulty)
 			end
 		end
@@ -3240,7 +3409,95 @@ script.on_event(defines.events.on_robot_built_entity, function(event)
 	keepPortalIndestructible(event)
 end)
 
+--gives back what a purchase cost, for send biter offers that could not be sent
+local function refundMarketPurchase(player, price, count)
+	for _, ingredient in pairs(price) do
+		local amount = ingredient.count * count
+		local inserted = player.insert({name = ingredient.name, count = amount, quality = ingredient.quality})
+		if inserted < amount then
+			player.surface.spill_item_stack({
+				position = player.position,
+				stack = {name = ingredient.name, count = amount - inserted, quality = ingredient.quality}
+			})
+		end
+	end
+end
+
 script.on_event(defines.events.on_market_item_purchased, function(event)
+	local player = game.get_player(event.player_index)
+	local marketEntity = event.market
+	if not player or not player.valid or not marketEntity or not marketEntity.valid then
+		return
+	end
+
+	--slowdown capsules double in price for the buyer's force on every buy
+	if market.isSlowdownCapsuleOffer(marketEntity, event.offer_index) then
+		local paidPrice = market.getSlowdownCapsulePrice(player.force.name)
+		--a bulk buy (shift/ctrl click) would get them all at the old price, so only one is kept
+		if event.count > 1 then
+			local extra = event.count - 1
+			player.remove_item({name = "slowdown-capsule", count = extra})
+			refundMarketPurchase(player, {{name = "coin", count = paidPrice}}, extra)
+			player.print("Slowdown capsules can only be bought one at a time, the rest of your coins were refunded.")
+		end
+		local newPrice = market.doubleSlowdownCapsulePrice(marketEntity.surface, player.force)
+		player.force.print({"", player.name, " bought a slowdown capsule, the next one costs ", newPrice, " coins."})
+		return
+	end
+
+	if marketEntity.name ~= "attack-market" then
+		return
+	end
+
+	local sendOffer = market.getSendBiterOffer(event.offer_index)
+	if not sendOffer then
+		return
+	end
+
+	local slot = mapModule.getSlotByForceName(player.force.name)
+	local enemySlot = nil
+	if slot and slot.isPvp and slot.enemyForce then
+		enemySlot = mapModule.getSlotByForceName(slot.enemyForce)
+	end
+
+	if not enemySlot or not enemySlot.isGameStarted or enemySlot.isDead or not enemySlot.mapBiterPaths then
+		refundMarketPurchase(player, sendOffer.price, event.count)
+		player.print("There is no enemy team to send biters to right now, you got your science packs back.")
+		return
+	end
+
+	local surface = game.surfaces[main_surface_name]
+	if not surface then
+		refundMarketPurchase(player, sendOffer.price, event.count)
+		return
+	end
+
+	--one send per SEND_BITER_COOLDOWN_TICKS for the whole force, so neither one player nor several can spam it
+	storage.sendBiterNextTick = storage.sendBiterNextTick or {}
+	local forceIndex = player.force.index
+	local nextTick = storage.sendBiterNextTick[forceIndex] or 0
+	if game.tick < nextTick then
+		refundMarketPurchase(player, sendOffer.price, event.count)
+		player.print("Your team can only send biters once per second, you got your science packs back.")
+		return
+	end
+	storage.sendBiterNextTick[forceIndex] = game.tick + SEND_BITER_COOLDOWN_TICKS
+
+	--a bulk buy (shift/ctrl click) only sends one offer, the rest is refunded
+	if event.count > 1 then
+		refundMarketPurchase(player, sendOffer.price, event.count - 1)
+		player.print("Only one biter purchase per second, the rest of your science packs were refunded.")
+	end
+
+	local biterPaths = enemySlot.mapBiterPaths
+	send_biter_path(surface, biterPaths[1], biterPaths, sendOffer.count, sendOffer.biterName, enemySlot, getSentEnemyForce())
+
+	local enemyForce = game.forces[enemySlot.forceName]
+	local message = {"", player.name, " sent ", sendOffer.count, " ", {"entity-name." .. sendOffer.biterName}, "!"}
+	player.force.print(message)
+	if enemyForce then
+		enemyForce.print(message)
+	end
 end)
 
 script.on_event(defines.events.on_player_died, function(event)	
@@ -3286,7 +3543,16 @@ end)
 script.on_event(defines.events.on_entity_damaged, function(event)
 	local entity = event.entity
 
-	if not entity.valid or entity.name ~= "rocket-silo" then
+	if not entity.valid then
+		return
+	end
+
+	if entity.type == "unit" then
+		scaleEnemyDamageTaken(event)
+		return
+	end
+
+	if entity.name ~= "rocket-silo" then
 		return
 	end
 
@@ -3297,6 +3563,21 @@ script.on_event(defines.events.on_entity_damaged, function(event)
 			entity.health + event.final_damage_amount,
 			entity.max_health
 		)
+		return
+	end
+
+	--anything else hurting the silo: alert sound for the silo's team, at most once per SILO_ALERT_COOLDOWN_TICKS
+	storage.siloAlertNextTick = storage.siloAlertNextTick or {}
+	local force = entity.force
+	if game.tick >= (storage.siloAlertNextTick[force.index] or 0) then
+		storage.siloAlertNextTick[force.index] = game.tick + SILO_ALERT_COOLDOWN_TICKS
+		force.play_sound({path = "utility/alert_destroyed"})
+	end
+end)
+
+script.on_event(defines.events.on_object_destroyed, function(event)
+	if storage.enemyHealthScaling and event.useful_id then
+		storage.enemyHealthScaling[event.useful_id] = nil
 	end
 end)
 
@@ -3449,6 +3730,8 @@ end)
 -- called when player joins the game
 script.on_event(defines.events.on_player_joined_game, function(event)
 	local player = game.get_player(event.player_index)
+	--their resolution can be different from last time, ensure also moves it to the corner
+	corpseButton.ensure(player)
   if not player.character then
       return
   end
@@ -3575,6 +3858,41 @@ if not commands.commands["wavenext"] then
     if command.player_index then
       showNextWave(game.get_player(command.player_index))
     end
+  end)
+end
+
+--/setwave <number>, admin only: jumps your slot's running game straight to that wave
+if not commands.commands["setwave"] then
+  commands.add_command("setwave", "<wave> Admin only. Jumps your map slot to that wave.", function(command)
+    local player = command.player_index and game.get_player(command.player_index)
+    if not player or not player.valid then
+      return
+    end
+
+    if not player.admin then
+      player.print("Only admins can use /setwave.")
+      return
+    end
+
+    local slot = mapModule.getSlotByForceName(player.force.name)
+    if not slot or not slot.isGameStarted or slot.isDead or not slot.mapWaveData then
+      player.print("Your map slot does not have a game running.")
+      return
+    end
+
+    local totalWaves = #slot.mapWaveData
+    local targetWave = math.floor(tonumber(command.parameter) or 0)
+    if targetWave < 1 or targetWave > totalWaves then
+      player.print("Usage: /setwave <1-" .. tostring(totalWaves) .. ">")
+      return
+    end
+
+    local slotMapDef = mapModule.slotDefinitions[slot.id]
+    -- startWave adds 1 to currentWave
+    slot.currentWave = targetWave - 1
+    startWave(slot, slotMapDef)
+
+    game.forces[tostring(slot.forceName)].print(player.name .. " jumped to wave " .. tostring(targetWave) .. ".")
   end)
 end
 

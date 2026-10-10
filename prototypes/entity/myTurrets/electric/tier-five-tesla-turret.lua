@@ -1,7 +1,12 @@
 local turret = table.deepcopy(data.raw["electric-turret"]["tesla-turret"])
 local sounds = require("__base__.prototypes.entity.sounds")
 local hit_effects = require("__base__.prototypes.entity.hit-effects")
-local turretTint = {2, 2, 2, 1}
+-- tints only multiply (they can darken, never brighten) and any value above 1 switches the
+-- whole colour to the 0-255 scale, so white is {1, 1, 1, 1}. the whitening is done by whitenLayers below
+local turretTint = {1, 1, 1, 1}
+-- how much brighter the body gets: each body layer is drawn a second time additively with this tint.
+-- 0 = vanilla gray, 1 = about twice as bright (close to white)
+local whitenTint = {0.6, 0.6, 0.6, 1}
 local tesla_turret_shift = -26
 
 local function white_tesla_rising(inputs)
@@ -349,13 +354,36 @@ turret.resource_indicator_animation = white_tesla_led()
 
 turret.graphics_set.base_visualisation = white_tesla_base_visualisation()
 
+-- draws every body layer (not shadows or glows) a second time with additive blending,
+-- which adds the sprite's own colours on top of itself and pushes the gray towards white
+local function whitenLayers(animation)
+  local whitened = {}
+  for _, layer in ipairs(animation.layers) do
+    table.insert(whitened, layer)
+    if not layer.draw_as_shadow and not layer.draw_as_glow and not layer.blend_mode then
+      local copy = table.deepcopy(layer)
+      copy.blend_mode = "additive"
+      copy.tint = whitenTint
+      table.insert(whitened, copy)
+    end
+  end
+  animation.layers = whitened
+end
+
+whitenLayers(turret.folded_animation)
+whitenLayers(turret.preparing_animation)
+whitenLayers(turret.prepared_animation)
+whitenLayers(turret.ending_attack_animation)
+whitenLayers(turret.folding_animation)
+whitenLayers(turret.graphics_set.base_visualisation[1].animation)
+
 -- Tier 5 tesla turret: cooldown (fire rate) and beam damage are set on the
 -- white-tesla-beam-start / white-tesla-beam-bounce / tier-five-tesla-chain
 -- prototypes defined in white-tesla-beam.lua
 turret.attack_parameters = {
   type = "beam",
-  cooldown = 100,
-  range = 40,
+  cooldown = 120,
+  range = 35,
   range_mode = "center-to-bounding-box",
   fire_penalty = 0.9,
   source_direction_count = 64,

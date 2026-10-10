@@ -288,7 +288,8 @@ data:extend({
   },
 })
 
---hidden radar spawned inside each slot's silo, actively reveals the whole 200x200 slot
+--hidden radar spawned in the middle of each slot (control.lua), actively reveals the whole 200x200 slot.
+--no sprite (invisible), no collision (players build over it), not selectable, made indestructible when placed
 data:extend({
   {
     type = "radar",
@@ -306,7 +307,7 @@ data:extend({
     },
     hidden = true,
     max_health = 1,
-    --no collision so it can sit inside the silo
+    --no collision so players can build on top of it
     collision_box = {{-0.1, -0.1}, {0.1, 0.1}},
     collision_mask = {layers = {}},
     selectable_in_game = false,
@@ -320,7 +321,7 @@ data:extend({
     energy_per_nearby_scan = "1J",
     --no passive sector scanning, only the constant active area
     max_distance_of_sector_revealed = 0,
-    --in chunks (32 tiles), 4 chunks around the radar covers the whole slot from the silo
+    --in chunks (32 tiles), 4 chunks around the radar covers the whole slot from its middle
     max_distance_of_nearby_sector_revealed = 4,
     connects_to_other_radars = false
   }
@@ -337,7 +338,7 @@ local function portalEntity(name, filename)
     order = "d-a-b",
     subgroup = "other",
     max_health = 150,
-    minable = {mining_time = 0.5, result = name}, --no recipe, the map places them and players move them
+    minable = {mining_time = 0.5, result = name},
     collision_box = {{-0.9, -0.9}, {0.9, 0.9}},
     collision_mask = {layers = {}}, --players walk over it
     selection_box = {{-1, -1}, {1, 1}},

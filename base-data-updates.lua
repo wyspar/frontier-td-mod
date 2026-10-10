@@ -18,10 +18,15 @@ data.raw.plant["yumako-tree"].autoplace.tile_restriction = {}
 --Tower changes
 data.raw.item["agricultural-tower"].weight = 100 * kg
 
---frep.remove_ingredient("agricultural-tower", "landfill")
---frep.replace_ingredient("agricultural-tower", "electronic-circuit", "processing-unit")
-frep.replace_ingredient("agricultural-tower", "steel-plate", "carbon-fiber")
---frep.replace_ingredient("agricultural-tower", "spoilage", {type="item", name="pentapod-egg", amount=1})
+--only things players can make here (no gleba carbon fiber or spoilage), unlocked by our agriculture tech
+data.raw.recipe["agricultural-tower"].ingredients =
+{
+  {type = "item", name = "steel-plate", amount = 50},
+  {type = "item", name = "electronic-circuit", amount = 50},
+  {type = "item", name = "advanced-circuit", amount = 20},
+  {type = "item", name = "electric-engine-unit", amount = 2},
+  {type = "item", name = "landfill", amount = 50}
+}
 
 
 local agricultural_tower = data.raw["agricultural-tower"]["agricultural-tower"]
@@ -94,6 +99,11 @@ biolab_recipe.ingredients = {
   {type = "item", name = "electronic-circuit", amount = 10},
 }
 biolab_recipe.category = "electronics"
+
+--big mining drill (5x5) mines a 7x7 area instead of 13x13, 1 tile past the drill on every side.
+--the drill is an odd size so the area has to be odd too, radius x.49 = (2 * x + 1) tiles across
+local bigMiner_entity = data.raw["mining-drill"]["big-mining-drill"]
+bigMiner_entity.resource_searching_radius = 3.49
 
 local bigMiner_recipe = data.raw.recipe["big-mining-drill"]
 bigMiner_recipe.ingredients = {
@@ -599,6 +609,11 @@ modules_tech.effects =
   {
     type = "unlock-recipe",
     recipe = "productivity-module"
+  },
+  --biter module 2 and 3 have their own techs in prototypes/technology.lua
+  {
+    type = "unlock-recipe",
+    recipe = "biter-module-1"
   }
 }
 
@@ -800,8 +815,36 @@ electricFurnace_entity.graphics_set.working_visualisations =
   }
 }
 
+local ultraFlyer_entity = data.raw.unit['ultra-flyer']
+if ultraFlyer_entity then
+  ultraFlyer_entity.max_health = 35000
+  ultraFlyer_entity.attack_parameters.range = 25
+  ultraFlyer_entity.has_belt_immunity = true
+end
+
+--flyer health (l9m2-flyer-enemy mod defaults: small 60, medium 120, big 480, behemoth 1920)
+local smallFlyer_entity = data.raw.unit['small-flyer']
+if smallFlyer_entity then
+  smallFlyer_entity.max_health = 100
+end
+
+local mediumFlyer_entity = data.raw.unit['medium-flyer']
+if mediumFlyer_entity then
+  mediumFlyer_entity.max_health = 350
+end
+
+local bigFlyer_entity = data.raw.unit['big-flyer']
+if bigFlyer_entity then
+  bigFlyer_entity.max_health = 1500
+end
+
+local behemothFlyer_entity = data.raw.unit['behemoth-flyer']
+if behemothFlyer_entity then
+  behemothFlyer_entity.max_health = 6000
+end
+
 local slowdownSticker = data.raw["sticker"]["slowdown-sticker"]
-slowdownSticker.duration_in_ticks = 10 * 60 --10 seconds (60 ticks = 1 second)
+slowdownSticker.duration_in_ticks = 20 * 60 --10 seconds (60 ticks = 1 second)
 --slowdownSticker.target_movement_modifier = 0.5 --how much they're slowed
 
 local stunSticker = data.raw["sticker"]["stun-sticker"]
@@ -811,3 +854,92 @@ stunSticker.target_movement_modifier = 0
 local electricStunSticker = data.raw["sticker"]["electric-mini-stun"]
 electricStunSticker.duration_in_ticks = 20
 electricStunSticker.target_movement_modifier = 0.1
+
+
+--armoured biters (ArmouredBiters mod, spawned as friendly biters by the biter modules):
+--small and medium walk at ARMOURED_BITER_SPEED, big a bit faster than a vanilla behemoth biter
+--(distance_per_frame is scaled the same way so the walk animation still matches the speed),
+--the big one has 500 hp, their attacks do extra damage, and every attack also hurts the biter itself.
+--the self damage uses its own damage type so their resistances never reduce it
+local ARMOURED_BITER_SPEED = 0.3
+--big armoured biter speed = vanilla behemoth biter speed times this
+local BIG_ARMOURED_BITER_SPEED_FACTOR = 1.1
+--share of the biter's max health it loses on each of its own attacks
+local ARMOURED_BITER_SELF_DAMAGE = 0.33
+--how long their corpses stay (time_before_removed), the vanilla default is 15 minutes.
+--scripts/biter-modules.lua also destroys them from script after the same 20 seconds as a backup
+local ARMOURED_BITER_CORPSE_TICKS = 20 * 60
+
+data:extend({
+  {
+    type = "damage-type",
+    name = "armoured-biter-self-damage"
+  }
+})
+
+--attack damage multiplier per biter, 2 = +100%. only the damage to the target, not the self damage
+local ARMOURED_BITER_DAMAGE_MULTIPLIERS = {
+  ["small-armoured-biter"] = 2,
+  ["medium-armoured-biter"] = 2,
+  ["big-armoured-biter"] = 4,
+}
+
+--multiplies the attack damage and adds the self damage
+local function adjustAttack(action, damageMultiplier, selfDamage)
+  if not action then
+    return
+  end
+  --an action can be one action or a list of them, same for action_delivery and target_effects
+  local actions = action.type and {action} or action
+  for _, singleAction in pairs(actions) do
+    local delivery = singleAction.action_delivery
+    local deliveries = (delivery and delivery.type) and {delivery} or (delivery or {})
+    for _, singleDelivery in pairs(deliveries) do
+      local effects = singleDelivery.target_effects
+      effects = (effects and effects.type) and {effects} or (effects or {})
+      for _, effect in pairs(effects) do
+        if effect.type == "damage" and effect.damage then
+          effect.damage.amount = effect.damage.amount * damageMultiplier
+        end
+      end
+      singleDelivery.source_effects = {
+        type = "damage",
+        damage = {amount = selfDamage, type = "armoured-biter-self-damage"}
+      }
+    end
+  end
+end
+
+for biterName, damageMultiplier in pairs(ARMOURED_BITER_DAMAGE_MULTIPLIERS) do
+  local biter = data.raw["unit"][biterName]
+  if biter then
+    local speed = ARMOURED_BITER_SPEED
+    if biterName == "big-armoured-biter" then
+      biter.max_health = 500
+      speed = data.raw["unit"]["behemoth-biter"].movement_speed * BIG_ARMOURED_BITER_SPEED_FACTOR
+    end
+    biter.distance_per_frame = biter.distance_per_frame * (speed / biter.movement_speed)
+    biter.movement_speed = speed
+    adjustAttack(biter.attack_parameters.ammo_type.action, damageMultiplier, math.max(1, biter.max_health * ARMOURED_BITER_SELF_DAMAGE))
+  end
+end
+
+for _, corpseName in pairs({"small_armoured-corpse", "medium-armoured-corpse", "big-armoured-corpse", "behemoth-armoured-corpse"}) do
+  local corpse = data.raw["corpse"][corpseName]
+  if corpse then
+    corpse.time_before_removed = ARMOURED_BITER_CORPSE_TICKS
+  end
+end
+
+--vehicle machine gun: sold in the weapons market (scripts/market.lua). it uses the submachine gun icon,
+--so it gets a slightly darker tint to tell them apart, and it is unhidden so it shows up like a normal item
+local vehicleMachineGun = data.raw["gun"]["vehicle-machine-gun"]
+vehicleMachineGun.hidden = false
+vehicleMachineGun.icons = {
+  {
+    icon = vehicleMachineGun.icon,
+    icon_size = vehicleMachineGun.icon_size or 64,
+    tint = {0.72, 0.72, 0.72, 1}
+  }
+}
+vehicleMachineGun.icon = nil

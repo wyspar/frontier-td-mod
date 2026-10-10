@@ -166,4 +166,16 @@ data:extend({
     },
     results = {{type = "item", name = "ut-poison-cannon-one", amount = 1}}
   },
+  {
+    type = "recipe",
+    name = "ut-acid-shooter",
+    enabled = false, -- unlocked with the poison cannon by the ut-poison-cannon-one technology
+    energy_required = 5,
+    ingredients =
+    {
+      {type = "item", name = "boss-reward-item", amount = 2},
+      {type = "item", name = "coin", amount = 2000},
+    },
+    results = {{type = "item", name = "ut-acid-shooter", amount = 1}}
+  },
 })

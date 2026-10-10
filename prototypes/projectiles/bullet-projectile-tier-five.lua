@@ -23,7 +23,7 @@ local projectile = {
         {
           type = "damage",
           damage = {
-            amount = 30,
+            amount = 20,
             type = "physical"
           },
           force = "enemy"

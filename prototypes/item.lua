@@ -480,6 +480,26 @@ data:extend({
   utPoisonCannonOne
 })
 
+--acid turrets
+local utAcidShooter = table.deepcopy(data.raw.item["gun-turret"])
+utAcidShooter.name = "ut-acid-shooter"
+utAcidShooter.place_result = "ut-acid-shooter"
+utAcidShooter.subgroup = "acid-turrets"
+utAcidShooter.order = "a[ut-acid-shooter]"
+utAcidShooter.stack_size = 10
+utAcidShooter.icon = nil
+utAcidShooter.icons = {
+  {
+    icon = "__space-age__/graphics/icons/rocket-turret.png",
+    icon_size = 64,
+    tint = {0.35, 1, 0.2, 1}
+  }
+}
+
+data:extend({
+  utAcidShooter
+})
+
 --portals have no recipe, they come from the map and can be picked up and moved
 local function portalItem(name, order)
   return {

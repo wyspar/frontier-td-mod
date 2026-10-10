@@ -9,15 +9,15 @@ local towerCoinCosts = {
     upgradeToName = "tier-three-gun-turret"
   },
   ["tier-three-gun-turret"] = {
-    cost = 45,
+    cost = 50,
     upgradeToName = "tier-four-gun-turret"
   },
   ["tier-four-gun-turret"] = {
-    cost = 75,
+    cost = 250,
     upgradeToName = "tier-five-gun-turret"
   },
   ["tier-five-gun-turret"] = {
-    cost = 225,
+    cost = 1000,
     upgradeToName = nil
   },
 
@@ -27,41 +27,41 @@ local towerCoinCosts = {
     upgradeToName = "tier-two-laser-turret"
   },
   ["tier-two-laser-turret"] = {
-    cost = 35,
+    cost = 50,
     upgradeToName = "tier-three-laser-turret"
   },
   ["tier-three-laser-turret"] = {
-    cost = 65,
+    cost = 125,
     upgradeToName = "tier-four-laser-turret"
   },
   ["tier-four-laser-turret"] = {
-    cost = 125,
+    cost = 200,
     upgradeToName = "tier-five-laser-turret"
   },
   ["tier-five-laser-turret"] = {
-    cost = 175,
+    cost = 1200,
     upgradeToName = nil
   },
 
   --flamers
   ["tier-one-flamer-turret"] = {
-    cost = 30,
+    cost = 50,
     upgradeToName = "tier-two-flamer-turret"
   },
   ["tier-two-flamer-turret"] = {
-    cost = 50,
+    cost = 100,
     upgradeToName = "tier-three-flamer-turret"
   },
   ["tier-three-flamer-turret"] = {
-    cost = 100,
+    cost = 275,
     upgradeToName = "tier-four-flamer-turret"
   },
   ["tier-four-flamer-turret"] = {
-    cost = 200,
+    cost = 500,
     upgradeToName = "tier-five-flamer-turret"
   },
   ["tier-five-flamer-turret"] = {
-    cost = 300,
+    cost = 1000,
     upgradeToName = nil
   },
 

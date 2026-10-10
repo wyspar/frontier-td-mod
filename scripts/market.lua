@@ -7,9 +7,46 @@ local attackMarketItems = {
 
 }
 
+--pvp only: buy biters that are sent down the other team's biter path (force "enemy-sent", they give no coins or boss rewards)
+--the offer index is the position in this list, on_market_item_purchased in control.lua looks it up with market.getSendBiterOffer
+market.sendBiterOffers = {
+  { biterName = 'big-spitter',             count = 1, price = { { name = 'tier-two-science-pack', count = 12 } } },
+  { biterName = 'behemoth-spitter',        count = 1, price = { { name = 'tier-three-science-pack', count = 5 } } },
+  { biterName = 'behemoth-physical-biter', count = 1, price = { { name = 'tier-three-science-pack', count = 15 } } },
+  { biterName = 'behemoth-fire-biter',     count = 1, price = { { name = 'tier-four-science-pack', count = 20 } } },
+  { biterName = 'boss-biter-1',            count = 1, price = { { name = 'tier-five-science-pack', count = 50 } } },
+}
+
+function market.getSendBiterOffer(offerIndex)
+  return market.sendBiterOffers[offerIndex]
+end
+
+--fills only this attack market, the send biter offers are only added in pvp
+function market.fillAttackMarket(entity, isPvp)
+  if not entity or not entity.valid then
+    return
+  end
+
+  entity.clear_market_items()
+  if not isPvp then
+    return
+  end
+
+  for _, sendOffer in ipairs(market.sendBiterOffers) do
+    entity.add_market_item({
+      price = sendOffer.price,
+      offer = {
+        type = 'nothing',
+        effect_description = { 'frontier-td-market.send-biters', sendOffer.count, { 'entity-name.' .. sendOffer.biterName } }
+      }
+    })
+  end
+end
+
 local weaponMarketItems = {
   { price = { { name = 'coin', count = 45 } },    offer = { type = 'give-item', item = 'submachine-gun', count = 1 } },
-  { price = { { name = 'coin', count = 25 } },    offer = { type = 'give-item', item = 'slowdown-capsule', count = 1 } },
+  { price = { { name = 'coin', count = 200 } },   offer = { type = 'give-item', item = 'vehicle-machine-gun', count = 1 } },
+  { price = { { name = 'coin', count = 20 } },    offer = { type = 'give-item', item = 'slowdown-capsule', count = 1 } },
   { 
 		price = { { name = 'coin', count = 100 } },  
 		offer = { type = 'give-item', item = 'fission-reactor-equipment', count = 1 } 
@@ -36,6 +73,53 @@ local weaponMarketItems = {
 	},
   { price = { { name = 'coin', count = 20 } },    offer = { type = 'give-item', item = 'exoskeleton-equipment', count = 1 } },
 }
+
+--the slowdown capsule price doubles for a force every time someone on it buys one (20, 40, 80, ...),
+--capped at SLOWDOWN_CAPSULE_MAX_PRICE. it goes back to the base price when the slot is set up for a new round
+local SLOWDOWN_CAPSULE_ITEM = 'slowdown-capsule'
+local SLOWDOWN_CAPSULE_BASE_PRICE = 20
+local SLOWDOWN_CAPSULE_MAX_PRICE = 128000
+
+function market.getSlowdownCapsulePrice(forceName)
+  storage.slowdownCapsulePrice = storage.slowdownCapsulePrice or {}
+  return storage.slowdownCapsulePrice[forceName] or SLOWDOWN_CAPSULE_BASE_PRICE
+end
+
+function market.resetSlowdownCapsulePrice(forceName)
+  storage.slowdownCapsulePrice = storage.slowdownCapsulePrice or {}
+  storage.slowdownCapsulePrice[forceName] = nil
+end
+
+function market.isSlowdownCapsuleOffer(entity, offerIndex)
+  local item = weaponMarketItems[offerIndex]
+  return entity.name == 'weapons-market' and item ~= nil and item.offer.item == SLOWDOWN_CAPSULE_ITEM
+end
+
+--fills one weapons market, with the slowdown capsule at its force's current price
+local function fillWeaponsMarket(entity)
+  local slowdownPrice = market.getSlowdownCapsulePrice(entity.force.name)
+  for _, item in ipairs(weaponMarketItems) do
+    if item.offer.item == SLOWDOWN_CAPSULE_ITEM then
+      entity.add_market_item({ price = { { name = 'coin', count = slowdownPrice } }, offer = item.offer })
+    else
+      entity.add_market_item(item)
+    end
+  end
+end
+
+--doubles the force's slowdown capsule price and refills that force's weapons markets so they show it
+function market.doubleSlowdownCapsulePrice(surface, force)
+  storage.slowdownCapsulePrice = storage.slowdownCapsulePrice or {}
+  local price = math.min(market.getSlowdownCapsulePrice(force.name) * 2, SLOWDOWN_CAPSULE_MAX_PRICE)
+  storage.slowdownCapsulePrice[force.name] = price
+  for _, entity in pairs(surface.find_entities_filtered({name = 'weapons-market', force = force})) do
+    if entity.valid then
+      entity.clear_market_items()
+      fillWeaponsMarket(entity)
+    end
+  end
+  return price
+end
 
 local landMarket_Items = {
 }
@@ -131,9 +215,7 @@ function market.fillMarket(surface, marketName, entityName)
           entity.add_market_item(item)
         end
       elseif marketName == 'weapons-market' then
-        for _, item in pairs(weaponMarketItems) do
-          entity.add_market_item(item)
-        end
+        fillWeaponsMarket(entity)
       end
       -- this is for having multiple of the same market, need to mark it with a name tag / entity name tag
       -- if entity.name_tag == marketName then

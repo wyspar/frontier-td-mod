@@ -49,6 +49,10 @@ require("prototypes.entity.myTurrets.fire.tier-four-flamer-turret")
 require("prototypes.entity.myTurrets.fire.tier-five-flamer-turret")
 
 require("prototypes.entity.myTurrets.poison.ut-poison-cannon-one")
+require("prototypes.entity.myTurrets.acid.ut-acid-shooter")
+
+require("prototypes.biter-modules")
+require("prototypes.money-tree")
 
 
 require("base-data-updates")

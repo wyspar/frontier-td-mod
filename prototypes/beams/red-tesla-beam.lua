@@ -227,31 +227,45 @@ local redTeslaBeamStart =
   action_triggered_automatically = false,
   action =
   {
-    type = "direct",
-    action_delivery =
     {
-      type = "instant",
-      target_effects =
+      type = "direct",
+      action_delivery =
       {
+        type = "instant",
+        target_effects =
         {
-          type = "damage",
-          damage = { amount = 140, type = "electric" }
-        },
+          {
+            type = "damage",
+            damage = { amount = 140, type = "electric" }
+          },
+          {
+            type = "create-sticker",
+            sticker = "tesla-turret-stun"
+          },
+          {
+            type = "create-sticker",
+            sticker = "tesla-turret-slow"
+          },
+          {
+            type = "play-sound",
+            sound = space_age_sounds.tesla_turret_beam_deflect
+          }
+        }
+      }
+    },
+    {
+      --push-back only hits "ground-unit" targets, boss-biter-6 doesn't have that mask so it can't be pushed
+      type = "direct",
+      trigger_target_mask = {"ground-unit"},
+      action_delivery =
+      {
+        type = "instant",
+        target_effects =
         {
-          type = "push-back",
-          distance = 0.5
-        },
-        {
-          type = "create-sticker",
-          sticker = "tesla-turret-stun"
-        },
-        {
-          type = "create-sticker",
-          sticker = "tesla-turret-slow"
-        },
-        {
-          type = "play-sound",
-          sound = space_age_sounds.tesla_turret_beam_deflect
+          {
+            type = "push-back",
+            distance = 0.45
+          }
         }
       }
     }
@@ -278,27 +292,41 @@ local redTeslaBeamBounce =
   action_triggered_automatically = false,
   action =
   {
-    type = "direct",
-    action_delivery =
     {
-      type = "instant",
-      target_effects =
+      type = "direct",
+      action_delivery =
       {
+        type = "instant",
+        target_effects =
         {
-          type = "damage",
-          damage = { amount = 140, type = "electric" }
-        },
+          {
+            type = "damage",
+            damage = { amount = 140, type = "electric" }
+          },
+          {
+            type = "create-sticker",
+            sticker = "tesla-turret-stun"
+          },
+          {
+            type = "create-sticker",
+            sticker = "tesla-turret-slow"
+          }
+        }
+      }
+    },
+    {
+      --push-back only hits "ground-unit" targets, boss-biter-6 doesn't have that mask so it can't be pushed
+      type = "direct",
+      trigger_target_mask = {"ground-unit"},
+      action_delivery =
+      {
+        type = "instant",
+        target_effects =
         {
-          type = "push-back",
-          distance = 0.25
-        },
-        {
-          type = "create-sticker",
-          sticker = "tesla-turret-stun"
-        },
-        {
-          type = "create-sticker",
-          sticker = "tesla-turret-slow"
+          {
+            type = "push-back",
+            distance = 0.25
+          }
         }
       }
     }
