@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.1.0
+Version: 1.1.1
 Date: 2026-09-01
   Changes:
     - Started frontier td
@@ -38,3 +38,7 @@ Date: 2026-10-06
     - Biter modules
     - New Map, Deep Forest
     - Added money tree
+Date: 2026-10-10
+  Changes:
+    - Lowered boss 1 hp
+    - Increased other bosses hp

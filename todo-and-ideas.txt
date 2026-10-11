@@ -12,6 +12,12 @@ I like the idea of a two spawners, two lanes, a fork in the road.
   fork in the road map, might be a big redo of everything cause two spawners, then the biters need to know which is their path, left or right
   Use 'volcanic-folds-warm' as the map tile
 
+
+make the red area a little bigger around spawner
+move spawner to left and top in map 2
+biter modules cant go in em plants
+friendly armoured biters need to walk to the enemy spawner
+
 bullet modules?  maybe like spawn a friendly biter to fight for you? DONE
 make biters have resistances DONE, still missing like acid
 redo wave gen script, then make waves for easy, normal, hard DONE

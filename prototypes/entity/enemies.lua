@@ -76,7 +76,7 @@ local bossBiter1 = {
   order="b-a-c",
   icon = "__base__/graphics/icons/big-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 25000,
+  max_health = 15000,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_big_biter,
   impact_category = "organic",
@@ -84,7 +84,7 @@ local bossBiter1 = {
   {
     {
       type = "physical",
-      percent = 25
+      percent = 15
     }
   },
   spawning_time_modifier = 3,
@@ -111,7 +111,7 @@ local bossBiter1 = {
     range_mode = "bounding-box-to-bounding-box"
   },
   vision_distance = 30,
-  movement_speed = 0.14,
+  movement_speed = 0.11,
   distance_per_frame = 0.30,
   has_belt_immunity = true,
   -- in pu
@@ -142,27 +142,27 @@ local bossBiterTiers = {
   { --laser
     name = "boss-biter-3",
     scale = 3,
-    maxHealth = 60000,
+    maxHealth = 70000,
     movementSpeed = 0.10,
     damage = 300,
     tint1 = {0.9, 0.8, 0.1, 1},
     tint2 = {0.1, 0.2, 0.55, 0.8},
     resistances =
     {
-      {type = "laser", percent = 50}
+      {type = "laser", percent = 80}
     }
   },
   { --explosion
     name = "boss-biter-4",
     scale = 4,
-    maxHealth = 100000,
+    maxHealth = 125000,
     movementSpeed = 0.10,
     damage = 450,
     tint1 = {0.9, 0.15, 0.15, 1},
     tint2 = {0.55, 0.05, 0.05, 0.8},
     resistances =
     {
-      {type = "explosion", percent = 60}
+      {type = "explosion", percent = 80}
     }
   },
   { --electric, laser, poison, acid
@@ -175,10 +175,10 @@ local bossBiterTiers = {
     tint2 = {0.35, 0.8, 0.2, 0.8},
     resistances =
     {
-      {type = "electric", percent = 45},
-      {type = "laser", percent = 45},
-      {type = "poison", percent = 45},
-      {type = "acid", percent = 45}
+      {type = "electric", percent = 60},
+      {type = "laser", percent = 60},
+      {type = "poison", percent = 60},
+      {type = "acid", percent = 60}
     }
   },
   { --50% everything
