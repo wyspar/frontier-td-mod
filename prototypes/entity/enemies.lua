@@ -2,7 +2,7 @@ require ("__base__.prototypes.entity.enemy-constants")
 require ("__base__.prototypes.entity.biter-animations")
 require ("__base__.prototypes.entity.spitter-animations")
 require ("__base__.prototypes.entity.spawner-animation")
-local biter_ai_settings = require ("__base__.prototypes.entity.biter-ai-settings")
+local biter_ai_settings = { destroy_when_commands_fail = true, allow_try_return_to_spawner = true } -- inlined: __base__.prototypes.entity.biter-ai-settings was removed in Factorio 2.1
 local enemy_autoplace = require ("__base__.prototypes.entity.enemy-autoplace-utils")
 local sounds = require ("__base__.prototypes.entity.sounds")
 local hit_effects = require ("__base__.prototypes.entity.hit-effects")

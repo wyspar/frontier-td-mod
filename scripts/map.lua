@@ -372,7 +372,7 @@ local function generate_structures(surface, slot, structures)
 			})
 
 			--portals can be picked up and moved by the slot owners
-			entity.minable = (entity.name == "portal-1" or entity.name == "portal-2")
+			entity.minable_flag = (entity.name == "portal-1" or entity.name == "portal-2")
 			if (entity.name ~= "rocket-silo") then
 				entity.destructible = false
 			end
@@ -412,7 +412,7 @@ local function generate_structures(surface, slot, structures)
 				})
 
 				if entity then
-					entity.minable = true
+					entity.minable_flag = true
 					entity.destructible = true
 				end
 			end
@@ -593,8 +593,8 @@ function map.generateSlotLand(surface, slot, generateStructures)
 					force = game.forces.enemy
 				})
 				spawner.destructible = false
-				spawner.active = false
-				spawner.minable = false
+				spawner.disabled_by_script = true
+				spawner.minable_flag = false
 			elseif i == #biterPaths then
 				-- last path
 				tiles[#tiles + 1] = {
@@ -827,13 +827,13 @@ function map.createStartingPlayer(player, slot)
 		end
 	end
 
-	player.set_quick_bar_slot(1, "turret-upgrade-tool")
-	player.set_quick_bar_slot(2, "infinite-gun-turret")
-	player.set_quick_bar_slot(3, "tier-one-laser-turret")
-	player.set_quick_bar_slot(4, "tier-one-flamer-turret")
-	player.set_quick_bar_slot(5, "tier-one-tesla-turret")
-	player.set_quick_bar_slot(9, "boss-reward-item")
-	player.set_quick_bar_slot(10, "coin")
+	player.set_quick_bar_slot(1, 1, "turret-upgrade-tool")
+	player.set_quick_bar_slot(1, 2, "infinite-gun-turret")
+	player.set_quick_bar_slot(1, 3, "tier-one-laser-turret")
+	player.set_quick_bar_slot(1, 4, "tier-one-flamer-turret")
+	player.set_quick_bar_slot(1, 5, "tier-one-tesla-turret")
+	player.set_quick_bar_slot(1, 9, "boss-reward-item")
+	player.set_quick_bar_slot(1, 10, "coin")
 
 end
 

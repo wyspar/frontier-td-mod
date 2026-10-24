@@ -70,7 +70,7 @@ for _, tree in pairs(data.raw["tree"]) do
     tree.minable.result = nil
     tree.minable.count = nil
     tree.minable.results = {
-      {type = "item", name = "coin", amount = 1, probability = TREE_COIN_CHANCE}
+      {type = "item", name = "coin", amount = 1, independent_probability = TREE_COIN_CHANCE}
     }
   end
 end

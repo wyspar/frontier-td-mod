@@ -413,7 +413,7 @@ data:extend({
     icon = "__frontier-td__/graphics/icons/compressed-coal.png",
     icon_size = 64,
     --dark_background_icon = "__base__/graphics/icons/coal-dark-background.png",
-    fuel_category = "chemical",
+    fuel_categories = {"chemical"},
     fuel_value = "9.2MJ",
     subgroup = "raw-resource",
     order = "c[compressed-coal]",

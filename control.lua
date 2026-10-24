@@ -1087,7 +1087,7 @@ local function placeSlotRadar(surface, position, radarForce)
 
 	if radar then
 		radar.destructible = false
-		radar.minable = false
+		radar.minable_flag = false
 	end
 end
 

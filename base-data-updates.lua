@@ -34,7 +34,6 @@ agricultural_tower.energy_usage = "500kW"
 agricultural_tower.crane_energy_usage = "500kW"
 
 --Assembler changes
-table.insert(data.raw["assembling-machine"]["assembling-machine-1"].crafting_categories, "organic-or-assembling")
 data.raw['assembling-machine']['assembling-machine-2'].crafting_speed = 1
 data.raw['assembling-machine']['assembling-machine-3'].crafting_speed = 2
 
@@ -98,7 +97,7 @@ biolab_recipe.ingredients = {
   {type = "item", name = "copper-plate", amount = 10},
   {type = "item", name = "electronic-circuit", amount = 10},
 }
-biolab_recipe.category = "electronics"
+biolab_recipe.categories = {"crafting", "electromagnetics"}
 
 --big mining drill (5x5) mines a 7x7 area instead of 13x13, 1 tile past the drill on every side.
 --the drill is an odd size so the area has to be odd too, radius x.49 = (2 * x + 1) tiles across
@@ -112,7 +111,7 @@ bigMiner_recipe.ingredients = {
   {type = "item", name = "electronic-circuit", amount = 4},
 }
 bigMiner_recipe.energy_required = 10
-bigMiner_recipe.category = "electronics"
+bigMiner_recipe.categories = {"crafting", "electromagnetics"}
 
 local heatEx_recipe = data.raw.recipe["heat-exchanger"]
 heatEx_recipe.ingredients = {
@@ -151,11 +150,11 @@ electricFurnace_recipe.ingredients = {
   {type = "item", name = "steel-plate", amount = 5},
   {type = "item", name = "electronic-circuit", amount = 5}
 }
-electricFurnace_recipe.category = "electronics"
+electricFurnace_recipe.categories = {"crafting", "electromagnetics"}
 electricFurnace_recipe.allow_productivity = true
 
-data.raw.recipe['chemical-plant'].category = "electronics"
-data.raw.recipe['assembling-machine-3'].category = "electronics"
+data.raw.recipe['chemical-plant'].categories = {"crafting", "electromagnetics"}
+data.raw.recipe['assembling-machine-3'].categories = {"crafting", "electromagnetics"}
 
 local concrete_recipe = data.raw.recipe['concrete']
 concrete_recipe.ingredients =
@@ -166,7 +165,7 @@ concrete_recipe.ingredients =
 }
 
 local electricUnit_recipe = data.raw.recipe['electric-engine-unit']
-electricUnit_recipe.category = nil
+electricUnit_recipe.categories = nil
 electricUnit_recipe.ingredients =
 {
   {type = "item", name = "engine-unit", amount = 1},
@@ -183,7 +182,7 @@ redChip_recipe.ingredients =
 }
 
 local blueChip_recipe = data.raw.recipe['processing-unit']
-blueChip_recipe.category = "electronics"
+blueChip_recipe.categories = {"crafting", "electromagnetics"}
 blueChip_recipe.ingredients =
 {
   {type = "item", name = "electronic-circuit", amount = 10},
@@ -259,7 +258,7 @@ roboport_recipe.ingredients =
   {type = "item", name = "electric-engine-unit", amount = 4},
   {type = "item", name = "advanced-circuit", amount = 15}
 }
-roboport_recipe.category = "electronics"
+roboport_recipe.categories = {"crafting", "electromagnetics"}
 
 local speedMod_recipe = data.raw.recipe['speed-module']
 speedMod_recipe.ingredients =

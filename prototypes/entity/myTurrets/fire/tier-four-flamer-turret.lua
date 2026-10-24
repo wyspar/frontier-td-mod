@@ -599,8 +599,15 @@ data:extend(
       }
     },
 
+    -- Factorio 2.1 made the flamethrower connectors 8-way (N, NE, E, SE, S, SW, W, NW).
+    -- This is a 4-way "turret", so keep only N, E, S, W.
     circuit_connector =
-      circuit_connector_definitions["flamethrower-turret"],
+      {
+        circuit_connector_definitions["flamethrower-turret"][1],
+        circuit_connector_definitions["flamethrower-turret"][3],
+        circuit_connector_definitions["flamethrower-turret"][5],
+        circuit_connector_definitions["flamethrower-turret"][7],
+      },
     circuit_wire_max_distance =
       default_circuit_wire_max_distance,
 

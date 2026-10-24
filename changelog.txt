@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.1.1
+Version: 1.2.0
 Date: 2026-09-01
   Changes:
     - Started frontier td
@@ -42,3 +42,6 @@ Date: 2026-10-10
   Changes:
     - Lowered boss 1 hp
     - Increased other bosses hp
+Date: 2026-10-24
+  Changes:
+    - Update to 2.1

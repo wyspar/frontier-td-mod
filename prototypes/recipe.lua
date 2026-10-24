@@ -32,7 +32,7 @@ data:extend({
     type = "recipe",
     name = "compressed-coal",
     enabled = false,
-    category = "chemistry",
+    categories = {"chemistry"},
     energy_required = 3,
     ingredients =
     {
@@ -46,7 +46,7 @@ data:extend({
     type = "recipe",
     name = "ice-making",
     enabled = false,
-    category = "chemistry",
+    categories = {"chemistry"},
     energy_required = 10,
     ingredients =
     {
@@ -60,7 +60,7 @@ data:extend({
     type = "recipe",
     name = "fine-stone",
     enabled = false,
-    category = "crushing",
+    categories = {"crushing"},
     subgroup="space-crushing",
     energy_required = 2,
     ingredients =
@@ -74,7 +74,7 @@ data:extend({
     type = "recipe",
     name = "small-electric-pole-iron",
     enabled = false,
-    category = "electronics",
+    categories = {"crafting", "electromagnetics"},
     ingredients =
     {
       {type = "item", name = "iron-stick", amount = 2},
@@ -116,7 +116,7 @@ data:extend({
     name = "tier-three-science-pack",
     enabled = false,
     energy_required = 6,
-    category = "crafting-with-fluid",
+    categories = {"crafting-with-fluid"},
     ingredients =
     {
       {type = "item", name = "medium-electric-pole", amount = 3},

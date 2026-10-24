@@ -1,4 +1,8 @@
 IDEAS AND TODO:
+add these back to dependencies
+    "l9m2-flyer-enemy >= 1.3.0",
+    "ArmouredBiters = 2.0.2"
+
 2nd map can be all trees, toxic lol
 handle player leaving DONE?
   could be more issues that i dont see yet
@@ -17,6 +21,7 @@ make the red area a little bigger around spawner
 move spawner to left and top in map 2
 biter modules cant go in em plants
 friendly armoured biters need to walk to the enemy spawner
+remove the pushback on the tesla turret
 
 bullet modules?  maybe like spawn a friendly biter to fight for you? DONE
 make biters have resistances DONE, still missing like acid
