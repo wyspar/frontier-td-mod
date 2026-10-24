@@ -2,128 +2,215 @@ local map2 = {}
 -- same waves as map1, the generated wave tables are in map1-waves.lua
 local mapWaveData = require("scripts.maps.map1-waves")
 
--- all x/y in this file are relative to the slot (0-200 into the slot), not world positions.
+-- all x/y in this file are relative to the slot (0-350 into the slot), not world positions.
 -- the whole slot is filled with trees (generate_structures in map.lua), except on entities, ores,
 -- path tiles, a circle around every waypoint and a corridor between waypoints
 
+-- layout of the old 200x200 version scaled by 1.75 for the 350x350 slots. the spawner (top left) and the silo base
+-- (bottom right: silo, portals, markets, pond) keep their distance to their corner instead of being scaled
+
 -- spawner in the top left, along the top, then two full loops around the outside of the water ring
--- (waterOutlineTiles, center 155,44, water out to radius 20) at radius 26, leaving it on its south east side
+-- (waterOutlineTiles, center 271,77, water out to radius 28) at radius 32, leaving it on its south east side
 -- and going down the right side to the silo
 map2.mapNormalBiterPaths = {
   {
-    x = 16,
-    y = 16
-  },
-  {
-    x = 50,
-    y = 16
-  },
-  {
-    x = 100,
-    y = 30
-  },
-  -- around the water ring twice, clockwise, starting on its west side
-  {
-    x = 129,
-    y = 44
-  },
-  {
-    x = 137,
-    y = 26
-  },
-  {
-    x = 155,
+    x = 18,
     y = 18
   },
   {
-    x = 173,
-    y = 26
-  },
-  {
-    x = 181,
-    y = 44
-  },
-  {
-    x = 173,
-    y = 62
-  },
-  {
-    x = 155,
-    y = 70
-  },
-  {
-    x = 137,
-    y = 62
-  },
-  {
-    x = 129,
-    y = 44
-  },
-  {
-    x = 137,
-    y = 26
-  },
-  {
-    x = 155,
+    x = 88,
     y = 18
   },
   {
-    x = 173,
-    y = 26
+    x = 175,
+    y = 52
+  },
+  -- around the water ring twice, clockwise, starting on its west side. 16 points per lap so the path hugs the ring
+  {
+    x = 239,
+    y = 77
   },
   {
-    x = 181,
-    y = 44
+    x = 241,
+    y = 65
   },
   {
-    x = 173,
-    y = 62
+    x = 248,
+    y = 54
   },
   {
-    x = 155,
-    y = 70
+    x = 259,
+    y = 47
   },
   {
-    x = 137,
-    y = 62
-  },
-  -- then on around the top a third time to the south east side, so the exit is on the right
-  {
-    x = 129,
-    y = 44
+    x = 271,
+    y = 45
   },
   {
-    x = 137,
-    y = 26
+    x = 283,
+    y = 47
   },
   {
-    x = 155,
-    y = 18
+    x = 294,
+    y = 54
   },
   {
-    x = 173,
-    y = 26
+    x = 301,
+    y = 65
   },
   {
-    x = 181,
-    y = 44
+    x = 303,
+    y = 77
   },
   {
-    x = 173,
-    y = 62
+    x = 301,
+    y = 89
   },
-  -- off the ring, down the right side to the silo
   {
-    x = 182,
+    x = 294,
     y = 100
   },
   {
-    x = 182,
-    y = 140
+    x = 283,
+    y = 107
   },
   {
-    x = 178,
-    y = 172
+    x = 271,
+    y = 109
+  },
+  {
+    x = 259,
+    y = 107
+  },
+  {
+    x = 248,
+    y = 100
+  },
+  {
+    x = 241,
+    y = 89
+  },
+  {
+    x = 239,
+    y = 77
+  },
+  {
+    x = 241,
+    y = 65
+  },
+  {
+    x = 248,
+    y = 54
+  },
+  {
+    x = 259,
+    y = 47
+  },
+  {
+    x = 271,
+    y = 45
+  },
+  {
+    x = 283,
+    y = 47
+  },
+  {
+    x = 294,
+    y = 54
+  },
+  {
+    x = 301,
+    y = 65
+  },
+  {
+    x = 303,
+    y = 77
+  },
+  {
+    x = 301,
+    y = 89
+  },
+  {
+    x = 294,
+    y = 100
+  },
+  {
+    x = 283,
+    y = 107
+  },
+  {
+    x = 271,
+    y = 109
+  },
+  {
+    x = 259,
+    y = 107
+  },
+  {
+    x = 248,
+    y = 100
+  },
+  {
+    x = 241,
+    y = 89
+  },
+  -- then on around the top a third time to the south east side, so the exit is on the right
+  {
+    x = 239,
+    y = 77
+  },
+  {
+    x = 241,
+    y = 65
+  },
+  {
+    x = 248,
+    y = 54
+  },
+  {
+    x = 259,
+    y = 47
+  },
+  {
+    x = 271,
+    y = 45
+  },
+  {
+    x = 283,
+    y = 47
+  },
+  {
+    x = 294,
+    y = 54
+  },
+  {
+    x = 301,
+    y = 65
+  },
+  {
+    x = 303,
+    y = 77
+  },
+  {
+    x = 301,
+    y = 89
+  },
+  {
+    x = 294,
+    y = 100
+  },
+  -- off the ring, down the right side to the silo
+  {
+    x = 318,
+    y = 175
+  },
+  {
+    x = 318,
+    y = 245
+  },
+  {
+    x = 328,
+    y = 322
   },
 }
 
@@ -168,90 +255,91 @@ map2.mapBiterPaths = {
 map2.DefaultMapStructures = {
   {
     name = "rocket-silo",
-    x = 192,
-    y = 192
+    x = 342,
+    y = 342
   },
   {
     name = "portal-1",
-    x = 189,
-    y = 185
+    x = 339,
+    y = 335
   },
   {
     name = "portal-2",
-    x = 196,
-    y = 185
+    x = 346,
+    y = 335
   },
   {
     name = "iron-ore",
-    x = 85,
-    y = 182,
+    x = 105,
+    y = 328,
     amount = 1000000,
     isOreTile = true,
-    size=16
+    size=20
   },
   {
     name = "copper-ore",
-    x = 119,
-    y = 182,
+    x = 147,
+    y = 328,
     amount = 1000000,
     isOreTile = true,
-    size=16
+    size=20
   },
   {
     name = "coal",
-    x = 17,
-    y = 182,
+    x = 21,
+    y = 328,
     amount = 1000000,
     isOreTile = true,
-    size=16
+    size=20
   },
   {
     name = "stone",
-    x = 51,
-    y = 182,
+    x = 63,
+    y = 328,
     amount = 1000000,
     isOreTile = true,
-    size=16
+    size=20
   },
   {
     name = "calcite",
-    x = 15,
-    y = 45,
+    x = 26,
+    y = 79,
     amount = 1000000,
     isOreTile = true,
-    size=5
+    size=9
   },
   {
     name = "attack-market",
-    x = 186,
-    y = 195
+    x = 336,
+    y = 345
   },
   {
     name = "weapons-market",
-    x = 186,
-    y = 189
+    x = 336,
+    y = 339
   },
 }
 
 map2.waterCompleteTiles = {
+  -- pond next to the silo, same spot from the corner as before
   {
-    x = 170,
-    y = 200,
+    x = 320,
+    y = 350,
     radius = 10
   },
   {
     x = 0,
-    y = 140,
-    radius = 8
+    y = 265,
+    radius = 14
   },
 }
 
 map2.waterOutlineTiles = {
   {
-    x = 155,
-    y = 44,
-    radius = 20,
-    innerRadius = 17, 
+    x = 271,
+    y = 77,
+    radius = 28,
+    innerRadius = 25, 
     innerTile = "foundation",
     outerTile = "water"
   },

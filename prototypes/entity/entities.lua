@@ -288,7 +288,7 @@ data:extend({
   },
 })
 
---hidden radar spawned in the middle of each slot (control.lua), actively reveals the whole 200x200 slot.
+--hidden radar spawned in the middle of each slot (control.lua), actively reveals the whole 350x350 slot.
 --no sprite (invisible), no collision (players build over it), not selectable, made indestructible when placed
 data:extend({
   {
@@ -321,8 +321,9 @@ data:extend({
     energy_per_nearby_scan = "1J",
     --no passive sector scanning, only the constant active area
     max_distance_of_sector_revealed = 0,
-    --in chunks (32 tiles), 4 chunks around the radar covers the whole slot from its middle
-    max_distance_of_nearby_sector_revealed = 4,
+    --in chunks (32 tiles), counted from the radar's own chunk. the slot edges are 175 tiles from its middle (350x350 slots,
+    --scripts/map.lua), 6 chunks reaches 192+ tiles. at most 224 tiles, so it stops in the 50 tile gap before the next slot (225)
+    max_distance_of_nearby_sector_revealed = 6,
     connects_to_other_radars = false
   }
 })

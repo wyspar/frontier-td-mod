@@ -354,7 +354,7 @@ turret.graphics_set.base_visualisation = green_tesla_base_visualisation()
 -- prototypes defined in green-tesla-beam.lua
 turret.attack_parameters = {
   type = "beam",
-  cooldown = 180,
+  cooldown = 212,
   range = 30,
   range_mode = "center-to-bounding-box",
   fire_penalty = 0.9,

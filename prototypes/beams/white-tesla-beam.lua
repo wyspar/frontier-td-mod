@@ -252,22 +252,6 @@ local whiteTeslaBeamStart =
           }
         }
       }
-    },
-    {
-      --push-back only hits "ground-unit" targets, boss-biter-6 doesn't have that mask so it can't be pushed
-      type = "direct",
-      trigger_target_mask = {"ground-unit"},
-      action_delivery =
-      {
-        type = "instant",
-        target_effects =
-        {
-          {
-            type = "push-back",
-            distance = 0.45
-          }
-        }
-      }
     }
   },
   graphics_set = white_tesla_beam_graphics(),
@@ -310,22 +294,6 @@ local whiteTeslaBeamBounce =
           {
             type = "create-sticker",
             sticker = "tesla-turret-slow"
-          }
-        }
-      }
-    },
-    {
-      --push-back only hits "ground-unit" targets, boss-biter-6 doesn't have that mask so it can't be pushed
-      type = "direct",
-      trigger_target_mask = {"ground-unit"},
-      action_delivery =
-      {
-        type = "instant",
-        target_effects =
-        {
-          {
-            type = "push-back",
-            distance = 0.25
           }
         }
       }

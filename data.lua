@@ -91,6 +91,36 @@ end
 
 require("prototypes.technology")
 
+--our infinite damage techs reuse vanilla names, and Factorio does not allow any level after an infinite one,
+--so the disabled vanilla levels after them (e.g. vanilla electric-weapons-damage-4) are removed
+local infiniteTechnologies = {
+  ["electric-weapons-damage"] = 3,
+  ["physical-projectile-damage"] = 6,
+  ["stronger-explosives"] = 4,
+  ["laser-weapons-damage"] = 4,
+  ["flamer-damage"] = 3
+}
+
+local removedTechnologies = {}
+for prefix, infiniteLevel in pairs(infiniteTechnologies) do
+  local level = infiniteLevel + 1
+  while data.raw.technology[prefix .. "-" .. level] do
+    removedTechnologies[prefix .. "-" .. level] = true
+    data.raw.technology[prefix .. "-" .. level] = nil
+    level = level + 1
+  end
+end
+
+for _, technology in pairs(data.raw.technology) do
+  if technology.prerequisites then
+    for i = #technology.prerequisites, 1, -1 do
+      if removedTechnologies[technology.prerequisites[i]] then
+        table.remove(technology.prerequisites, i)
+      end
+    end
+  end
+end
+
 local towerCoinCosts = require("models.tower-coin-costs")
 local upgradeableTowers = {}
 
@@ -113,6 +143,9 @@ local turret_upgrade_tool = {
   },
 
   stack_size = 1,
+
+  -- live cost preview while dragging (scripts/turret-info.lua)
+  send_pre_selection_events = true,
 
   select = {
     border_color = {0, 1, 0, 1},

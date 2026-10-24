@@ -5,84 +5,84 @@ local map2 = require("scripts.maps.map2")
 local main_surface_name = "frontier"
 
 --this is where player spawns their map
---+10 offset, (50 + width)
+--+10 offset, then every slot (50 + width) further along x, so 50 tiles between slots
 map.slotDefinitions = {
 	[1] = {
 		id = 1,
 		x = 10,
 		y = -5,
-		width = 200,
-		height = 200,
+		width = 350,
+		height = 350,
 		structures = nil,
 		biterPaths = nil,
 		mapName = nil,
 	},
 	[2] = {
 		id = 2,
-		x = 260,
+		x = 410,
 		y = -5,
-		width = 200,
-		height = 200,
+		width = 350,
+		height = 350,
 		structures = nil,
 		biterPaths = nil,
 		mapName = nil,
 	},
 	[3] = {
 		id = 3,
-		x = 510,
+		x = 810,
 		y = -5,
-		width = 200,
-		height = 200,
+		width = 350,
+		height = 350,
 		structures = nil,
 		biterPaths = nil,
 		mapName = nil,
 	},
 	[4] = {
 		id = 4,
-		x = 760,
+		x = 1210,
 		y = -5,
-		width = 200,
-		height = 200,
+		width = 350,
+		height = 350,
 		structures = nil,
 		biterPaths = nil,
 		mapName = nil,
 	},
 	[5] = {
 		id = 5,
-		x = 1010,
+		x = 1610,
 		y = -5,
-		width = 200,
-		height = 200,
+		width = 350,
+		height = 350,
 		structures = nil,
 		biterPaths = nil,
 		mapName = nil,
 	},
 	[6] = {
 		id = 6,
-		x = 1260,
+		x = 2010,
 		y = -5,
-		width = 200,
-		height = 200,
+		width = 350,
+		height = 350,
 		structures = nil,
 		biterPaths = nil,
 		mapName = nil,
 	},
 	[7] = {
 		id = 7,
-		x = 1510,
+		x = 2410,
 		y = -5,
-		width = 200,
-		height = 200,
+		width = 350,
+		height = 350,
 		structures = nil,
 		biterPaths = nil,
 		mapName = nil,
 	},
 	[8] = {
 		id = 8,
-		x = 1760,
+		x = 2810,
 		y = -5,
-		width = 200,
-		height = 200,
+		width = 350,
+		height = 350,
 		structures = nil,
 		biterPaths = nil,
 		mapName = nil,
@@ -125,6 +125,7 @@ map.allMaps = {
 	}
 }
 
+--big-sand-rock is the only sand rock entity, medium/small-sand-rock are decoratives and cannot be created as entities
 local sandRockNames = {
 	"big-sand-rock",
 }
@@ -146,9 +147,9 @@ local FOREST_TREE_SPACING = 2
 --chance that a square gets a tree at all
 local FOREST_TREE_CHANCE = 0.75
 --no trees this close to a biter path waypoint (a small circle around every path tile)
-local FOREST_WAYPOINT_CLEAR_RADIUS = 6
+local FOREST_WAYPOINT_CLEAR_RADIUS = 11
 --no trees this close to the line between two waypoints, so the biters can walk from one to the next
-local FOREST_PATH_CLEAR_RADIUS = 3
+local FOREST_PATH_CLEAR_RADIUS = 8
 --no trees this close to the silo, room for the player spawn, portals and markets
 local FOREST_SILO_CLEAR_RADIUS = 14
 
@@ -340,6 +341,156 @@ function map.getRelativeSlotPosition(slotDef, local_x, local_y)
     }
 end
 
+--a filled circle of one ground tile, only inside the slot (world coordinates)
+local function createTilePatch(surface, slot, center_x, center_y, radius, tile_name)
+	local tiles = {}
+	for x = math.max(slot.x, math.floor(center_x - radius)), math.min(slot.x + slot.width - 1, math.ceil(center_x + radius)) do
+		for y = math.max(slot.y, math.floor(center_y - radius)), math.min(slot.y + slot.height - 1, math.ceil(center_y + radius)) do
+			local dx = x + 0.5 - center_x
+			local dy = y + 0.5 - center_y
+			if dx * dx + dy * dy < radius * radius then
+				tiles[#tiles + 1] = {name = tile_name, position = {x = x, y = y}}
+			end
+		end
+	end
+	surface.set_tiles(tiles, true)
+end
+
+--cliff formations (map cliffAreas, slot relative circles). cliffs sit on a 4x4 grid (base cliff prototype: grid_size 4,
+--grid_offset {0, 0.5}), one cliff per grid cell. every grid corner inside a cliffAreas circle is "high", and a cliff goes
+--in every cell on the border between high and low corners (marching squares), so each formation is one closed cliff loop.
+--the orientation names the two cell sides the cliff runs between, in the order that keeps the high ground on its left
+local CLIFF_NAME = "cliff"
+--flip this if the formations come out as pits instead of raised plateaus
+local CLIFF_HIGH_ON_LEFT = true
+
+--cell side -> its middle and the corners next to it, cell local (x right, y down, corners at +-1)
+local cliffCellSides = {
+	{name = "north", x = 0, y = -1},
+	{name = "east", x = 1, y = 0},
+	{name = "south", x = 0, y = 1},
+	{name = "west", x = -1, y = 0},
+}
+
+local function generateCliffs(surface, slot, cliffAreas)
+	-- only cells completely inside the slot. cell i,j is centered on (4i, 4j + 0.5), its corners are at (4i +-2, 4j + 0.5 +-2)
+	local iMin = math.ceil((slot.x + 2) / 4)
+	local iMax = math.floor((slot.x + slot.width - 2) / 4)
+	local jMin = math.ceil((slot.y + 1.5) / 4)
+	local jMax = math.floor((slot.y + slot.height - 2.5) / 4)
+
+	-- high[i][j] is the corner at the top left of cell i,j
+	local high = {}
+	for i = iMin, iMax + 1 do
+		high[i] = {}
+		for j = jMin, jMax + 1 do
+			local x = 4 * i - 2 - slot.x
+			local y = 4 * j - 1.5 - slot.y
+			local isHigh = false
+			for _, area in ipairs(cliffAreas) do
+				local dx = x - area.x
+				local dy = y - area.y
+				if dx * dx + dy * dy < area.radius * area.radius then
+					isHigh = true
+					break
+				end
+			end
+			high[i][j] = isHigh
+		end
+	end
+
+	-- a cell with only two diagonal corners high would need two cliffs, there is no orientation for that.
+	-- those cells get filled in (all four corners high), repeated because filling can make a new one next to it
+	for _ = 1, 10 do
+		local changed = false
+		for i = iMin, iMax do
+			for j = jMin, jMax do
+				local nw, ne, sw, se = high[i][j], high[i + 1][j], high[i][j + 1], high[i + 1][j + 1]
+				if nw == se and ne == sw and nw ~= ne then
+					high[i][j], high[i + 1][j], high[i][j + 1], high[i + 1][j + 1] = true, true, true, true
+					changed = true
+				end
+			end
+		end
+		if not changed then
+			break
+		end
+	end
+
+	for i = iMin, iMax do
+		for j = jMin, jMax do
+			local nw, ne, sw, se = high[i][j], high[i + 1][j], high[i][j + 1], high[i + 1][j + 1]
+			-- sides of the cell the cliff crosses: where the two corners of a side differ
+			local crossed = {}
+			if nw ~= ne then crossed[#crossed + 1] = cliffCellSides[1] end
+			if ne ~= se then crossed[#crossed + 1] = cliffCellSides[2] end
+			if sw ~= se then crossed[#crossed + 1] = cliffCellSides[3] end
+			if nw ~= sw then crossed[#crossed + 1] = cliffCellSides[4] end
+
+			if #crossed == 2 then
+				local from, to = crossed[1], crossed[2]
+				-- middle of the high corners, then which side of the from->to line it is on (y is down, so > 0 is the right)
+				local hx, hy, highCount = 0, 0, 0
+				for _, corner in ipairs({{-1, -1, nw}, {1, -1, ne}, {-1, 1, sw}, {1, 1, se}}) do
+					if corner[3] then
+						hx, hy, highCount = hx + corner[1], hy + corner[2], highCount + 1
+					end
+				end
+				hx, hy = hx / highCount, hy / highCount
+				local cross = (to.x - from.x) * (hy - from.y) - (to.y - from.y) * (hx - from.x)
+				local highOnRight = cross > 0
+				if highOnRight == CLIFF_HIGH_ON_LEFT then
+					from, to = to, from
+				end
+
+				surface.create_entity({
+					name = CLIFF_NAME,
+					position = {4 * i, 4 * j + 0.5},
+					cliff_orientation = from.name .. "-to-" .. to.name
+				})
+			end
+		end
+	end
+end
+
+--rocks spread over the slot, kept off the biter path, the silo area, ores and anything already there
+local function generateRocks(surface, slot, biterPaths, structures, rockNames, count)
+	local random = game.create_random_generator()
+	local silo = map.findStructureByName(structures, "rocket-silo")
+	local siloRadiusSquared = FOREST_SILO_CLEAR_RADIUS * FOREST_SILO_CLEAR_RADIUS
+
+	for _ = 1, count do
+		local x = 1 + random() * (slot.width - 2)
+		local y = 1 + random() * (slot.height - 2)
+		local nearSilo = false
+		if silo then
+			local dx = x - silo.x
+			local dy = y - silo.y
+			nearSilo = dx * dx + dy * dy < siloRadiusSquared
+		end
+
+		if not nearSilo and not isNearBiterPath(x, y, biterPaths) then
+			local rockName = rockNames[random(1, #rockNames)]
+			local position = map.getRelativeSlotPosition(slot, x, y)
+			local tile = surface.get_tile(position)
+
+			if tile and tile.valid and not forbiddenTilesForSpawningRocksOn[tile.name]
+				and surface.count_entities_filtered({position = position, radius = 2, type = "resource"}) == 0
+				and surface.can_place_entity({name = rockName, position = position}) then
+				local entity = surface.create_entity({
+					name = rockName,
+					position = position
+				})
+
+				if entity then
+					entity.minable_flag = true
+					entity.destructible = true
+				end
+			end
+		end
+	end
+end
+
 local function generate_structures(surface, slot, structures)
 	local mapSlot = storage.mapSlots[slot.id]
 	local force = game.forces[tostring(mapSlot.forceName)]
@@ -389,34 +540,17 @@ local function generate_structures(surface, slot, structures)
 
 	end
 
-	--generate stupid shit like decorations, trees, rocks
+	--cliff formations, before the rocks so the rocks go around them
+	local getMap = map.getMapByName(mapSlot.mapName)
+	if getMap and getMap.cliffAreas then
+		generateCliffs(surface, slot, getMap.cliffAreas)
+	end
+
+	--desert: sand rocks all over the map
 	if mapSlot.mapName and mapSlot.mapName == 'map-1-sand' then
+		local biterPaths = map.getMapBiterPaths(mapSlot.mapName, mapSlot.difficulty) or {}
 		local random = game.create_random_generator()
-		local rockCount = random(50, 150)
-
-		for _ = 1, rockCount do
-			local rockName = sandRockNames[random(1, #sandRockNames)]
-
-			local position = map.getRelativeSlotPosition(
-				slot,
-				random() * slot.width,
-				random() * slot.height
-			)
-
-			local tile = surface.get_tile(position)
-
-			if tile and not forbiddenTilesForSpawningRocksOn[tile.name] then
-				local entity = surface.create_entity({
-					name = rockName,
-					position = position
-				})
-
-				if entity then
-					entity.minable_flag = true
-					entity.destructible = true
-				end
-			end
-		end
+		generateRocks(surface, slot, biterPaths, structures, sandRockNames, random(300, 450))
 	end
 
 	--fill the whole map with trees
@@ -424,6 +558,9 @@ local function generate_structures(surface, slot, structures)
 		generateForest(surface, slot, mapSlot, structures)
 	end
 end
+
+--half size of the red concrete square around the spawner, players cannot build on it
+local SPAWNER_PROTECTED_RADIUS = 19
 
 local function set_tile_area(surface, slot, tile_name, x1, y1, x2, y2)
 	local tiles = {}
@@ -469,12 +606,13 @@ local function createOutlineCircleOfTiles(surface, center_x, center_y, radius, i
     local tiles = {}
     for x = center_x - radius, center_x + radius do
         for y = center_y - radius, center_y + radius do
-            local dx = x - center_x
-            local dy = y - center_y
+            -- measured from the middle of the tile (tile x,y covers x..x+1), so the ring is round and evenly thick
+            local dx = x + 0.5 - center_x
+            local dy = y + 0.5 - center_y
             local distance_squared = dx * dx + dy * dy
             if distance_squared < radius * radius then
                 local tile = surface.get_tile(x, y)
-                if  tile.name ~= "red-refined-concrete" and 
+                if  tile.name ~= "red-refined-concrete" and
                     tile.name ~= "out-of-map" and
                     tile.name ~= inner_tile
                 then
@@ -517,7 +655,11 @@ function map.generateSlotLand(surface, slot, generateStructures)
 		slot.width / 2,
 		slot.height / 2
 	)
-	surface.request_to_generate_chunks(position, 4)
+	-- radius in chunks (32 tiles) from the slot center, +1 so the slot edges are covered
+	surface.request_to_generate_chunks(position, math.ceil(math.max(slot.width, slot.height) / 2 / 32) + 1)
+	-- generate them now: a chunk generated later would paint over the land below, and on_chunk_generated
+	-- (control.lua) removes every cliff in a new chunk, which would take the map's cliffs with it
+	surface.force_generate_chunk_requests()
 
 	-- Destroy entities
 	for _, entity in pairs(surface.find_entities_filtered({
@@ -554,6 +696,14 @@ function map.generateSlotLand(surface, slot, generateStructures)
 	end
 	surface.set_tiles(tiles, true)
 
+	-- patches of other ground tiles on top of the map tile (dunes on the desert map)
+	if getMap.groundPatchTiles then
+		for _, patch in ipairs(getMap.groundPatchTiles) do
+			local position = map.getRelativeSlotPosition(slot, patch.x, patch.y)
+			createTilePatch(surface, slot, position.x, position.y, patch.radius, patch.tile)
+		end
+	end
+
 	if getMap.waterCompleteTiles then
 		for i, point in ipairs(getMap.waterCompleteTiles) do
 			local position = map.getRelativeSlotPosition(slot, point.x, point.y)
@@ -576,15 +726,16 @@ function map.generateSlotLand(surface, slot, generateStructures)
 
 
 			if i == 1 then
-				-- first path
+				-- first path: protected red concrete square around the spawner, kept inside the slot
+				-- (the map 1 spawner sits near the slot corner)
 				set_tile_area(
 					surface,
 					slot,
 					"red-refined-concrete",
-					path.x - 14,
-					path.y - 14,
-					path.x + 14,
-					path.y + 14
+					math.max(0, path.x - SPAWNER_PROTECTED_RADIUS),
+					math.max(0, path.y - SPAWNER_PROTECTED_RADIUS),
+					math.min(slot.width - 1, path.x + SPAWNER_PROTECTED_RADIUS),
+					math.min(slot.height - 1, path.y + SPAWNER_PROTECTED_RADIUS)
 				)
 
 				local spawner = surface.create_entity({
@@ -785,6 +936,10 @@ function map.createStartingPlayer(player, slot)
 			x = slot.x + slot.width / 2,
 			y = slot.y + slot.height / 2
 		}
+	end
+	-- since Factorio 2.1 teleport no longer leaves the map view (remote view), leave it so the character is moved
+	if player.connected then
+		player.exit_remote_view()
 	end
 	local findBestPosition = surface.find_non_colliding_position("character", spawnPos, 20, 0.5)
 	if findBestPosition then

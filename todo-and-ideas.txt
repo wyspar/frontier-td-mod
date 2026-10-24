@@ -3,7 +3,6 @@ add these back to dependencies
     "l9m2-flyer-enemy >= 1.3.0",
     "ArmouredBiters = 2.0.2"
 
-2nd map can be all trees, toxic lol
 handle player leaving DONE?
   could be more issues that i dont see yet
 handle player joining back, check if they have a force, check if they have a slot HALFDONE
@@ -16,91 +15,7 @@ I like the idea of a two spawners, two lanes, a fork in the road.
   fork in the road map, might be a big redo of everything cause two spawners, then the biters need to know which is their path, left or right
   Use 'volcanic-folds-warm' as the map tile
 
-
-make the red area a little bigger around spawner
-move spawner to left and top in map 2
-biter modules cant go in em plants
 friendly armoured biters need to walk to the enemy spawner
-remove the pushback on the tesla turret
-
-bullet modules?  maybe like spawn a friendly biter to fight for you? DONE
-make biters have resistances DONE, still missing like acid
-redo wave gen script, then make waves for easy, normal, hard DONE
-add dmg upgrades for tesla turret DONE
-add a teleporter, make it invinceable, only have one pair DONE
-max hp of enemies needs to increase by wave count DONE
-when upgrading a turret, make the current hp = max hp DONE
-add bot speed research DONE
-add more bigger backpack, maybe add qqs name DONE
-add chem plant recipe/tech DONE
-move beacons to tier 4 sci, DONE
-buff lab speed DONE
-decrease the cost of modules DONE
-add automation 3, stack inserters to tier 4 sci DONE
-add roboport/construction bot tech DONE
-make the ore patches a tiny bit smaller DONE
-increase the timer for players leaving inventory DONE
-make the assembler 2 and 3 faster crafting DONE
-add landfill DONE
-
-need to put a minimum placing range between tesla turrets cause op stun DONE
-add a command for getting the current and next wave info DONE
-owner of force should accept request, not instant join DONE
-handle players respawning DONE
-  make player the new owner when old leaves DONE
-  spits out loot when a player is gone for more than 5 minutes in your slot DONE
-choose map, choose difficulty DONE
-handle clean up of map when losing/winning DONE
-  should say the difficulty and map when dying or winning DONE
-  need to reset research or reset force when reseting DONE
-need to kick the players out of the slot back to the public slot when game over DONE?
-new map, silo in the center, biters start bottom right then go to middle, top half of map is for ores and building DONE
-add decorations and shit to the map like rocks DONE
-added a shorter biter path for hard difficulty on map 1 DONE
-need to add the frontier menu gui DONE
-need to add dragger on teams gui DONE
-need to add the winning condition when all biters are dead DONE
-map slots might need to be limited to reduce lag. maybe have 9 private ones. 1 public one DONE
-make each force an enemy DONE
-stop players from shooting their own silo DONE
-need a way for players to visually see which slot is theirs --using a tag DONE 
-new power source, steam engine boring but maybe use steam still? DONE
-  could just use steam turbine instead of engine DONE
-add mod setting for turning on/off blueprints DONE
-sub item groups for each turret group DONE
-tier 3 water science DONE
-  calcite ore for concrete, remove iron ore DONE
-  maybe special water recipe like purifed water or salt
-  then use tier 3 science to research a water treating thing to get more ores
-
-send a challenge to another team DONE
-destroy the start button for each player involved in each force DONE
-  for isPvp = true DONE
-start button function needs to also create the slot for the isPvp team DONE
-handle clean up of map when losing/winning when two teams DONE
-add a kick menu for the owner of force DONE
-
-add mods for more biters models
-  flying biters DONE
-
-add upgrades to turrets, like a menu maybe, ended up making a upgrade planner tool DONE
-add the 5 tiers of gun turret, with icons DONE
-add the 5 tiers of laser DONE
-  only green laser looks good, the rest dont work cause red base laser png DONE
-add the 5 tiers of tesla DONE
-add the 5 tiers of flamers DONE
-different firing distances
---beams, colors, upgrade colors lowest to highest should be
-T1  Gray
-T2  Green
-T3  Blue
-T4  Red
-T5  White
-UT could be black, purple, yellow
-gray is the shitter basic gun turret that can lead into other things DONE
-new science packs / receipes to match the tier colors DONE
-biter like the heart balloon, medium spawns 1 small, maybe use spitters for this DONE
-
 
 TEST:
 need to test saving game and reload, do waves still work? DONE, yes waves still work

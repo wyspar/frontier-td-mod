@@ -5,6 +5,7 @@ local market = require('scripts.market')
 local biterModules = require('scripts.biter-modules')
 local corpseButton = require('scripts.corpse-button')
 local moneyTree = require('scripts.money-tree')
+local turretInfo = require('scripts.turret-info')
 local TICKS_PER_SECOND = 60
 local main_surface_name = "frontier"
 
@@ -443,6 +444,11 @@ local function createDefaultPlayerGui(player)
 end
 
 local function teleportPlayerToTheirSpawn(surface, force, slotDef, player)
+  -- since Factorio 2.1 teleport no longer leaves the map view (remote view), it would only move the map view
+  -- and leave the character where it is. leave it first so the character itself is moved
+  if player.connected then
+    player.exit_remote_view()
+  end
   local spawnPos = mapModule.findSlotPlayerSpawnPoint(surface, force)
 	if not spawnPos then
 		spawnPos = {
@@ -819,6 +825,11 @@ local function spawnSpitterChild(entity)
 end
 
 local function fullClearPlayerInventory(player)
+  -- a player looking at the map is in the remote controller, leave it so everything below is about their character
+  if player.connected then
+    player.exit_remote_view()
+  end
+
   -- the item held on the cursor is not part of any inventory, clear it too
   local cursorStack = player.cursor_stack
   if cursorStack and cursorStack.valid_for_read then
@@ -826,27 +837,30 @@ local function fullClearPlayerInventory(player)
   end
   player.cursor_ghost = nil
 
-  local inventory = player.get_main_inventory()
+  -- the character's own inventories when there is one (player.character is nil for disconnected players)
+  local owner = player.character or player
+
+  local inventory = owner.get_main_inventory()
   if inventory then
     inventory.clear()
   end
 
-  local gunInventory = player.get_inventory(defines.inventory.character_guns)
+  local gunInventory = owner.get_inventory(defines.inventory.character_guns)
   if gunInventory then
     gunInventory.clear()
   end
 
-  local ammoInventory = player.get_inventory(defines.inventory.character_ammo)
+  local ammoInventory = owner.get_inventory(defines.inventory.character_ammo)
   if ammoInventory then
     ammoInventory.clear()
   end
 
-  local armorInventory = player.get_inventory(defines.inventory.character_armor)
+  local armorInventory = owner.get_inventory(defines.inventory.character_armor)
   if armorInventory then
     armorInventory.clear()
   end
 
-  local trashInventory = player.get_inventory(defines.inventory.character_trash)
+  local trashInventory = owner.get_inventory(defines.inventory.character_trash)
   if trashInventory then
     trashInventory.clear()
   end
@@ -869,6 +883,9 @@ local function getSlotDisplayName(slot)
 
 	return "Slot " .. tostring(slot.id)
 end
+
+--defined further down (after the inventory snapshot functions it uses)
+local sendForceBackToPublicSlot
 
 local function checkForWinnerSlot(slot, slotMapDef)
   if not slot then
@@ -922,17 +939,7 @@ local function checkForWinnerSlot(slot, slotMapDef)
 		game.print(playerThatWon .. "'s team is Victorious! Map: " .. mapData.mapLabel .. " on " .. difficulty)
 
     mapModule.resetMapSlot(surface, slot.id, true)
-    local publicForce = game.forces["mapSlotDef_1"]
-    for _, player in pairs(force.players) do
-      if player.valid then
-        fullClearPlayerInventory(player)
-        player.force = publicForce
-        createDefaultPlayerGui(player)
-        --move the player back to public slot 1
-        teleportPlayerToTheirSpawn(surface, publicForce, publicSlotDef, player)
-      end
-    end
-    force.reset()
+    sendForceBackToPublicSlot(surface, force)
 		for _, connectedPlayer in pairs(game.connected_players) do
 			updateTeamMenuGui(connectedPlayer)
 		end
@@ -1108,6 +1115,34 @@ local function giveStartingGearIfNeeded(player, slot)
 	slot.startingGearGiven[player.index] = true
 
 	mapModule.createStartingPlayer(player, mapModule.getSlotDefinitionById(slot.id))
+end
+
+--for players that were not there when their slot's round started: brand new players, players that were offline
+--when the round started, or offline when their old slot's round ended and they got moved to the public slot.
+--if a round is going on in their slot they get the in round gui and the starting gear (still only once per round)
+local function catchUpPlayerOnRound(player)
+	if not player or not player.valid then
+		return
+	end
+
+	local slot = mapModule.getSlotByForceName(player.force.name)
+	if not slot or not slot.isGameStarted then
+		return
+	end
+
+	if not player.gui.top.menu_bar then
+		createDefaultPlayerGui(player)
+	end
+	-- createIsGameStartedGui adds the wave buttons, it can only run once per menu bar
+	if not player.gui.top.menu_bar.open_waveTimer_button then
+		local getMap = mapModule.getMapByName(slot.mapName)
+		if getMap then
+			createIsGameStartedGui(player, slot, getMap)
+			updateWaveRoundGui(slot, slot.currentWave)
+		end
+	end
+
+	giveStartingGearIfNeeded(player, slot)
 end
 
 local function startRoundForForce(slot, force)
@@ -1728,6 +1763,32 @@ local function giveBackInventoryAndCancelRemovingInventory(player)
 	storage.leftPlayers[playerIndex] = nil
 end
 
+--throws away the inventory a player left the game with, if it was saved on this force.
+--used when that force's round ends: the items belonged to that round, they are not given back or dropped
+local function discardLeftPlayerSnapshot(playerIndex, forceName)
+	local data = storage.leftPlayers and storage.leftPlayers[playerIndex]
+	if not data or data.forceName ~= forceName then
+		return
+	end
+
+	for i = #storage.delayedTickActions, 1, -1 do
+		if storage.delayedTickActions[i] == data.action then
+			table.remove(storage.delayedTickActions, i)
+			break
+		end
+	end
+
+	local snapshot = data.inventory
+	if snapshot then
+		snapshot.main.destroy()
+		snapshot.guns.destroy()
+		snapshot.ammo.destroy()
+		snapshot.armor.destroy()
+	end
+
+	storage.leftPlayers[playerIndex] = nil
+end
+
 --removes join request popups ("bum_joining_") after a player switches slots:
 --requests this player sent to other owners, and requests other players sent to this player
 local function removeJoinRequestGuis(player)
@@ -2053,16 +2114,22 @@ script.on_event(defines.events.on_permission_group_added, function()
 	applyBlueprintImportSetting()
 end)
 
---moves every player on a force back to public slot 1 with a clean inventory, then resets the force
-local function sendForceBackToPublicSlot(surface, force)
+--moves every player on a force back to public slot 1 with a clean inventory, then resets the force.
+--offline players are moved too, they catch up on a public round when they join back (on_player_joined_game)
+sendForceBackToPublicSlot = function(surface, force)
 	local publicForce = game.forces["mapSlotDef_1"]
 	local publicSlotDef = mapModule.getSlotDefinitionById(1)
 	for _, player in pairs(force.players) do
 		if player.valid then
+			-- the items of the round that ended are gone, also the ones saved when a player left mid round
+			discardLeftPlayerSnapshot(player.index, force.name)
 			fullClearPlayerInventory(player)
 			player.force = publicForce
 			createDefaultPlayerGui(player)
 			teleportPlayerToTheirSpawn(surface, publicForce, publicSlotDef, player)
+			if player.connected then
+				catchUpPlayerOnRound(player)
+			end
 		end
 	end
 	force.reset()
@@ -2529,6 +2596,9 @@ script.on_event(defines.events.on_player_created, function(event)
 
 	teleportPlayerToTheirSpawn(surface, force, slotDef, player)
 	corpseButton.ensure(player)
+	-- joining while a public round is going on: in round gui and starting gear
+	-- (in multiplayer the character can still be missing here, on_player_joined_game catches up again then)
+	catchUpPlayerOnRound(player)
 
 	player.print("Welcome to Frontier!")
 end)
@@ -3743,11 +3813,14 @@ script.on_event(defines.events.on_player_joined_game, function(event)
 	end
 	player.character_running_speed_modifier = 1
 	giveBackInventoryAndCancelRemovingInventory(player)
+	-- a round may have started while they were away, or their old round ended and they are now in a public round
+	catchUpPlayerOnRound(player)
 end)
 
 -- when player leaves the game
 script.on_event(defines.events.on_player_left_game, function(event)
 	local player_index = event.player_index
+	turretInfo.clearUpgradePreview(player_index)
 	local player = game.get_player(player_index)
 	if not player then
 		return
@@ -3933,6 +4006,8 @@ script.on_event(defines.events.on_player_selected_area, function(event)
     return
   end
 
+  turretInfo.clearUpgradePreview(event.player_index)
+
   local player = game.get_player(event.player_index)
 
   if not player or not player.valid then
@@ -3945,24 +4020,7 @@ script.on_event(defines.events.on_player_selected_area, function(event)
     return
   end
 
-  local total_cost = 0
-  local upgrade_count = 0
-
-  for _, turret in pairs(event.entities) do
-    if turret.valid and turret.force.name == player.force.name then
-      local towerCostDto = towerCoinCosts[turret.name]
-      if towerCostDto and towerCostDto.upgradeToName then
-        local upgradeTowerName = towerCostDto.upgradeToName
-        if upgradeTowerName then
-          local upgradeTowerDto = towerCoinCosts[upgradeTowerName]
-          if upgradeTowerDto then
-            total_cost = total_cost + upgradeTowerDto.cost
-            upgrade_count = upgrade_count + 1
-          end
-        end
-      end
-    end
-  end
+  local total_cost, upgrade_count = turretInfo.getUpgradeCost(event.entities, player.force)
 
   if upgrade_count == 0 then
     return
@@ -4007,10 +4065,24 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         }
 
         if new_turret then
+          -- keep the turret's stats, the tooltip shows its kills
+          new_turret.kills = old_turret.kills
+          new_turret.damage_dealt = old_turret.damage_dealt
           old_turret.destroy()
         end
       end
     end
   end
 end)
+
+-- live upgrade cost preview while dragging the upgrade tool (needs send_pre_selection_events on the tool, see data.lua)
+script.on_event(defines.events.on_player_start_selected_area, turretInfo.onUpgradePreselect)
+script.on_event(defines.events.on_player_change_selected_area, turretInfo.onUpgradePreselect)
+script.on_event(defines.events.on_player_cancel_selected_area, function(event)
+  turretInfo.clearUpgradePreview(event.player_index)
+end)
+
+-- turret and silo hover tooltips
+script.on_event(defines.events.on_selected_entity_changed, turretInfo.onSelectedEntityChanged)
+script.on_nth_tick(30, turretInfo.refreshHoveredTooltips)
 

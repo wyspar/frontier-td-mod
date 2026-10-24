@@ -72,6 +72,8 @@ local weaponMarketItems = {
 		offer = { type = 'give-item', item = 'speed-module-3', count = 1 } 
 	},
   { price = { { name = 'coin', count = 20 } },    offer = { type = 'give-item', item = 'exoskeleton-equipment', count = 1 } },
+  --clears the cliffs on the desert map (map-1-sand)
+  { price = { { name = 'coin', count = 5 } },     offer = { type = 'give-item', item = 'cliff-explosives', count = 1 } },
 }
 
 --the slowdown capsule price doubles for a force every time someone on it buys one (20, 40, 80, ...),

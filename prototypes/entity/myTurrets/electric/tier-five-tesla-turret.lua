@@ -382,7 +382,7 @@ whitenLayers(turret.graphics_set.base_visualisation[1].animation)
 -- prototypes defined in white-tesla-beam.lua
 turret.attack_parameters = {
   type = "beam",
-  cooldown = 120,
+  cooldown = 141,
   range = 35,
   range_mode = "center-to-bounding-box",
   fire_penalty = 0.9,

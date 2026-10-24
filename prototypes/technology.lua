@@ -13,6 +13,27 @@ local weapon_shooting_speed_3_icon = "__base__/graphics/technology/weapon-shooti
 local laser_shooting_speed_icon = "__base__/graphics/technology/laser-shooting-speed.png"
 local electric_weapons_damage_icon = "__space-age__/graphics/technology/electric-weapons-damage.png"
 
+--the flamers share the "biological" ammo category with the acid shooter, so flamer damage buffs each flamer turret instead
+local flamer_turret_names = {
+  "tier-one-flamer-turret",
+  "tier-two-flamer-turret",
+  "tier-three-flamer-turret",
+  "tier-four-flamer-turret",
+  "tier-five-flamer-turret"
+}
+
+local function flamer_damage_effects(modifier)
+  local effects = {}
+  for _, turret_name in ipairs(flamer_turret_names) do
+    table.insert(effects, {
+      type = "turret-attack",
+      turret_id = turret_name,
+      modifier = modifier
+    })
+  end
+  return effects
+end
+
 data:extend({
   {
     type = "technology",
@@ -857,6 +878,45 @@ data:extend({
     },
     upgrade = true
   },
+  {
+    type = "technology",
+    name = "physical-projectile-damage-6",
+    icons = util.technology_icon_constant_damage(physical_projectile_damage_2_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "bullet",
+        modifier = 0.4
+      },
+      {
+        type = "turret-attack",
+        turret_id = "gun-turret",
+        modifier = 0.4
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "shotgun-shell",
+        modifier = 0.4
+      }
+    },
+    prerequisites = {"physical-projectile-damage-5","biter-progress-tier-five-science"},
+    max_level = "infinite",
+    unit =
+    {
+      count_formula = "300*1.5^(L-6)",
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+        {"tier-five-science-pack", 1}
+      },
+      time = 20
+    },
+    upgrade = true
+  },
     {
     type = "technology",
     name = "weapon-shooting-speed-3",
@@ -1230,17 +1290,17 @@ data:extend({
       {
         type = "ammo-damage",
         ammo_category = "tesla",
-        modifier = 0.7
+        modifier = 0.5
       },
       {
         type = "ammo-damage",
         ammo_category = "electric",
-        modifier = 0.7
+        modifier = 0.5
       },
       {
         type = "ammo-damage",
         ammo_category = "beam",
-        modifier = 0.7
+        modifier = 0.5
       }
     },
     prerequisites = {"electric-weapons-damage-1","biter-progress-tier-four-science"},
@@ -1287,23 +1347,24 @@ data:extend({
       {
         type = "ammo-damage",
         ammo_category = "tesla",
-        modifier = 1
+        modifier = 0.5
       },
       {
         type = "ammo-damage",
         ammo_category = "electric",
-        modifier = 1
+        modifier = 0.5
       },
       {
         type = "ammo-damage",
         ammo_category = "beam",
-        modifier = 1
+        modifier = 0.5
       }
     },
     prerequisites = {"electric-weapons-damage-2","biter-progress-tier-five-science"},
+    max_level = "infinite",
     unit =
     {
-      count = 300,
+      count_formula = "300*1.5^(L-3)",
       ingredients =
       {
         {"tier-one-science-pack", 1},
@@ -1512,6 +1573,220 @@ data:extend({
         {"tier-two-science-pack", 1},
         {"tier-three-science-pack", 1},
         {"tier-four-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "stronger-explosives-4",
+    icons = util.technology_icon_constant_damage(stronger_explosives_3_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "rocket",
+        modifier = 0.7
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "grenade",
+        modifier = 0.7
+      },
+      {
+        type = "ammo-damage",
+        ammo_category = "landmine",
+        modifier = 0.7
+      },
+      {
+        type = "turret-attack",
+        turret_id = "ut-poison-cannon-one",
+        modifier = 0.7
+      }
+    },
+    prerequisites = {"stronger-explosives-3","biter-progress-tier-five-science"},
+    max_level = "infinite",
+    unit =
+    {
+      count_formula = "300*1.5^(L-4)",
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+        {"tier-five-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  --flamer damage: +15% per level for all flamer turret tiers, level 3 is infinite
+  {
+    type = "technology",
+    name = "flamer-damage-1",
+    icons = util.technology_icon_constant_damage(refined_flammables_icon),
+    effects = flamer_damage_effects(0.15),
+    prerequisites = {"flamer-turrets","biter-progress-tier-three-science"},
+    unit =
+    {
+      count = 150,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "flamer-damage-2",
+    icons = util.technology_icon_constant_damage(refined_flammables_icon),
+    effects = flamer_damage_effects(0.15),
+    prerequisites = {"flamer-damage-1","biter-progress-tier-four-science"},
+    unit =
+    {
+      count = 200,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "flamer-damage-3",
+    icons = util.technology_icon_constant_damage(refined_flammables_icon),
+    effects = flamer_damage_effects(0.15),
+    prerequisites = {"flamer-damage-2","biter-progress-tier-five-science"},
+    max_level = "infinite",
+    unit =
+    {
+      count_formula = "300*1.5^(L-3)",
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+        {"tier-five-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  --laser damage: +15% per level for laser turrets (only they use the "laser" ammo category), level 4 is infinite
+  {
+    type = "technology",
+    name = "laser-weapons-damage-1",
+    icons = util.technology_icon_constant_damage(laser_weapons_damage_1_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "laser",
+        modifier = 0.15
+      }
+    },
+    prerequisites = {"laser-turrets","biter-progress-tier-two-science"},
+    unit =
+    {
+      count = 100,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "laser-weapons-damage-2",
+    icons = util.technology_icon_constant_damage(laser_weapons_damage_2_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "laser",
+        modifier = 0.15
+      }
+    },
+    prerequisites = {"laser-weapons-damage-1","biter-progress-tier-three-science"},
+    unit =
+    {
+      count = 150,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "laser-weapons-damage-3",
+    icons = util.technology_icon_constant_damage(laser_weapons_damage_3_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "laser",
+        modifier = 0.15
+      }
+    },
+    prerequisites = {"laser-weapons-damage-2","biter-progress-tier-four-science"},
+    unit =
+    {
+      count = 200,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+      },
+      time = 20
+    },
+    upgrade = true
+  },
+  {
+    type = "technology",
+    name = "laser-weapons-damage-4",
+    icons = util.technology_icon_constant_damage(laser_weapons_damage_3_icon),
+    effects =
+    {
+      {
+        type = "ammo-damage",
+        ammo_category = "laser",
+        modifier = 0.15
+      }
+    },
+    prerequisites = {"laser-weapons-damage-3","biter-progress-tier-five-science"},
+    max_level = "infinite",
+    unit =
+    {
+      count_formula = "300*1.5^(L-4)",
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+        {"tier-four-science-pack", 1},
+        {"tier-five-science-pack", 1},
       },
       time = 20
     },
