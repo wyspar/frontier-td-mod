@@ -2,6 +2,7 @@ local map = {}
 local market = require("scripts.market")
 local map1 = require("scripts.maps.map1")
 local map2 = require("scripts.maps.map2")
+local map3 = require("scripts.maps.map3")
 local main_surface_name = "frontier"
 
 --this is where player spawns their map
@@ -122,13 +123,27 @@ map.allMaps = {
 		label = map2.mapLabel,
 		tile = map2.mapTile,
 		icon = map2.mapIcon,
+	},
+	[3] = {
+		id = 3,
+		name = map3.mapName,
+		label = map3.mapLabel,
+		tile = map3.mapTile,
+		icon = map3.mapIcon,
 	}
 }
 
---big-sand-rock is the only sand rock entity, medium/small-sand-rock are decoratives and cannot be created as entities
-local sandRockNames = {
-	"big-sand-rock",
-}
+--a map's biter paths for one difficulty are either one path (a list of {x, y} points, one spawner) or a list of
+--paths (one spawner per path, map 3). this always returns a list of paths
+function map.getPathList(biterPaths)
+	if not biterPaths or #biterPaths == 0 then
+		return {}
+	end
+	if biterPaths[1].x then
+		return {biterPaths}
+	end
+	return biterPaths
+end
 
 local forbiddenTilesForSpawningRocksOn = {
 	["water"] = true,
@@ -181,15 +196,17 @@ end
 local function isNearBiterPath(x, y, biterPaths)
 	local waypointRadiusSquared = FOREST_WAYPOINT_CLEAR_RADIUS * FOREST_WAYPOINT_CLEAR_RADIUS
 	local pathRadiusSquared = FOREST_PATH_CLEAR_RADIUS * FOREST_PATH_CLEAR_RADIUS
-	for i, point in ipairs(biterPaths) do
-		local dx = x - point.x
-		local dy = y - point.y
-		if dx * dx + dy * dy < waypointRadiusSquared then
-			return true
-		end
-		local previous = biterPaths[i - 1]
-		if previous and distanceToSegmentSquared(x, y, previous.x, previous.y, point.x, point.y) < pathRadiusSquared then
-			return true
+	for _, biterPath in ipairs(map.getPathList(biterPaths)) do
+		for i, point in ipairs(biterPath) do
+			local dx = x - point.x
+			local dy = y - point.y
+			if dx * dx + dy * dy < waypointRadiusSquared then
+				return true
+			end
+			local previous = biterPath[i - 1]
+			if previous and distanceToSegmentSquared(x, y, previous.x, previous.y, point.x, point.y) < pathRadiusSquared then
+				return true
+			end
 		end
 	end
 	return false
@@ -341,14 +358,21 @@ function map.getRelativeSlotPosition(slotDef, local_x, local_y)
     }
 end
 
---a filled circle of one ground tile, only inside the slot (world coordinates)
-local function createTilePatch(surface, slot, center_x, center_y, radius, tile_name)
+--a filled patch of one ground tile, only inside the slot (world coordinates).
+--shape "diamond" is a square turned 45 degrees (radius = middle to a tip), anything else is a circle
+local function createTilePatch(surface, slot, center_x, center_y, radius, tile_name, shape)
 	local tiles = {}
 	for x = math.max(slot.x, math.floor(center_x - radius)), math.min(slot.x + slot.width - 1, math.ceil(center_x + radius)) do
 		for y = math.max(slot.y, math.floor(center_y - radius)), math.min(slot.y + slot.height - 1, math.ceil(center_y + radius)) do
 			local dx = x + 0.5 - center_x
 			local dy = y + 0.5 - center_y
-			if dx * dx + dy * dy < radius * radius then
+			local inside
+			if shape == "diamond" then
+				inside = math.abs(dx) + math.abs(dy) < radius
+			else
+				inside = dx * dx + dy * dy < radius * radius
+			end
+			if inside then
 				tiles[#tiles + 1] = {name = tile_name, position = {x = x, y = y}}
 			end
 		end
@@ -372,7 +396,8 @@ local cliffCellSides = {
 	{name = "west", x = -1, y = 0},
 }
 
-local function generateCliffs(surface, slot, cliffAreas)
+--cliffName is the map's cliffName (any cliff on the same 4x4 grid, like cliff-vulcanus), default CLIFF_NAME
+local function generateCliffs(surface, slot, cliffAreas, cliffName)
 	-- only cells completely inside the slot. cell i,j is centered on (4i, 4j + 0.5), its corners are at (4i +-2, 4j + 0.5 +-2)
 	local iMin = math.ceil((slot.x + 2) / 4)
 	local iMax = math.floor((slot.x + slot.width - 2) / 4)
@@ -444,7 +469,7 @@ local function generateCliffs(surface, slot, cliffAreas)
 				end
 
 				surface.create_entity({
-					name = CLIFF_NAME,
+					name = cliffName or CLIFF_NAME,
 					position = {4 * i, 4 * j + 0.5},
 					cliff_orientation = from.name .. "-to-" .. to.name
 				})
@@ -543,14 +568,15 @@ local function generate_structures(surface, slot, structures)
 	--cliff formations, before the rocks so the rocks go around them
 	local getMap = map.getMapByName(mapSlot.mapName)
 	if getMap and getMap.cliffAreas then
-		generateCliffs(surface, slot, getMap.cliffAreas)
+		generateCliffs(surface, slot, getMap.cliffAreas, getMap.cliffName)
 	end
 
-	--desert: sand rocks all over the map
-	if mapSlot.mapName and mapSlot.mapName == 'map-1-sand' then
+	--rocks all over the map: the map's rockNames (picked at random, list a name twice to make it more common)
+	--and rockCount = {min, max}
+	if getMap and getMap.rockNames and getMap.rockCount then
 		local biterPaths = map.getMapBiterPaths(mapSlot.mapName, mapSlot.difficulty) or {}
 		local random = game.create_random_generator()
-		generateRocks(surface, slot, biterPaths, structures, sandRockNames, random(300, 450))
+		generateRocks(surface, slot, biterPaths, structures, getMap.rockNames, random(getMap.rockCount[1], getMap.rockCount[2]))
 	end
 
 	--fill the whole map with trees
@@ -579,7 +605,9 @@ local function set_tile_area(surface, slot, tile_name, x1, y1, x2, y2)
 	surface.set_tiles(tiles, true)
 end
 
-local function createCircleOfTiles(surface, center_x, center_y, radius)
+--a filled circle of water, or of tile_name (lava pools on the volcano map)
+local function createCircleOfTiles(surface, center_x, center_y, radius, tile_name)
+    tile_name = tile_name or "water"
     local tiles = {}
     for x = center_x - radius, center_x + radius do
         for y = center_y - radius, center_y + radius do
@@ -591,7 +619,7 @@ local function createCircleOfTiles(surface, center_x, center_y, radius)
                     tile.name ~= "out-of-map" 
                 then
                     tiles[#tiles + 1] = {
-                        name = "water",
+                        name = tile_name,
                         position = {x = x, y = y}
                     }
                 end
@@ -700,14 +728,14 @@ function map.generateSlotLand(surface, slot, generateStructures)
 	if getMap.groundPatchTiles then
 		for _, patch in ipairs(getMap.groundPatchTiles) do
 			local position = map.getRelativeSlotPosition(slot, patch.x, patch.y)
-			createTilePatch(surface, slot, position.x, position.y, patch.radius, patch.tile)
+			createTilePatch(surface, slot, position.x, position.y, patch.radius, patch.tile, patch.shape)
 		end
 	end
 
 	if getMap.waterCompleteTiles then
 		for i, point in ipairs(getMap.waterCompleteTiles) do
 			local position = map.getRelativeSlotPosition(slot, point.x, point.y)
-			createCircleOfTiles(surface, position.x, position.y, point.radius)
+			createCircleOfTiles(surface, position.x, position.y, point.radius, point.tile)
 		end
 	end
 
@@ -718,10 +746,11 @@ function map.generateSlotLand(surface, slot, generateStructures)
 		end
 	end
 
-	if (biterPaths) then
+	-- one spawner, red square and set of path tiles per biter path
+	for _, biterPath in ipairs(map.getPathList(biterPaths)) do
 		local tiles = {}
 
-		for i, path in ipairs(biterPaths) do
+		for i, path in ipairs(biterPath) do
 			local position = map.getRelativeSlotPosition(slot, path.x, path.y)
 
 
@@ -746,7 +775,7 @@ function map.generateSlotLand(surface, slot, generateStructures)
 				spawner.destructible = false
 				spawner.disabled_by_script = true
 				spawner.minable_flag = false
-			elseif i == #biterPaths then
+			elseif i == #biterPath then
 				-- last path
 				tiles[#tiles + 1] = {
 					name = "red-refined-concrete",
@@ -888,6 +917,9 @@ function map.getMapByName(mapName)
 	end
 	if(tostring(mapName) == "map-2-trees")then
 		return map2
+	end
+	if(tostring(mapName) == "map-3-volcano")then
+		return map3
 	end
 end
 
@@ -1062,6 +1094,7 @@ function map.resetMapSlot(surface, slotId, isHardReset)
 	mapSlot.mapBiterPaths = nil
 	mapSlot.mapVotes = {}
 	mapSlot.mapDifficultyVotes = {}
+	mapSlot.endlessVotes = {}
 	mapSlot.waveTimer = 0
 	mapSlot.waveStartTick = 0
 	mapSlot.waveGroups = nil
@@ -1123,6 +1156,23 @@ function map.findStructureByName(structures, structureName)
         end
     end
     return nil
+end
+
+--endless or 300 waves, from the "Endless" checkbox of everyone who voted a difficulty (both slots in pvp).
+--endless is the default, so it wins a tie and when nobody voted (force start)
+function map.getEndlessVoteResult(slot, enemySlot)
+	local endlessCount = 0
+	local wavesCount = 0
+	for _, voteSlot in pairs({slot, enemySlot}) do
+		for _, isEndless in pairs(voteSlot.endlessVotes or {}) do
+			if isEndless then
+				endlessCount = endlessCount + 1
+			else
+				wavesCount = wavesCount + 1
+			end
+		end
+	end
+	return endlessCount >= wavesCount
 end
 
 function map.getWinningMapNameAndMapDifficulty(slot, enemySlot)

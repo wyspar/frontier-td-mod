@@ -10,7 +10,8 @@
     "space-age >= 2.1.23",
     "quality >= 2.1.23",
     "fdsl >= 0.5.4",
-    "aai-loaders >= 0.3.0"
+    "aai-loaders >= 0.3.0",
+    "ArmouredBiters21Compat >= 2.0.7"
   ],
   "space_travel_required": true
 }

@@ -1,7 +1,4 @@
 IDEAS AND TODO:
-add these back to dependencies
-    "l9m2-flyer-enemy >= 1.3.0",
-    "ArmouredBiters = 2.0.2"
 
 handle player leaving DONE?
   could be more issues that i dont see yet
@@ -11,11 +8,6 @@ maybe a 2nd public slot so both publics can fight
 add wind turbine, add wind turbine mod? steal that mod maybe
 add ammo only for the UT turrets
 need a big cool final boss
-I like the idea of a two spawners, two lanes, a fork in the road.
-  fork in the road map, might be a big redo of everything cause two spawners, then the biters need to know which is their path, left or right
-  Use 'volcanic-folds-warm' as the map tile
-
-friendly armoured biters need to walk to the enemy spawner
 
 TEST:
 need to test saving game and reload, do waves still work? DONE, yes waves still work

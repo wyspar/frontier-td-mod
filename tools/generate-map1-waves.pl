@@ -26,6 +26,10 @@
 # about countFactor times the unscaled base curve below, the difficulties differ by countFactor
 # and by having fewer but tankier (hard) or more but weaker (easy) enemies.
 # Bosses are never scaled, there is always exactly one.
+#
+# Endless mode (the "Endless" checkbox in the difficulty vote) does not use these tables: scripts/endless-waves.lua
+# makes its waves while the game runs, with the same rules as this script (families and unlock waves, special and
+# flying waves, behemoth ramp, a boss every 50) but a point budget per wave. Change both when the rules change.
 use strict;
 use warnings;
 

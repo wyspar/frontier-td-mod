@@ -15,6 +15,8 @@ market.sendBiterOffers = {
   { biterName = 'behemoth-physical-biter', count = 1, price = { { name = 'tier-three-science-pack', count = 15 } } },
   { biterName = 'behemoth-fire-biter',     count = 1, price = { { name = 'tier-four-science-pack', count = 20 } } },
   { biterName = 'boss-biter-1',            count = 1, price = { { name = 'tier-five-science-pack', count = 50 } } },
+  -- space age spider unit, slowed down and with more health in base-data-updates.lua
+  { biterName = 'big-stomper-pentapod',    count = 1, price = { { name = 'tier-five-science-pack', count = 200 } } },
 }
 
 function market.getSendBiterOffer(offerIndex)
@@ -76,10 +78,11 @@ local weaponMarketItems = {
   { price = { { name = 'coin', count = 5 } },     offer = { type = 'give-item', item = 'cliff-explosives', count = 1 } },
 }
 
---the slowdown capsule price doubles for a force every time someone on it buys one (20, 40, 80, ...),
+--the slowdown capsule price goes up 1.5x for a force every time someone on it buys one (20, 30, 45, 68, 102, ...),
 --capped at SLOWDOWN_CAPSULE_MAX_PRICE. it goes back to the base price when the slot is set up for a new round
 local SLOWDOWN_CAPSULE_ITEM = 'slowdown-capsule'
 local SLOWDOWN_CAPSULE_BASE_PRICE = 20
+local SLOWDOWN_CAPSULE_PRICE_MULTIPLIER = 1.5
 local SLOWDOWN_CAPSULE_MAX_PRICE = 128000
 
 function market.getSlowdownCapsulePrice(forceName)
@@ -109,10 +112,11 @@ local function fillWeaponsMarket(entity)
   end
 end
 
---doubles the force's slowdown capsule price and refills that force's weapons markets so they show it
-function market.doubleSlowdownCapsulePrice(surface, force)
+--raises the force's slowdown capsule price (rounded to whole coins) and refills that force's weapons markets so they show it
+function market.raiseSlowdownCapsulePrice(surface, force)
   storage.slowdownCapsulePrice = storage.slowdownCapsulePrice or {}
-  local price = math.min(market.getSlowdownCapsulePrice(force.name) * 2, SLOWDOWN_CAPSULE_MAX_PRICE)
+  local raised = math.floor(market.getSlowdownCapsulePrice(force.name) * SLOWDOWN_CAPSULE_PRICE_MULTIPLIER + 0.5)
+  local price = math.min(raised, SLOWDOWN_CAPSULE_MAX_PRICE)
   storage.slowdownCapsulePrice[force.name] = price
   for _, entity in pairs(surface.find_entities_filtered({name = 'weapons-market', force = force})) do
     if entity.valid then

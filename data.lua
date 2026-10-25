@@ -2,6 +2,8 @@ require("prototypes.entity.entities")
 require("prototypes.entity.explosions")
 require("prototypes.entity.remnants")
 require("prototypes.entity.enemies")
+--the flyers (merged from the l9m2-flyer-enemy mod), before base-data-updates.lua which changes their health
+require("prototypes.entity.l9m2-flyer.flyers")
 
 require("prototypes.item-groups")
 require("prototypes.item")
@@ -56,6 +58,8 @@ require("prototypes.money-tree")
 
 
 require("base-data-updates")
+--after base-data-updates: its recipe copies the (changed) assembling machine 1 recipe
+require("prototypes.entity.mini-foundry")
 
 local enabledTechnologies = {
   ["electronics"] = true,
@@ -68,6 +72,8 @@ local enabledTechnologies = {
   ["advanced-circuit"] = true,
   ["mining-productivity-1"] = true,
   ["mining-productivity-2"] = true,
+  ["mining-productivity-3"] = true,
+  ["mining-productivity-4"] = true,
   ["modules"] = true,
   ["battery"] = true,
   ["electric-engine"] = true,

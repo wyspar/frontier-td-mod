@@ -6,13 +6,15 @@ local biterModules = require('scripts.biter-modules')
 local corpseButton = require('scripts.corpse-button')
 local moneyTree = require('scripts.money-tree')
 local turretInfo = require('scripts.turret-info')
+local endlessWaves = require('scripts.endless-waves')
+local waveRecords = require('scripts.wave-records')
 local TICKS_PER_SECOND = 60
 local main_surface_name = "frontier"
 
 --biters bought in the pvp attack market go in their own force, killing them gives no coins or boss rewards
 local SENT_ENEMY_FORCE_NAME = "enemy-sent"
 --minimum time between two attack market buys on the same force
-local SEND_BITER_COOLDOWN_TICKS = TICKS_PER_SECOND * 2
+local SEND_BITER_COOLDOWN_TICKS = TICKS_PER_SECOND * 10
 --minimum time between two "silo under attack" alert sounds for the same force
 local SILO_ALERT_COOLDOWN_TICKS = 5 * TICKS_PER_SECOND
 
@@ -51,6 +53,29 @@ local function scheduleDelayedAction(delayTicks, name, data)
 end
 
 --validates the player and returns the player, their running slot, the map, and the wave list
+--one wave of a slot's round. endless rounds (slot.isEndless) have their own slot.mapWaveData table: a wave is made by
+--scripts/endless-waves.lua when it is first needed and only the current wave and the ones after it are kept
+local function getSlotWave(slot, waveNumber)
+	if not slot or not slot.mapWaveData or not waveNumber or waveNumber < 1 then
+		return nil
+	end
+	if not slot.isEndless then
+		return slot.mapWaveData[waveNumber]
+	end
+
+	local wave = slot.mapWaveData[waveNumber]
+	if not wave then
+		wave = endlessWaves.buildWave(waveNumber, slot.difficulty)
+		slot.mapWaveData[waveNumber] = wave
+	end
+	for oldWaveNumber, _ in pairs(slot.mapWaveData) do
+		if oldWaveNumber < (slot.currentWave or 0) then
+			slot.mapWaveData[oldWaveNumber] = nil
+		end
+	end
+	return wave
+end
+
 --used by /wave, /wavenext and the wave button on the top bar
 local function getWaveInfoForPlayer(player)
   if not player or not player.valid then
@@ -74,13 +99,12 @@ local function getWaveInfoForPlayer(player)
     return nil
   end
 
-  local waves = mapModule.getMapWaveData(slot.mapName, slot.difficulty)
-  if not waves then
+  if not slot.mapWaveData then
     player.print("Could not find the waves for slot " .. tostring(slot.id) .. ".")
     return nil
   end
 
-  return player, slot, mapData, waves
+  return player, slot, mapData
 end
 
 --prints one wave: number, duration, and every enemy group in it
@@ -119,9 +143,11 @@ local function getActualGroupSpawnCount(group, waveDuration)
   return spawned
 end
 
+--totalWaves is nil in an endless round
 local function printWaveInfo(player, title, waveNumber, wave, totalWaves)
-  player.print(title .. ": Wave " .. tostring(waveNumber) .. "/" .. tostring(totalWaves) ..
-    " (" .. tostring(wave.waveDuration) .. "s)")
+  local waveText = totalWaves and (tostring(waveNumber) .. "/" .. tostring(totalWaves)) or (tostring(waveNumber) .. " (endless)")
+  local noteText = wave.note and (" - " .. wave.note) or ""
+  player.print(title .. ": Wave " .. waveText .. " (" .. tostring(wave.waveDuration) .. "s)" .. noteText)
 
   --one line per enemy type with its total, the generated waves split a type into lots of small groups.
   --types are listed in the order they first show up in the wave
@@ -149,35 +175,37 @@ end
 
 --/wave and the wave button
 local function showCurrentWave(player)
-  local player, slot, mapData, waves = getWaveInfoForPlayer(player)
+  local player, slot, mapData = getWaveInfoForPlayer(player)
   if not player then
     return
   end
 
-  local wave = waves[slot.currentWave]
+  local totalWaves = (not slot.isEndless) and slot.totalWaves or nil
+  local wave = getSlotWave(slot, slot.currentWave)
   if not wave then
-    player.print("All " .. tostring(#waves) .. " waves have been sent on " .. mapData.mapLabel .. ". Kill the rest to win!")
+    player.print("All " .. tostring(slot.totalWaves) .. " waves have been sent on " .. mapData.mapLabel .. ". Kill the rest to win!")
     return
   end
 
-  printWaveInfo(player, mapData.mapLabel, slot.currentWave, wave, #waves)
+  printWaveInfo(player, mapData.mapLabel, slot.currentWave, wave, totalWaves)
 end
 
 --/wavenext
 local function showNextWave(player)
-  local player, slot, mapData, waves = getWaveInfoForPlayer(player)
+  local player, slot, mapData = getWaveInfoForPlayer(player)
   if not player then
     return
   end
 
+  local totalWaves = (not slot.isEndless) and slot.totalWaves or nil
   local nextWaveNumber = slot.currentWave + 1
-  local wave = waves[nextWaveNumber]
+  local wave = getSlotWave(slot, nextWaveNumber)
   if not wave then
     player.print("There are no more waves after wave " .. tostring(slot.currentWave) .. " on " .. mapData.mapLabel .. ".")
     return
   end
 
-  printWaveInfo(player, mapData.mapLabel, nextWaveNumber, wave, #waves)
+  printWaveInfo(player, mapData.mapLabel, nextWaveNumber, wave, totalWaves)
   player.print("  Starts in " .. tostring(math.ceil((slot.waveTimer or 0) / 60)) .. "s")
 end
 
@@ -441,6 +469,8 @@ local function createDefaultPlayerGui(player)
 		g = 1,
 		b = 1
 	}
+	-- right of the Frontier button (scripts/wave-records.lua)
+	waveRecords.ensureHighscoresButton(player)
 end
 
 local function teleportPlayerToTheirSpawn(surface, force, slotDef, player)
@@ -523,7 +553,7 @@ local function createIsGameStartedGui(player, slot, getMap)
 			type = "sprite-button",
 			name = "mapDifficulty_button",
 			caption = difficultyLabel,
-			tooltip = difficultyLabel
+			tooltip = slot.isEndless and (difficultyLabel .. " (Endless)") or difficultyLabel
 		}
 		mapDifficultyButton.style.width = 60;
 		mapDifficultyButton.style.height = 60;
@@ -737,6 +767,35 @@ local function send_biter_path(surface, spawn, path, count, biter_name, slot, un
 	set_biter_waypoint(group, storage.biter_paths[group.unique_id], surface, slotDef)
 
 	return group
+end
+
+--sends count enemies of a wave (or bought in the attack market) split between the slot's spawners, one per biter path
+--(map.getPathList). nothing extra is spawned: every spawner gets count / spawners, the leftover ones go to the next
+--spawners in turn (slot.nextSpawnerIndex), so a single boss comes from one spawner and the next one from the other
+local function sendToSlotSpawners(surface, slot, count, biterName, unitForce)
+	local paths = mapModule.getPathList(slot.mapBiterPaths)
+	local spawnerCount = #paths
+	if spawnerCount == 0 or count <= 0 then
+		return
+	end
+
+	local perSpawner = math.floor(count / spawnerCount)
+	local leftover = count % spawnerCount
+	local firstIndex = slot.nextSpawnerIndex or 1
+	if firstIndex > spawnerCount then
+		firstIndex = 1
+	end
+
+	for i = 0, spawnerCount - 1 do
+		local index = (firstIndex - 1 + i) % spawnerCount + 1
+		local spawnerAmount = perSpawner + ((i < leftover) and 1 or 0)
+		if spawnerAmount > 0 then
+			local path = paths[index]
+			send_biter_path(surface, path[1], path, spawnerAmount, biterName, slot, unitForce)
+		end
+	end
+
+	slot.nextSpawnerIndex = (firstIndex - 1 + leftover) % spawnerCount + 1
 end
 
 --when a spitter dies it spawns the next weaker spitter, small spitters spawn nothing
@@ -969,7 +1028,8 @@ local function startWave(slot, slotMapDef)
 	slot.waveStartTick = game.tick
 	slot.waveTimer = 0
 
-	local wave = slot.mapWaveData[slot.currentWave]
+	-- an endless round always has a next wave
+	local wave = getSlotWave(slot, slot.currentWave)
 
 	-- No more predefined waves
   if slot.isDead == true then
@@ -983,6 +1043,9 @@ local function startWave(slot, slotMapDef)
 		slot.waveGroups = nil
     return
   end
+
+	-- the slot's players reached this wave (highest wave records, scripts/wave-records.lua)
+	waveRecords.onWaveStarted(slot)
 
 	slot.waveGroups = {}
 
@@ -1008,7 +1071,7 @@ local function processWave(slot)
     return
   end
 
-  local wave = slot.mapWaveData[slot.currentWave]
+  local wave = getSlotWave(slot, slot.currentWave)
   if not wave then
     return
   end
@@ -1031,12 +1094,12 @@ local function processWave(slot)
         -- INTERVAL = 0
         -- Spawn entire group simultaneously
         if group.intervalTicks == 0 then
-          send_biter_path(surface, biterPaths[1], biterPaths, group.remaining, group.name, slot)
+          sendToSlotSpawners(surface, slot, group.remaining, group.name)
           group.remaining = 0
         -- NORMAL INTERVAL
         else
           local countOverDuration = math.floor(group.count / wave.waveDuration)
-          send_biter_path(surface, biterPaths[1], biterPaths, countOverDuration, group.name, slot)
+          sendToSlotSpawners(surface, slot, countOverDuration, group.name)
 
           group.remaining = group.remaining - countOverDuration
 
@@ -1201,6 +1264,26 @@ local function startRoundForForce(slot, force)
 
 	slot.isGameStarted = true
 	slot.startingGearGiven = {}
+	-- the "Endless" checkbox votes, both pvp slots count the same votes so they always agree
+	local enemySlot = slot.enemyForce and mapModule.getSlotByForceName(slot.enemyForce) or nil
+	slot.isEndless = mapModule.getEndlessVoteResult(slot, enemySlot)
+	-- a new round counts for the highest wave records again (/setwave turns them off for the round)
+	slot.waveRecordsOff = nil
+	-- map specific research (the map's technologies list, like map 3's foundry techs): hidden and off everywhere,
+	-- turned on for this round's force. force.reset() at the end of the round turns them off again
+	for _, technologyName in ipairs(getMap.technologies or {}) do
+		local technology = force.technologies[technologyName]
+		if technology then
+			technology.enabled = true
+		end
+	end
+	for _, player in pairs(force.connected_players) do
+		if slot.isEndless then
+			player.print("Endless mode: the waves never stop, survive as long as you can!")
+		else
+			player.print("Waves 1-" .. tostring(#waveData) .. ": kill the last wave to win.")
+		end
+	end
 
 	for _, player in pairs(force.connected_players) do
 		giveStartingGearIfNeeded(player, slot)
@@ -1261,9 +1344,15 @@ local function startRoundForForce(slot, force)
 	slot.waveTimer = 0
 	slot.waveStartTick = game.tick
 	slot.waveGroups = nil
-	slot.mapWaveData = waveData
 	slot.mapBiterPaths = biterPaths
-	slot.totalWaves = #waveData
+	if slot.isEndless then
+		-- the slot's own table, getSlotWave fills it one wave at a time
+		slot.mapWaveData = {}
+		slot.totalWaves = 0
+	else
+		slot.mapWaveData = waveData
+		slot.totalWaves = #waveData
+	end
   force.manual_mining_speed_modifier = 3
 
 	-- Immediately start Wave 1
@@ -1417,6 +1506,23 @@ local function createDifficultyGui(event, player, availableDifficulties)
 		scroll.style.maximal_height = 600
 		scroll.style.minimal_width = 300
 
+		-- voted together with the difficulty button (slot.endlessVotes), on by default.
+		-- keeps what the player chose if they open this again after voting
+		local slot = mapModule.getSlotByForceName(player.force.name)
+		local endlessState = true
+		if slot and slot.endlessVotes and slot.endlessVotes[player.index] ~= nil then
+			endlessState = slot.endlessVotes[player.index]
+		end
+		local endlessCheckbox = scroll.add {
+			type = "checkbox",
+			name = "endless_checkbox",
+			caption = "Endless",
+			state = endlessState,
+			tooltip = "On: the waves never stop, they keep getting harder until your silo is destroyed.\nOff: 300 waves, kill the last one to win."
+		}
+		endlessCheckbox.style.bottom_margin = 8
+		endlessCheckbox.style.font = "default-bold"
+
 		table = scroll.add {
 			type = "table",
 			column_count = 2
@@ -1476,8 +1582,10 @@ local function startPvpChallenge(slot, enemySlot)
 	--start voting fresh for both slots
 	slot.mapVotes = {}
 	slot.mapDifficultyVotes = {}
+	slot.endlessVotes = {}
 	enemySlot.mapVotes = {}
 	enemySlot.mapDifficultyVotes = {}
+	enemySlot.endlessVotes = {}
 
 	for _, forceToShow in pairs({force, enemyForce}) do
 		for _, forcePlayer in pairs(forceToShow.connected_players) do
@@ -2050,6 +2158,7 @@ script.on_init(function()
 			mapBiterPaths = nil,
 			mapVotes = {},
 			mapDifficultyVotes = {},
+			endlessVotes = {}, -- player index -> the endless checkbox when they voted a difficulty
 			waveTimer = 0, -- ticks not seconds
 			waveStartTick = 0,
 			waveGroups = nil,
@@ -2085,6 +2194,8 @@ script.on_configuration_changed(function()
 	--existing saves: give everyone the clear corpses button
 	for _, player in pairs(game.players) do
 		corpseButton.ensure(player)
+		--and the Highscores button on menu bars made before it existed
+		waveRecords.ensureHighscoresButton(player)
 	end
 end)
 
@@ -2620,6 +2731,10 @@ script.on_event(defines.events.on_gui_click, function(event)
 		return
 	end
 
+	if waveRecords.onGuiClick(element, player) then
+		return
+	end
+
 	if element.name == "teamMenu_button" then
     local frame = nil
     local scroll = nil
@@ -3117,6 +3232,11 @@ script.on_event(defines.events.on_gui_click, function(event)
 			return
 		end
 		slot.mapDifficultyVotes[player.index] = difficultyName
+		-- the endless checkbox counts as part of this vote
+		local difficultyGui = player.gui.screen.difficulty_selection_gui
+		local endlessCheckbox = difficultyGui and difficultyGui.difficulty_list and difficultyGui.difficulty_list.endless_checkbox
+		slot.endlessVotes = slot.endlessVotes or {}
+		slot.endlessVotes[player.index] = (not endlessCheckbox) or endlessCheckbox.state
 		if slot.isGameStarted then
 			player.print("Game already started.")
 			return
@@ -3500,7 +3620,7 @@ script.on_event(defines.events.on_market_item_purchased, function(event)
 		return
 	end
 
-	--slowdown capsules double in price for the buyer's force on every buy
+	--slowdown capsules go up 1.5x in price for the buyer's force on every buy
 	if market.isSlowdownCapsuleOffer(marketEntity, event.offer_index) then
 		local paidPrice = market.getSlowdownCapsulePrice(player.force.name)
 		--a bulk buy (shift/ctrl click) would get them all at the old price, so only one is kept
@@ -3510,7 +3630,7 @@ script.on_event(defines.events.on_market_item_purchased, function(event)
 			refundMarketPurchase(player, {{name = "coin", count = paidPrice}}, extra)
 			player.print("Slowdown capsules can only be bought one at a time, the rest of your coins were refunded.")
 		end
-		local newPrice = market.doubleSlowdownCapsulePrice(marketEntity.surface, player.force)
+		local newPrice = market.raiseSlowdownCapsulePrice(marketEntity.surface, player.force)
 		player.force.print({"", player.name, " bought a slowdown capsule, the next one costs ", newPrice, " coins."})
 		return
 	end
@@ -3548,7 +3668,8 @@ script.on_event(defines.events.on_market_item_purchased, function(event)
 	local nextTick = storage.sendBiterNextTick[forceIndex] or 0
 	if game.tick < nextTick then
 		refundMarketPurchase(player, sendOffer.price, event.count)
-		player.print("Your team can only send biters once per second, you got your science packs back.")
+		local secondsLeft = math.ceil((nextTick - game.tick) / TICKS_PER_SECOND)
+		player.print("Your team can send biters again in " .. secondsLeft .. " second" .. (secondsLeft == 1 and "" or "s") .. ", you got your science packs back.")
 		return
 	end
 	storage.sendBiterNextTick[forceIndex] = game.tick + SEND_BITER_COOLDOWN_TICKS
@@ -3559,8 +3680,7 @@ script.on_event(defines.events.on_market_item_purchased, function(event)
 		player.print("Only one biter purchase per second, the rest of your science packs were refunded.")
 	end
 
-	local biterPaths = enemySlot.mapBiterPaths
-	send_biter_path(surface, biterPaths[1], biterPaths, sendOffer.count, sendOffer.biterName, enemySlot, getSentEnemyForce())
+	sendToSlotSpawners(surface, enemySlot, sendOffer.count, sendOffer.biterName, getSentEnemyForce())
 
 	local enemyForce = game.forces[enemySlot.forceName]
 	local message = {"", player.name, " sent ", sendOffer.count, " ", {"entity-name." .. sendOffer.biterName}, "!"}
@@ -3811,6 +3931,7 @@ script.on_event(defines.events.on_player_joined_game, function(event)
 	if player.gui.top.menu_bar == nil then
 		createDefaultPlayerGui(player)
 	end
+	waveRecords.ensureHighscoresButton(player)
 	player.character_running_speed_modifier = 1
 	giveBackInventoryAndCancelRemovingInventory(player)
 	-- a round may have started while they were away, or their old round ended and they are now in a public round
@@ -3953,21 +4074,111 @@ if not commands.commands["setwave"] then
       return
     end
 
-    local totalWaves = #slot.mapWaveData
     local targetWave = math.floor(tonumber(command.parameter) or 0)
-    if targetWave < 1 or targetWave > totalWaves then
-      player.print("Usage: /setwave <1-" .. tostring(totalWaves) .. ">")
-      return
+    if slot.isEndless then
+      -- endless has no last wave
+      if targetWave < 1 then
+        player.print("Usage: /setwave <wave number>")
+        return
+      end
+    else
+      local totalWaves = #slot.mapWaveData
+      if targetWave < 1 or targetWave > totalWaves then
+        player.print("Usage: /setwave <1-" .. tostring(totalWaves) .. ">")
+        return
+      end
     end
 
     local slotMapDef = mapModule.slotDefinitions[slot.id]
     -- startWave adds 1 to currentWave
+    -- jumping waves would give everyone free records, the rest of this round does not count for them
+    if not slot.waveRecordsOff then
+      slot.waveRecordsOff = true
+      game.forces[tostring(slot.forceName)].print("Wave records are off for the rest of this round (/setwave was used).")
+    end
     slot.currentWave = targetWave - 1
     startWave(slot, slotMapDef)
 
     game.forces[tostring(slot.forceName)].print(player.name .. " jumped to wave " .. tostring(targetWave) .. ".")
   end)
 end
+
+--/highscores [filter]: the highest waves reached (scripts/wave-records.lua), optionally only records whose
+--player, map or difficulty contains the filter, like "/highscores volcano" or "/highscores hard"
+if not commands.commands["highscores"] then
+  commands.add_command("highscores", "[player, map or difficulty] Shows the highest waves reached.", function(command)
+    local player = command.player_index and game.get_player(command.player_index)
+    waveRecords.printHighscores(player, command.parameter)
+  end)
+end
+
+--/importwaverecords, admin only: brings the records of another save into this one, every record keeps the higher
+--wave. without anything after it, it opens a window with a big text box to paste the whole
+--script-output/frontier-td/highest-waves.json into (the chat line is too short for a big file).
+--"/importwaverecords <json>" still works for a small file, and from the server console / rcon
+if not commands.commands["importwaverecords"] then
+  commands.add_command("importwaverecords", "Admin only. Opens a window to paste highest-waves.json from another save into.", function(command)
+    local player = command.player_index and game.get_player(command.player_index)
+    if player and not player.admin then
+      player.print("Only admins can use /importwaverecords.")
+      return
+    end
+
+    if player and player.valid and not command.parameter then
+      waveRecords.openImportGui(player)
+      return
+    end
+
+    local changed, errorMessage = waveRecords.import(command.parameter)
+    local message = changed and ("Imported wave records: " .. changed .. " added or improved.") or errorMessage
+    if player and player.valid then
+      player.print(message)
+    else
+      game.print(message)
+    end
+  end)
+end
+
+--/exportwaverecords, admin only: writes script-output/frontier-td/highest-waves.json now
+--(it is also written every time a record goes up)
+if not commands.commands["exportwaverecords"] then
+  commands.add_command("exportwaverecords", "Admin only. Writes the wave records to script-output/" .. waveRecords.EXPORT_FILE .. ".", function(command)
+    local player = command.player_index and game.get_player(command.player_index)
+    if player and not player.admin then
+      player.print("Only admins can use /exportwaverecords.")
+      return
+    end
+
+    waveRecords.export()
+    local message = "Wave records written to script-output/" .. waveRecords.EXPORT_FILE .. (game.is_multiplayer() and " on the server." or ".")
+    if player and player.valid then
+      player.print(message)
+    else
+      game.print(message)
+    end
+  end)
+end
+
+--changing the endless checkbox after voting changes that vote too
+script.on_event(defines.events.on_gui_checked_state_changed, function(event)
+  local element = event.element
+  if not element or not element.valid or element.name ~= "endless_checkbox" then
+    return
+  end
+
+  local player = game.get_player(event.player_index)
+  if not player or not player.valid then
+    return
+  end
+
+  local slot = mapModule.getSlotByForceName(player.force.name)
+  if not slot or slot.isGameStarted or not slot.mapDifficultyVotes or not slot.mapDifficultyVotes[player.index] then
+    return
+  end
+
+  slot.endlessVotes = slot.endlessVotes or {}
+  slot.endlessVotes[player.index] = element.state
+end)
 
 script.on_event(defines.events.on_gui_opened, function(event)
   local player = game.get_player(event.player_index)

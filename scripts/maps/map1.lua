@@ -261,6 +261,11 @@ map1.groundPatchTiles = {
   {tile = "sand-3", x = 330, y = 190, radius = 22},
 }
 
+-- sand rocks all over the map (generateRocks in map.lua), kept off the paths, the silo and the ores.
+-- big-sand-rock is the only sand rock entity, medium/small-sand-rock are decoratives and cannot be created as entities
+map1.rockNames = {"big-sand-rock"}
+map1.rockCount = {300, 450}
+
 map1.mapName = "map-1-sand"  
 map1.mapLabel = "Sand Dunes"
 map1.mapTile = "sand-1"

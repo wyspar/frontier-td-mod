@@ -132,21 +132,27 @@ local function rememberBiter(data, forceName, biterName, unit)
   data.biters[forceName][biterName][unit.unit_number] = unit
 end
 
--- the biter walks to its force's silo and guards it, fighting any enemy that comes close
+-- the biter walks to its force's silo and guards it: it wanders around the silo for good, fighting any enemy
+-- that comes close (by_enemy distractions go back to the command after the fight).
+-- the silo itself is solid, so it walks to a free spot next to it. biters that end up without a command are
+-- sent again by checkIdleBiters
+local SILO_GUARD_RADIUS = 12
+
 local function sendToGuard(unit, surface, force)
   local silo = surface.find_entities_filtered({name = "rocket-silo", force = force, limit = 1})[1]
   local commands = {}
   if silo and silo.valid then
+    local destination = surface.find_non_colliding_position(unit.name, silo.position, SILO_GUARD_RADIUS, 1) or silo.position
     table.insert(commands, {
       type = defines.command.go_to_location,
-      destination = silo.position,
-      radius = 8,
+      destination = destination,
+      radius = 3,
       distraction = defines.distraction.by_enemy
     })
   end
   table.insert(commands, {
     type = defines.command.wander,
-    radius = 12,
+    radius = SILO_GUARD_RADIUS,
     distraction = defines.distraction.by_enemy
   })
   unit.commandable.set_command({
@@ -154,6 +160,22 @@ local function sendToGuard(unit, surface, force)
     structure_type = defines.compound_command.return_last,
     commands = commands
   })
+end
+
+-- friendly biters with no command (a walk that failed, or the command was lost) are sent to their silo again
+local function checkIdleBiters(data, surface)
+  for forceName, byName in pairs(data.biters) do
+    local force = game.forces[forceName]
+    for _, units in pairs(byName) do
+      for unitNumber, unit in pairs(units) do
+        if not unit.valid then
+          units[unitNumber] = nil
+        elseif force and not unit.commandable.has_command then
+          sendToGuard(unit, surface, force)
+        end
+      end
+    end
+  end
 end
 
 -- one biter per craft, of the tier of the machine's biter module, unless the force is at the cap
@@ -280,6 +302,7 @@ function biterModules.onTick(tick, surface, isSlotForce)
   local data = getStorage()
   if tick % SCAN_INTERVAL_TICKS == 0 then
     scanMachines(data, surface, isSlotForce)
+    checkIdleBiters(data, surface)
   end
   checkCrafts(data)
   removeExpiredCorpses(data, tick)

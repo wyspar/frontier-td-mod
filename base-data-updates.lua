@@ -145,6 +145,31 @@ redUnderground_recipe.ingredients = {
   {type = "item", name = "underground-belt", amount = 2}
 }
 
+--green (turbo) belts, unlocked by the green-belts tech: a little more than the red ones and made from them,
+--no lubricant, blue chips or tungsten. by hand, in assemblers and in foundries
+local greenBelt_recipe = data.raw.recipe["turbo-transport-belt"]
+greenBelt_recipe.categories = {"crafting", "metallurgy"}
+greenBelt_recipe.ingredients = {
+  {type = "item", name = "fast-transport-belt", amount = 1},
+  {type = "item", name = "iron-gear-wheel", amount = 3},
+  {type = "item", name = "steel-plate", amount = 1}
+}
+
+local greenUnderground_recipe = data.raw.recipe["turbo-underground-belt"]
+greenUnderground_recipe.categories = {"crafting", "metallurgy"}
+greenUnderground_recipe.ingredients = {
+  {type = "item", name = "turbo-transport-belt", amount = 5},
+  {type = "item", name = "fast-underground-belt", amount = 2}
+}
+
+local greenSplitter_recipe = data.raw.recipe["turbo-splitter"]
+greenSplitter_recipe.categories = {"crafting", "metallurgy"}
+greenSplitter_recipe.ingredients = {
+  {type = "item", name = "fast-splitter", amount = 1},
+  {type = "item", name = "iron-gear-wheel", amount = 15},
+  {type = "item", name = "electronic-circuit", amount = 15}
+}
+
 local electricFurnace_recipe = data.raw.recipe['electric-furnace']
 electricFurnace_recipe.ingredients = {
   {type = "item", name = "steel-plate", amount = 5},
@@ -165,7 +190,8 @@ concrete_recipe.ingredients =
 }
 
 local electricUnit_recipe = data.raw.recipe['electric-engine-unit']
-electricUnit_recipe.categories = nil
+--assemblers and the electromagnetic plant
+electricUnit_recipe.categories = {"crafting", "electromagnetics"}
 electricUnit_recipe.ingredients =
 {
   {type = "item", name = "engine-unit", amount = 1},
@@ -459,6 +485,58 @@ miningProd2_tech.unit =
   {
     {"tier-one-science-pack", 1},
     {"tier-two-science-pack", 1},
+  },
+  time = 20
+}
+
+--mining productivity 3 and 4. space age makes 3 the infinite one and removes 4, so 3 is made a normal tech
+--again and 4 is a copy of it
+local miningProd3_tech = data.raw.technology["mining-productivity-3"]
+miningProd3_tech.max_level = nil
+miningProd3_tech.prerequisites = {"mining-productivity-2", "biter-progress-tier-three-science"}
+miningProd3_tech.effects =
+{
+  {
+    type = "mining-drill-productivity-bonus",
+    modifier = 1
+  }
+}
+miningProd3_tech.unit =
+{
+  count = 200,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+  },
+  time = 20
+}
+
+local miningProd4_tech = data.raw.technology["mining-productivity-4"]
+if not miningProd4_tech then
+  miningProd4_tech = table.deepcopy(miningProd3_tech)
+  miningProd4_tech.name = "mining-productivity-4"
+  data:extend({miningProd4_tech})
+end
+miningProd4_tech.prerequisites = {"mining-productivity-3", "biter-progress-tier-four-science"}
+miningProd4_tech.max_level = nil
+miningProd4_tech.effects =
+{
+  {
+    type = "mining-drill-productivity-bonus",
+    modifier = 1
+  }
+}
+miningProd4_tech.unit =
+{
+  count = 300,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+    {"tier-four-science-pack", 1},
   },
   time = 20
 }
@@ -923,6 +1001,20 @@ for biterName, damageMultiplier in pairs(ARMOURED_BITER_DAMAGE_MULTIPLIERS) do
   end
 end
 
+--they are only ever friendly biters here (the waves never use them) and they have no spawner to go back to:
+--a failed walk must not delete them, they must not wander off to "return to a spawner", and they do not join
+--enemy style attack groups. scripts/biter-modules.lua sends them to their silo and back there when they are idle.
+--a copy, the armoured biters mod can hand out the vanilla biters' own ai_settings table
+for _, biterName in pairs({"small-armoured-biter", "medium-armoured-biter", "big-armoured-biter", "behemoth-armoured-biter"}) do
+  local biter = data.raw["unit"][biterName]
+  if biter then
+    biter.ai_settings = table.deepcopy(biter.ai_settings or {})
+    biter.ai_settings.destroy_when_commands_fail = false
+    biter.ai_settings.allow_try_return_to_spawner = false
+    biter.ai_settings.join_attacks = false
+  end
+end
+
 for _, corpseName in pairs({"small_armoured-corpse", "medium-armoured-corpse", "big-armoured-corpse", "behemoth-armoured-corpse"}) do
   local corpse = data.raw["corpse"][corpseName]
   if corpse then
@@ -942,3 +1034,85 @@ vehicleMachineGun.icons = {
   }
 }
 vehicleMachineGun.icon = nil
+
+--foundry (map 3 only, see map3.technologies in scripts/maps/map3.lua and the mini foundry in prototypes/entity/mini-foundry.lua)
+
+--adds a recipe category, keeping the ones it already has (no categories means "crafting")
+local function addRecipeCategory(recipe, category)
+  if not recipe then
+    return
+  end
+  recipe.categories = recipe.categories or {"crafting"}
+  for _, existing in pairs(recipe.categories) do
+    if existing == category then
+      return
+    end
+  end
+  table.insert(recipe.categories, category)
+end
+
+--both foundries (crafting category "metallurgy") can also make these. belts already can in space age
+for _, recipeName in pairs({"pipe", "pipe-to-ground", "engine-unit", "transport-belt"}) do
+  addRecipeCategory(data.raw.recipe[recipeName], "metallurgy")
+end
+
+local foundry_recipe = data.raw.recipe["foundry"]
+foundry_recipe.categories = {"crafting", "metallurgy"}
+foundry_recipe.ingredients =
+{
+  {type = "item", name = "steel-plate", amount = 50},
+  {type = "item", name = "electronic-circuit", amount = 30},
+  {type = "item", name = "electric-engine-unit", amount = 5},
+  {type = "item", name = "productivity-module", amount = 3},
+}
+
+--+100% productivity built in (vanilla +50%)
+data.raw["assembling-machine"]["foundry"].effect_receiver = {base_effect = {productivity = 1}}
+
+--researched with science instead of crafting tungsten carbide. the mini foundry tech already has the lava,
+--casting and pipe recipes, this one keeps the foundry and the rest of the vanilla unlocks
+local foundry_tech = data.raw.technology["foundry"]
+local miniFoundryRecipes = {
+  ["molten-iron-from-lava"] = true, ["molten-copper-from-lava"] = true,
+  ["casting-iron"] = true, ["casting-copper"] = true, ["casting-steel"] = true,
+  ["casting-iron-gear-wheel"] = true, ["casting-iron-stick"] = true, ["casting-copper-cable"] = true,
+  ["casting-pipe"] = true, ["casting-pipe-to-ground"] = true,
+}
+local foundryEffects = {}
+for _, effect in pairs(foundry_tech.effects or {}) do
+  if not (effect.type == "unlock-recipe" and miniFoundryRecipes[effect.recipe]) then
+    table.insert(foundryEffects, effect)
+  end
+end
+foundry_tech.effects = foundryEffects
+foundry_tech.research_trigger = nil
+foundry_tech.prerequisites = {"mini-foundry", "biter-progress-tier-four-science", "electric-engine", "modules"}
+foundry_tech.unit =
+{
+  count = 250,
+  ingredients =
+  {
+    {"tier-one-science-pack", 1},
+    {"tier-two-science-pack", 1},
+    {"tier-three-science-pack", 1},
+    {"tier-four-science-pack", 1},
+  },
+  time = 30
+}
+
+--big stomper pentapod (space age spider unit, sent in the pvp attack market, scripts/market.lua):
+--150000 hp, and 40 km/h instead of 68.5. a spider unit's speed comes from its legs: space age makes them with
+--initial_movement_speed and movement_acceleration both times its speed factor, so both are scaled down the same
+local BIG_STOMPER_HEALTH = 150000
+local BIG_STOMPER_SPEED_FACTOR = 40 / 68.5
+
+local bigStomper = data.raw["spider-unit"]["big-stomper-pentapod"]
+if bigStomper then
+  bigStomper.max_health = BIG_STOMPER_HEALTH
+end
+
+local bigStomperLeg = data.raw["spider-leg"]["big-stomper-pentapod-leg"]
+if bigStomperLeg then
+  bigStomperLeg.initial_movement_speed = bigStomperLeg.initial_movement_speed * BIG_STOMPER_SPEED_FACTOR
+  bigStomperLeg.movement_acceleration = bigStomperLeg.movement_acceleration * BIG_STOMPER_SPEED_FACTOR
+end

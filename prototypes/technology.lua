@@ -682,6 +682,40 @@ data:extend({
       time = 30
     }
   },
+  --green (turbo) belts, recipes in base-data-updates.lua (made from red belts, no lubricant or tungsten)
+  {
+    type = "technology",
+    name = "green-belts",
+    icon = "__space-age__/graphics/technology/turbo-transport-belt.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "turbo-transport-belt"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "turbo-underground-belt"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "turbo-splitter"
+      },
+    },
+    prerequisites = {"red-belts", "biter-progress-tier-three-science"},
+    unit =
+    {
+      count = 300,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+        {"tier-three-science-pack", 1},
+      },
+      time = 30
+    }
+  },
   {
     type = "technology",
     name = "flamer-turrets",
@@ -1822,6 +1856,73 @@ data:extend({
         {"tier-four-science-pack", 1},
       },
       time = 30
+    }
+  },
+  --map specific: hidden and off everywhere, a map 3 round turns it on for that slot's force (map3.technologies,
+  --startRoundForForce in control.lua). the foundry tech after it is changed in base-data-updates.lua
+  {
+    type = "technology",
+    name = "mini-foundry",
+    --the foundry tech icon, darker like the mini foundry icon (prototypes/entity/mini-foundry.lua)
+    icons = {{icon = "__space-age__/graphics/technology/foundry.png", icon_size = 256, tint = {r = 0.55, g = 0.55, b = 0.55, a = 1}}},
+    enabled = false,
+    visible_when_disabled = false,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "mini-foundry"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "molten-iron-from-lava"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "molten-copper-from-lava"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "casting-iron"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "casting-copper"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "casting-steel"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "casting-iron-gear-wheel"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "casting-iron-stick"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "casting-copper-cable"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "casting-pipe"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "casting-pipe-to-ground"
+      },
+    },
+    prerequisites = {"automation"},
+    unit =
+    {
+      count = 50,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+      },
+      time = 20
     }
   },
 })
