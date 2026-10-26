@@ -10,10 +10,14 @@ local attackMarketItems = {
 --pvp only: buy biters that are sent down the other team's biter path (force "enemy-sent", they give no coins or boss rewards)
 --the offer index is the position in this list, on_market_item_purchased in control.lua looks it up with market.getSendBiterOffer
 market.sendBiterOffers = {
-  { biterName = 'big-spitter',             count = 1, price = { { name = 'tier-two-science-pack', count = 12 } } },
+  { biterName = 'small-biter',             count = 5, price = { { name = 'tier-one-science-pack', count = 5 } } },
+  { biterName = 'medium-biter',            count = 1, price = { { name = 'tier-one-science-pack', count = 45 } } },
+  { biterName = 'big-spitter',             count = 1, price = { { name = 'tier-two-science-pack', count = 10 } } },
+  { biterName = 'big-biter',             count = 1, price = { { name = 'tier-two-science-pack', count = 12 } } },
   { biterName = 'behemoth-spitter',        count = 1, price = { { name = 'tier-three-science-pack', count = 5 } } },
   { biterName = 'behemoth-physical-biter', count = 1, price = { { name = 'tier-three-science-pack', count = 15 } } },
   { biterName = 'behemoth-fire-biter',     count = 1, price = { { name = 'tier-four-science-pack', count = 20 } } },
+  { biterName = 'behemoth-laser-biter',     count = 1, price = { { name = 'tier-four-science-pack', count = 30 } } },
   { biterName = 'boss-biter-1',            count = 1, price = { { name = 'tier-five-science-pack', count = 50 } } },
   -- space age spider unit, slowed down and with more health in base-data-updates.lua
   { biterName = 'big-stomper-pentapod',    count = 1, price = { { name = 'tier-five-science-pack', count = 200 } } },
@@ -21,6 +25,75 @@ market.sendBiterOffers = {
 
 function market.getSendBiterOffer(offerIndex)
   return market.sendBiterOffers[offerIndex]
+end
+
+--biter auction: the two pvp teams share the send biter prices. a send makes that offer more expensive and every
+--other offer paid with the same science pack cheaper, offers paid with other packs do not change.
+--prices are a percent of the price in sendBiterOffers, between SEND_PRICE_MIN_PERCENT and SEND_PRICE_MAX_PERCENT,
+--and start at the max when the round's markets are set up
+local SEND_PRICE_MIN_PERCENT = 50
+local SEND_PRICE_MAX_PERCENT = 100
+local SEND_PRICE_UP_PERCENT = 10
+local SEND_PRICE_DOWN_PERCENT = 5
+
+--the slots of both pvp teams share one key (the lower slot id), nil when the force is not in pvp.
+--looks at storage.mapSlots itself, scripts/map.lua requires this file so it cannot be required here
+local function getPvpPairKey(forceName)
+  for _, slot in pairs(storage.mapSlots or {}) do
+    if slot.forceName == forceName then
+      if not slot.isPvp or not slot.enemyForce then
+        return nil
+      end
+      for _, enemySlot in pairs(storage.mapSlots) do
+        if enemySlot.forceName == slot.enemyForce then
+          return math.min(slot.id, enemySlot.id)
+        end
+      end
+      return nil
+    end
+  end
+  return nil
+end
+
+--storage.sendBiterPricePercents[pairKey][offerIndex], missing means the max
+local function getPricePercents(forceName)
+  local key = getPvpPairKey(forceName)
+  if not key then
+    return nil
+  end
+  storage.sendBiterPricePercents = storage.sendBiterPricePercents or {}
+  storage.sendBiterPricePercents[key] = storage.sendBiterPricePercents[key] or {}
+  return storage.sendBiterPricePercents[key]
+end
+
+local function getPricePack(sendOffer)
+  return sendOffer.price[1].name
+end
+
+--the price the force's attack market charges for the offer right now (same format as sendOffer.price)
+function market.getSendBiterPrice(forceName, offerIndex)
+  local sendOffer = market.sendBiterOffers[offerIndex]
+  if not sendOffer then
+    return nil
+  end
+  local percents = getPricePercents(forceName)
+  local percent = percents and percents[offerIndex] or SEND_PRICE_MAX_PERCENT
+  local price = {}
+  for _, ingredient in ipairs(sendOffer.price) do
+    table.insert(price, {
+      name = ingredient.name,
+      count = math.max(1, math.floor(ingredient.count * percent / 100 + 0.5))
+    })
+  end
+  return price
+end
+
+--new round: both pvp teams start at the full prices again
+function market.resetSendBiterPrices(forceName)
+  local key = getPvpPairKey(forceName)
+  if key and storage.sendBiterPricePercents then
+    storage.sendBiterPricePercents[key] = nil
+  end
 end
 
 --fills only this attack market, the send biter offers are only added in pvp
@@ -34,14 +107,49 @@ function market.fillAttackMarket(entity, isPvp)
     return
   end
 
-  for _, sendOffer in ipairs(market.sendBiterOffers) do
+  for offerIndex, sendOffer in ipairs(market.sendBiterOffers) do
     entity.add_market_item({
-      price = sendOffer.price,
+      price = market.getSendBiterPrice(entity.force.name, offerIndex),
       offer = {
         type = 'nothing',
         effect_description = { 'frontier-td-market.send-biters', sendOffer.count, { 'entity-name.' .. sendOffer.biterName } }
       }
     })
+  end
+end
+
+--a send went through: that offer goes up, the other offers paid with the same science pack go down,
+--then the attack markets of both pvp teams are refilled so they show the new prices
+function market.onSendBiterBought(surface, forceName, offerIndex)
+  local percents = getPricePercents(forceName)
+  local boughtOffer = market.sendBiterOffers[offerIndex]
+  if not percents or not boughtOffer then
+    return
+  end
+
+  local pack = getPricePack(boughtOffer)
+  for index, sendOffer in ipairs(market.sendBiterOffers) do
+    if getPricePack(sendOffer) == pack then
+      local percent = percents[index] or SEND_PRICE_MAX_PERCENT
+      if index == offerIndex then
+        percent = percent + SEND_PRICE_UP_PERCENT
+      else
+        percent = percent - SEND_PRICE_DOWN_PERCENT
+      end
+      percents[index] = math.max(SEND_PRICE_MIN_PERCENT, math.min(SEND_PRICE_MAX_PERCENT, percent))
+    end
+  end
+
+  local key = getPvpPairKey(forceName)
+  for _, slot in pairs(storage.mapSlots) do
+    if slot.isPvp and getPvpPairKey(slot.forceName) == key then
+      local force = game.forces[slot.forceName]
+      if force then
+        for _, entity in pairs(surface.find_entities_filtered({name = 'attack-market', force = force})) do
+          market.fillAttackMarket(entity, true)
+        end
+      end
+    end
   end
 end
 
@@ -76,6 +184,8 @@ local weaponMarketItems = {
   { price = { { name = 'coin', count = 20 } },    offer = { type = 'give-item', item = 'exoskeleton-equipment', count = 1 } },
   --clears the cliffs on the desert map (map-1-sand)
   { price = { { name = 'coin', count = 5 } },     offer = { type = 'give-item', item = 'cliff-explosives', count = 1 } },
+  --space age foundation, can be placed on lava and deep water
+  { price = { { name = 'coin', count = 5 }, { name = 'landfill', count = 1 } },     offer = { type = 'give-item', item = 'foundation', count = 1 } },
 }
 
 --the slowdown capsule price goes up 1.5x for a force every time someone on it buys one (20, 30, 45, 68, 102, ...),

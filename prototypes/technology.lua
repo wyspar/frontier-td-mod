@@ -624,6 +624,35 @@ data:extend({
   },
   {
     type = "technology",
+    name = "pump-and-storage-tank",
+    -- the vanilla fluid handling icon is a storage tank
+    icon = "__base__/graphics/technology/fluid-handling.png",
+    icon_size = 256,
+    effects =
+    {
+      {
+        type = "unlock-recipe",
+        recipe = "pump"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "storage-tank"
+      }
+    },
+    prerequisites = {"biter-progress-tier-two-science","steel-processing"},
+    unit =
+    {
+      count = 100,
+      ingredients =
+      {
+        {"tier-one-science-pack", 1},
+        {"tier-two-science-pack", 1},
+      },
+      time = 30
+    }
+  },
+  {
+    type = "technology",
     name = "compressed-coal",
     icon = "__frontier-td__/graphics/technology/compressed-coal.png",
     icon_size = 256,
@@ -701,6 +730,10 @@ data:extend({
       {
         type = "unlock-recipe",
         recipe = "turbo-splitter"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "aai-turbo-loader"
       },
     },
     prerequisites = {"red-belts", "biter-progress-tier-three-science"},
@@ -1914,7 +1947,7 @@ data:extend({
         recipe = "casting-pipe-to-ground"
       },
     },
-    prerequisites = {"automation"},
+    prerequisites = {"automation", "steel-processing"},
     unit =
     {
       count = 50,

@@ -168,10 +168,10 @@ map1.DefaultMapStructures = {
     x = 182,
     y = 179
   },
-  -- ores in a 2x2 block in the top right corner, 41x41 each (8 big mining drills fit along a side), 1 tile seams
+  -- ores stacked in a column down the right edge, 41x41 each (8 big mining drills fit along a side), 1 tile seams
   {
     name = "copper-ore",
-    x = 286,
+    x = 328,
     y = 21,
     amount = 1000000,
     isOreTile = true,
@@ -180,15 +180,15 @@ map1.DefaultMapStructures = {
   {
     name = "stone",
     x = 328,
-    y = 21,
+    y = 63,
     amount = 1000000,
     isOreTile = true,
     size=20
   },
   {
     name = "iron-ore",
-    x = 286,
-    y = 63,
+    x = 328,
+    y = 105,
     amount = 1000000,
     isOreTile = true,
     size=20
@@ -196,7 +196,7 @@ map1.DefaultMapStructures = {
   {
     name = "coal",
     x = 328,
-    y = 63,
+    y = 147,
     amount = 1000000,
     isOreTile = true,
     size=20
@@ -224,8 +224,8 @@ map1.DefaultMapStructures = {
 -- small oasis next to the base, water for offshore pumps
 map1.waterCompleteTiles = {
   {
-    x = 255,
-    y = 120,
+    x = 266,
+    y = 177,
     radius = 9
   },
 }
@@ -243,7 +243,9 @@ map1.cliffAreas = {
   -- bottom middle, between the path and the bottom edge
   {x = 175, y = 300, radius = 40},
   -- east, along the turn of the path before it heads to the silo
-  {x = 280, y = 220, radius = 50},
+  -- pulled in at the north so it stays clear of the bottom of the ore column (fits inside the old 280,220 r50 circle,
+  -- so it is no closer to the paths)
+  {x = 280, y = 228, radius = 42},
   {x = 300, y = 265, radius = 43},
 }
 
@@ -264,7 +266,7 @@ map1.groundPatchTiles = {
 -- sand rocks all over the map (generateRocks in map.lua), kept off the paths, the silo and the ores.
 -- big-sand-rock is the only sand rock entity, medium/small-sand-rock are decoratives and cannot be created as entities
 map1.rockNames = {"big-sand-rock"}
-map1.rockCount = {300, 450}
+map1.rockCount = {500, 650}
 
 map1.mapName = "map-1-sand"  
 map1.mapLabel = "Sand Dunes"

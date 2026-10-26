@@ -90,6 +90,36 @@ biolab.inputs = {
 }
 biolab.researching_speed = 6
 
+--4x4 instead of 5x5, every sprite (scale and shift) and position in its graphics scaled down to match.
+--seen: a sprite used twice must only be scaled once
+local BIOLAB_SCALE = 4 / 5
+local function scaleBiolabGraphics(value, seen)
+  if type(value) ~= "table" or seen[value] then
+    return
+  end
+  seen[value] = true
+  if value.filename or value.filenames or value.stripes then
+    value.scale = (value.scale or 1) * BIOLAB_SCALE
+  end
+  for key, child in pairs(value) do
+    if type(child) == "table" then
+      local isPosition = (key == "shift" or (type(key) == "string" and key:sub(-9) == "_position"))
+        and type(child[1]) == "number" and type(child[2]) == "number"
+      if isPosition then
+        value[key] = {child[1] * BIOLAB_SCALE, child[2] * BIOLAB_SCALE}
+      else
+        scaleBiolabGraphics(child, seen)
+      end
+    end
+  end
+end
+biolab.collision_box = {{-1.7, -1.7}, {1.7, 1.7}}
+biolab.selection_box = {{-2, -2}, {2, 2}}
+local biolabSeen = {}
+for _, key in pairs({"on_animation", "off_animation", "frozen_patch", "water_reflection"}) do
+  scaleBiolabGraphics(biolab[key], biolabSeen)
+end
+
 local biolab_recipe = data.raw.recipe["biolab"]
 biolab_recipe.ingredients = {
   {type = "item", name = "iron-gear-wheel", amount = 10},
@@ -267,6 +297,19 @@ if aaiFastLoader then
     {type = "item", name = "electronic-circuit", amount = 25}
   }
   aaiFastLoader.energy_required = 2
+end
+
+--green loader, unlocked by the green belts tech (prototypes/technology.lua). no lubricant or tungsten, also in foundries
+local aaiTurboLoader = data.raw.recipe["aai-turbo-loader"]
+if aaiTurboLoader then
+  aaiTurboLoader.ingredients = {
+    {type = "item", name = "aai-fast-loader", amount = 1},
+    {type = "item", name = "turbo-transport-belt", amount = 1},
+    {type = "item", name = "advanced-circuit", amount = 25}
+  }
+  aaiTurboLoader.categories = {"crafting", "metallurgy"}
+  aaiTurboLoader.energy_required = 2
+  aaiTurboLoader.enabled = false
 end
 
 local battery_recipe = data.raw.recipe['battery']
@@ -894,7 +937,7 @@ electricFurnace_entity.graphics_set.working_visualisations =
 
 local ultraFlyer_entity = data.raw.unit['ultra-flyer']
 if ultraFlyer_entity then
-  ultraFlyer_entity.max_health = 35000
+  ultraFlyer_entity.max_health = 55000
   ultraFlyer_entity.attack_parameters.range = 25
   ultraFlyer_entity.has_belt_immunity = true
 end
@@ -1052,7 +1095,10 @@ local function addRecipeCategory(recipe, category)
 end
 
 --both foundries (crafting category "metallurgy") can also make these. belts already can in space age
-for _, recipeName in pairs({"pipe", "pipe-to-ground", "engine-unit", "transport-belt"}) do
+for _, recipeName in pairs({
+  "engine-unit", "transport-belt",
+  "boiler", "steam-engine", "heat-pipe", "heat-exchanger", "heating-tower", "storage-tank", "steam-turbine",
+}) do
   addRecipeCategory(data.raw.recipe[recipeName], "metallurgy")
 end
 
@@ -1069,18 +1115,27 @@ foundry_recipe.ingredients =
 --+100% productivity built in (vanilla +50%)
 data.raw["assembling-machine"]["foundry"].effect_receiver = {base_effect = {productivity = 1}}
 
+--the electromagnetic plant (crafting category "electromagnetics") can also make every inserter
+for _, recipeName in pairs({
+  "burner-inserter", "inserter", "long-handed-inserter", "fast-inserter", "bulk-inserter", "stack-inserter",
+}) do
+  addRecipeCategory(data.raw.recipe[recipeName], "electromagnetics")
+end
+
 --researched with science instead of crafting tungsten carbide. the mini foundry tech already has the lava,
---casting and pipe recipes, this one keeps the foundry and the rest of the vanilla unlocks
+--casting and pipe recipes, this one keeps the foundry and the rest of the vanilla unlocks,
+--minus casting low density structure and concrete from molten iron
 local foundry_tech = data.raw.technology["foundry"]
-local miniFoundryRecipes = {
+local removedFoundryRecipes = {
   ["molten-iron-from-lava"] = true, ["molten-copper-from-lava"] = true,
   ["casting-iron"] = true, ["casting-copper"] = true, ["casting-steel"] = true,
   ["casting-iron-gear-wheel"] = true, ["casting-iron-stick"] = true, ["casting-copper-cable"] = true,
   ["casting-pipe"] = true, ["casting-pipe-to-ground"] = true,
+  ["casting-low-density-structure"] = true, ["concrete-from-molten-iron"] = true,
 }
 local foundryEffects = {}
 for _, effect in pairs(foundry_tech.effects or {}) do
-  if not (effect.type == "unlock-recipe" and miniFoundryRecipes[effect.recipe]) then
+  if not (effect.type == "unlock-recipe" and removedFoundryRecipes[effect.recipe]) then
     table.insert(foundryEffects, effect)
   end
 end

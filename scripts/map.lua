@@ -380,7 +380,8 @@ local function createTilePatch(surface, slot, center_x, center_y, radius, tile_n
 	surface.set_tiles(tiles, true)
 end
 
---cliff formations (map cliffAreas, slot relative circles). cliffs sit on a 4x4 grid (base cliff prototype: grid_size 4,
+--cliff formations (map cliffAreas, slot relative circles {x, y, radius} or rectangles {x, y, shape = "rect",
+--halfWidth, halfHeight}, overlapping ones make one formation). cliffs sit on a 4x4 grid (base cliff prototype: grid_size 4,
 --grid_offset {0, 0.5}), one cliff per grid cell. every grid corner inside a cliffAreas circle is "high", and a cliff goes
 --in every cell on the border between high and low corners (marching squares), so each formation is one closed cliff loop.
 --the orientation names the two cell sides the cliff runs between, in the order that keeps the high ground on its left
@@ -415,7 +416,14 @@ local function generateCliffs(surface, slot, cliffAreas, cliffName)
 			for _, area in ipairs(cliffAreas) do
 				local dx = x - area.x
 				local dy = y - area.y
-				if dx * dx + dy * dy < area.radius * area.radius then
+				local inside
+				if area.shape == "rect" then
+					-- a rectangle, halfWidth/halfHeight from the middle to the sides
+					inside = math.abs(dx) < area.halfWidth and math.abs(dy) < area.halfHeight
+				else
+					inside = dx * dx + dy * dy < area.radius * area.radius
+				end
+				if inside then
 					isHigh = true
 					break
 				end
@@ -554,6 +562,8 @@ local function generate_structures(surface, slot, structures)
 			end
 			--the attack market only sells biters to send to the other team in pvp
 			if entity and entity.name == 'attack-market' then
+				--new round: the biter auction starts at full prices again
+				market.resetSendBiterPrices(force.name)
 				market.fillAttackMarket(entity, mapSlot.isPvp == true)
 			end
 			if entity and entity.name == 'weapons-market' then
@@ -1099,6 +1109,7 @@ function map.resetMapSlot(surface, slotId, isHardReset)
 	mapSlot.waveStartTick = 0
 	mapSlot.waveGroups = nil
 	mapSlot.startingGearGiven = {}
+	mapSlot.playerClasses = {}
 	local oldMapTagId = mapSlot.mapTagId
 	mapSlot.mapTagId = nil
 

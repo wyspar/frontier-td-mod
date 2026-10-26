@@ -1,5 +1,14 @@
 IDEAS AND TODO:
 
+map where its all landfill on top of water. you can choose your own pathing. 
+  map-4
+  But would need to limit some amount of area to be unpickable. Like default to regular tiles
+biochamers for the forest map? turn off spoil for nutrients
+  new tech for new items to make nutrients and other shit
+  mini biochambers (3x3) like vanilla 50% prod
+  large biomchambers (4x4) 100% prod
+cargo landing pad for map 1?
+map-5 could be only get resources from space? LOL would need cargo landing pad here too
 handle player leaving DONE?
   could be more issues that i dont see yet
 handle player joining back, check if they have a force, check if they have a slot HALFDONE

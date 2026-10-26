@@ -4,6 +4,8 @@ require("prototypes.entity.remnants")
 require("prototypes.entity.enemies")
 --the flyers (merged from the l9m2-flyer-enemy mod), before base-data-updates.lua which changes their health
 require("prototypes.entity.l9m2-flyer.flyers")
+--a gold copy of the small flyer, needs the flyers above
+require("prototypes.entity.golden-snitch")
 
 require("prototypes.item-groups")
 require("prototypes.item")
@@ -188,7 +190,15 @@ type = "shortcut",
 
 data:extend({
   turret_upgrade_tool,
-  turret_upgrade_shortcut
+  turret_upgrade_shortcut,
+  -- played to the player when the upgrade tool upgrades turrets. confirmation_002 from Kenney's Interface Sounds
+  -- (CC0, see sounds/LICENSE-kenney-interface-sounds.txt)
+  {
+    type = "sound",
+    name = "frontier-turret-upgrade",
+    filename = "__frontier-td__/sounds/turret-upgrade.ogg",
+    volume = 0.5
+  }
 })
 
 data:extend({
@@ -199,5 +209,30 @@ data:extend({
     consuming = "game-only",
     item_to_spawn = "turret-upgrade-tool",
     action = "spawn-item"
+  }
+})
+-- speed wave modifier (endless, scripts/endless-waves.lua): control.lua puts this on every enemy of the wave.
+-- the slowdown sticker's goo tinted red, the movement modifier is in sync with SPEED_WAVE_MOVEMENT_MODIFIER
+data:extend({
+  {
+    type = "sticker",
+    name = "frontier-haste-sticker",
+    flags = {"not-on-map"},
+    hidden = true,
+    animation =
+    {
+      filename = "__base__/graphics/entity/slowdown-sticker/slowdown-sticker.png",
+      line_length = 5,
+      width = 42,
+      height = 48,
+      frame_count = 50,
+      animation_speed = 0.5,
+      tint = {1, 0.15, 0.1, 0.6},
+      shift = {2 / 32, -0.5 / 32},
+      scale = 0.5
+    },
+    -- longer than any enemy lives
+    duration_in_ticks = 30 * 60 * 60,
+    target_movement_modifier = 1.4
   }
 })

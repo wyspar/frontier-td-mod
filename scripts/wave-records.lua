@@ -126,14 +126,15 @@ function waveRecords.import(jsonText)
 end
 
 -- the best records, highest wave first: every player's record for each map/difficulty/mode.
--- filter (optional) only keeps records whose map name, map label, difficulty or player name contains it
-function waveRecords.getTop(count, filter)
+-- filter (optional) only keeps records whose map name, map label, difficulty or player name contains it.
+-- mapName (optional) only keeps the records of exactly that map
+function waveRecords.getTop(count, filter, mapName)
   local list = {}
   filter = filter and filter:lower() or nil
   for playerName, playerRecords in pairs(getRecords()) do
     for _, record in pairs(playerRecords) do
       local text = (playerName .. " " .. tostring(record.map) .. " " .. mapLabel(record.map) .. " " .. tostring(record.difficulty)):lower()
-      if not filter or text:find(filter, 1, true) then
+      if (not filter or text:find(filter, 1, true)) and (not mapName or record.map == mapName) then
         list[#list + 1] = {player = playerName, wave = record.wave, map = record.map, difficulty = record.difficulty, endless = record.endless}
       end
     end
@@ -156,8 +157,9 @@ function waveRecords.describe(record)
 end
 
 -- the top 10 in chat, for /highscores and the Highscores button. filter (optional) only shows records whose
--- player, map or difficulty contains it. player nil (server console) prints to everyone
-function waveRecords.printHighscores(player, filter)
+-- player, map or difficulty contains it, mapName (optional) only shows that map's records.
+-- player nil (server console) prints to everyone
+function waveRecords.printHighscores(player, filter, mapName)
   local print = function(message)
     if player and player.valid then
       player.print(message)
@@ -166,13 +168,14 @@ function waveRecords.printHighscores(player, filter)
     end
   end
 
-  local top, total = waveRecords.getTop(10, filter)
+  local top, total = waveRecords.getTop(10, filter, mapName)
+  local title = filter or (mapName and mapLabel(mapName))
   if total == 0 then
-    print(filter and ("No wave records for \"" .. filter .. "\".") or "No wave records yet.")
+    print(title and ("No wave records for \"" .. title .. "\".") or "No wave records yet.")
     return
   end
 
-  print("Highest waves" .. (filter and (" (" .. filter .. ")") or "") .. ":")
+  print("Highest waves" .. (title and (" (" .. title .. ")") or "") .. ":")
   for i, record in ipairs(top) do
     print("  " .. i .. ". " .. record.player .. " - wave " .. record.wave .. " (" .. waveRecords.describe(record) .. ")")
   end
@@ -209,6 +212,25 @@ function waveRecords.ensureHighscoresButton(player)
   button.style.padding = 5
   button.style.font = "default-bold"
   button.style.font_color = {r = 1, g = 1, b = 1}
+end
+
+-- Highscores button right of each map button in the Choose a map window, shows only that map's records
+local MAP_HIGHSCORES_BUTTON_PREFIX = "map_highscores_button_"
+
+function waveRecords.addMapHighscoresButton(parent, mapName, label)
+  local button = parent.add({
+    type = "sprite-button",
+    name = MAP_HIGHSCORES_BUTTON_PREFIX .. tostring(mapName),
+    sprite = "virtual-signal/signal-star",
+    caption = "Highscores",
+    tooltip = "Highest waves reached on " .. tostring(label)
+  })
+  button.style.width = 60
+  button.style.height = 50
+  button.style.padding = 5
+  button.style.font = "default-bold"
+  button.style.font_color = {r = 1, g = 1, b = 1}
+  return button
 end
 
 -- import window: a big text box to paste the whole highest-waves.json into. used instead of the chat line,
@@ -251,6 +273,12 @@ end
 function waveRecords.onGuiClick(element, player)
   if element.name == HIGHSCORES_BUTTON then
     waveRecords.printHighscores(player)
+    return true
+  end
+
+  local mapName = element.name:match("^" .. MAP_HIGHSCORES_BUTTON_PREFIX .. "(.+)$")
+  if mapName then
+    waveRecords.printHighscores(player, nil, mapName)
     return true
   end
 

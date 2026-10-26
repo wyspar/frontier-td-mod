@@ -46,10 +46,13 @@ my $FIRST_BITER_SECOND = 10;
 my $FIRST_WAVE_REST_DELAY = 25;
 
 # keep healthGrowth in sync with ENEMY_HEALTH_GROWTH_PER_WAVE in control.lua
+# lateCountFactor: extra enemies after wave $LATE_COUNT_WAVE (normal +15%, hard +25%), keep in sync with LATE_COUNT_FACTOR in
+# scripts/endless-waves.lua
+my $LATE_COUNT_WAVE = 30;
 my %DIFFICULTIES = (
-  easy   => {tableName => "easyWaves",      label => "Easy",  healthGrowth => 0.02, countFactor => 0.8,  firstMediumWave => 7},
-  normal => {tableName => "normalWaves",    label => "Normal", healthGrowth => 0.04, countFactor => 1.3,  firstMediumWave => 6},
-  hard   => {tableName => "hardWaves",      label => "Hard",   healthGrowth => 0.06, countFactor => 1.75, firstMediumWave => 3},
+  easy   => {tableName => "easyWaves",      label => "Easy",  healthGrowth => 0.02, countFactor => 0.8,  lateCountFactor => 1,  firstMediumWave => 7},
+  normal => {tableName => "normalWaves",    label => "Normal", healthGrowth => 0.04, countFactor => 1.3,  lateCountFactor => 1.15,  firstMediumWave => 6},
+  hard   => {tableName => "hardWaves",      label => "Hard",   healthGrowth => 0.06, countFactor => 1.75, lateCountFactor => 1.25, firstMediumWave => 3},
 );
 
 # one boss every 50 waves, boss 2 is the ultra-flyer
@@ -399,6 +402,7 @@ sub buildWave {
   my ($wave) = @_;
   my $duration = waveDuration($wave);
   $countScale = $difficulty->{countFactor} / healthMultiplier($wave);
+  $countScale *= $difficulty->{lateCountFactor} if $wave > $LATE_COUNT_WAVE;
 
   return ($duration, firstWave($duration)) if $wave == 1;
   return ($duration, bossWave($wave, $duration)) if isBossWave($wave);

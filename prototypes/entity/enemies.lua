@@ -76,7 +76,7 @@ local bossBiter1 = {
   order="b-a-c",
   icon = "__base__/graphics/icons/big-biter.png",
   flags = {"placeable-player", "placeable-enemy", "placeable-off-grid", "breaths-air", "not-repairable"},
-  max_health = 15000,
+  max_health = 17500,
   subgroup = "enemies",
   factoriopedia_simulation = simulations.factoriopedia_big_biter,
   impact_category = "organic",
@@ -84,7 +84,7 @@ local bossBiter1 = {
   {
     {
       type = "physical",
-      percent = 15
+      percent = 20
     }
   },
   spawning_time_modifier = 3,
@@ -142,7 +142,7 @@ local bossBiterTiers = {
   { --laser
     name = "boss-biter-3",
     scale = 3,
-    maxHealth = 70000,
+    maxHealth = 100000,
     movementSpeed = 0.10,
     damage = 300,
     tint1 = {0.9, 0.8, 0.1, 1},
@@ -156,7 +156,7 @@ local bossBiterTiers = {
     name = "boss-biter-4",
     scale = 4,
     maxHealth = 125000,
-    movementSpeed = 0.10,
+    movementSpeed = 0.07,
     damage = 450,
     tint1 = {0.9, 0.15, 0.15, 1},
     tint2 = {0.55, 0.05, 0.05, 0.8},
@@ -168,8 +168,8 @@ local bossBiterTiers = {
   { --electric, laser, poison, acid
     name = "boss-biter-5",
     scale = 5,
-    maxHealth = 175000,
-    movementSpeed = 0.09,
+    maxHealth = 250000,
+    movementSpeed = 0.08,
     damage = 650,
     tint1 = {0.6, 0.2, 0.85, 1},
     tint2 = {0.35, 0.8, 0.2, 0.8},
@@ -184,7 +184,7 @@ local bossBiterTiers = {
   { --50% everything
     name = "boss-biter-6",
     scale = 6,
-    maxHealth = 1000000,
+    maxHealth = 750000,
     movementSpeed = 0.05,
     damage = 1000,
     tint1 = {0.0, 0.0, 0.0, 1},

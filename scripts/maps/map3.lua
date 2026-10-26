@@ -230,6 +230,14 @@ map3.cliffAreas = {
   {x = 100, y = 265, radius = 16},
   {x = 302, y = 255, radius = 18},
   {x = 250, y = 265, radius = 18},
+  -- big plus sign in the middle, two crossing 90x12 bars around a round hub with the lava pool in it
+  -- (groundPatchTiles), the hub keeps the cliffs outside the hot cracks. it sits above the slot's center (175, 175)
+  -- so its bottom arm stays 20 tiles clear of where the paths cross (175, 190)
+  {x = 175, y = 125, shape = "rect", halfWidth = 45, halfHeight = 6},
+  -- x 171 instead of 175: the cliffs snap to a 4 tile grid and at 175 the vertical bar came out ~3 tiles right of
+  -- the lava, 171 is the next grid step left
+  {x = 171, y = 125, shape = "rect", halfWidth = 6, halfHeight = 45},
+  {x = 175, y = 125, radius = 19},
 }
 
 -- ground tiles on top of the map tile, later ones are drawn over earlier ones. shape "diamond" is a square turned
@@ -250,6 +258,9 @@ map3.groundPatchTiles = {
   {tile = "lava", x = 88, y = 15, radius = 11},
   {tile = "volcanic-cracks-hot", x = 262, y = 15, radius = 15},
   {tile = "lava", x = 262, y = 15, radius = 11},
+  -- the same lava circle in the middle of the cliff plus (cliffAreas)
+  {tile = "volcanic-cracks-hot", x = 175, y = 125, radius = 15},
+  {tile = "lava", x = 175, y = 125, radius = 11},
 }
 
 -- volcanic rocks and a few cold chimneys (generateRocks in map.lua), kept off the paths, the silo and the ores.
@@ -259,7 +270,7 @@ map3.rockNames = {
   "huge-volcanic-rock", "huge-volcanic-rock", "huge-volcanic-rock",
   "vulcanus-chimney-cold",
 }
-map3.rockCount = {100, 160}
+map3.rockCount = {300, 500}
 
 -- research only on this map: hidden everywhere else, turned on for the slot's force when a round starts here
 -- (startRoundForForce in control.lua). the techs themselves are in prototypes/technology.lua and base-data-updates.lua

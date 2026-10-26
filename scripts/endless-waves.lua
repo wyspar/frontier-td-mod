@@ -3,10 +3,12 @@
 -- the rules follow tools/generate-map1-waves.pl (which makes the 300 normal waves): the same enemy families and
 -- unlock waves, special waves with one family, flying waves every 20, behemoths ramped in, a boss every 50.
 -- instead of fixed counts every wave gets a point budget and spends it on the enemies it is allowed to use.
--- every wave is 60 seconds. wave 1 is always one small biter, wave 2 is 11 small biters on normal
+-- every wave is 60 seconds (boss waves 150). wave 1 is always one small biter, wave 2 is 11 small biters on normal
 local endless = {}
 
 local WAVE_DURATION = 60
+-- boss waves (every 50) are longer, like the boss waves of the 300 normal waves
+local BOSS_WAVE_DURATION = 150
 
 -- enemies cost their max health / 15 points, so a small biter is 1.
 -- max health from prototypes/entity/enemies.lua, base-data-updates.lua (flyers) and the base game
@@ -23,6 +25,9 @@ local HEALTH_PER_POINT = 15
 
 -- by mapModule.difficulties id (1 normal, 2 easy, 3 hard, 4 test). the points are the perl script's countFactor
 local DIFFICULTY_POINTS = {[1] = 1.3, [2] = 0.8, [3] = 1.75, [4] = 1.3}
+-- extra enemies after wave LATE_COUNT_WAVE: normal +15%, hard +25%, easy the same (the perl script's lateCountFactor)
+local LATE_COUNT_WAVE = 30
+local LATE_COUNT_FACTOR = {[1] = 1.15, [2] = 1, [3] = 1.25, [4] = 1.15}
 local FIRST_MEDIUM_WAVE = {[1] = 6, [2] = 7, [3] = 3, [4] = 6}
 
 -- budget = (BUDGET_BASE + (wave - 2)^2) * difficulty points / (1 + BUDGET_HEALTH_GROWTH * wave).
@@ -32,7 +37,9 @@ local FIRST_MEDIUM_WAVE = {[1] = 6, [2] = 7, [3] = 3, [4] = 6}
 -- also tankier. on normal this follows the strength of the 300 scripted waves and keeps growing after them
 local BUDGET_BASE = 9.1
 local BUDGET_POWER = 2
-local BUDGET_HEALTH_GROWTH = 0.04
+local BUDGET_HEALTH_GROWTH = 0.02
+-- control.lua caps the enemy health multiplier at 10 (MAX_ENEMY_DAMAGE_REDUCTION 0.9), keep this in sync
+local BUDGET_MAX_HEALTH_MULTIPLIER = 10
 
 -- every 50 waves, one after the other. after boss-biter-6 they start over with one more boss each time
 local BOSSES = {"boss-biter-1", "ultra-flyer", "boss-biter-3", "boss-biter-4", "boss-biter-5", "boss-biter-6"}
@@ -80,7 +87,11 @@ end
 function endless.getBudget(wave, difficulty)
   local difficultyPoints = DIFFICULTY_POINTS[tonumber(difficulty)] or DIFFICULTY_POINTS[1]
   local base = BUDGET_BASE + math.max(0, wave - 2) ^ BUDGET_POWER
-  return math.max(1, math.floor(base * difficultyPoints / (1 + BUDGET_HEALTH_GROWTH * wave) + 0.5))
+  local healthMultiplier = math.min(BUDGET_MAX_HEALTH_MULTIPLIER, 1 + BUDGET_HEALTH_GROWTH * wave)
+  if wave > LATE_COUNT_WAVE then
+    difficultyPoints = difficultyPoints * (LATE_COUNT_FACTOR[tonumber(difficulty)] or 1)
+  end
+  return math.max(1, math.floor(base * difficultyPoints / healthMultiplier + 0.5))
 end
 
 local function familyUnlockWave(family)
@@ -186,11 +197,11 @@ end
 -- spawn groups for count enemies over the wave (see processWave in control.lua): whole enemies per second go in a
 -- stream (interval 1, count = per second * duration), the rest come in bursts spread through the wave.
 -- the tougher the enemy, the fewer bursts, so big ones come in small packs instead of one at a time
-local function addGroups(groups, name, count)
-  local perSecond = math.floor(count / WAVE_DURATION)
+local function addGroups(groups, name, count, duration)
+  local perSecond = math.floor(count / duration)
   if perSecond >= 1 then
-    groups[#groups + 1] = {name = name, count = perSecond * WAVE_DURATION, interval = 1, startDelay = 0}
-    count = count - perSecond * WAVE_DURATION
+    groups[#groups + 1] = {name = name, count = perSecond * duration, interval = 1, startDelay = 0}
+    count = count - perSecond * duration
   end
   if count <= 0 then
     return
@@ -205,14 +216,40 @@ local function addGroups(groups, name, count)
       name = name,
       count = size,
       interval = 0,
-      -- spread over the first 55 seconds so everything is out before the next wave
-      startDelay = math.floor((WAVE_DURATION - 5) * (i - 0.5) / bursts)
+      -- spread over all but the last 5 seconds so everything is out before the next wave
+      startDelay = math.floor((duration - 5) * (i - 0.5) / bursts)
     }
   end
 end
 
--- one wave in the same format as the map wave tables: {waveDuration, groups, note}
-function endless.buildWave(wave, difficulty)
+-- wave modifiers, endless only: from wave MODIFIER_FIRST_WAVE on, every wave but the boss waves rolls one of these
+-- with the same chance. "normal" changes nothing. rush: the wave is RUSH_MIN-MAX seconds shorter with the same
+-- enemies (so the next wave also comes sooner). speed: control.lua puts the haste sticker
+-- on every enemy of the wave (data.lua). coin: control.lua pays COIN_WAVE_MULTIPLIER times the coins for the wave's enemies
+local MODIFIER_FIRST_WAVE = 51
+local MODIFIERS = {"normal", "rush", "speed", "coin"}
+local RUSH_MIN_SECONDS = 15
+local RUSH_MAX_SECONDS = 30
+-- keep in sync with the haste sticker's target_movement_modifier in data.lua
+endless.SPEED_WAVE_MOVEMENT_MODIFIER = 1.4
+endless.COIN_WAVE_MULTIPLIER = 1.25
+
+-- nil for a normal wave. math.random is the same on every client in factorio, so this is multiplayer safe
+local function rollModifier(wave)
+  if wave < MODIFIER_FIRST_WAVE or wave % 50 == 0 then
+    return nil
+  end
+  local modifier = MODIFIERS[math.random(1, #MODIFIERS)]
+  if modifier == "normal" then
+    return nil
+  end
+  return modifier
+end
+
+-- one wave in the same format as the map wave tables: {waveDuration, groups, note}, plus the endless only
+-- modifier (rollModifier) and rushSeconds. sharedRoll (optional) is {modifier, rushSeconds} of the same wave of the
+-- other pvp team, used instead of rolling so both teams get the same modifier (modifier false is a normal wave)
+function endless.buildWave(wave, difficulty, sharedRoll)
   if wave <= 1 then
     return {
       waveDuration = WAVE_DURATION,
@@ -226,7 +263,7 @@ function endless.buildWave(wave, difficulty)
     local boss = BOSSES[bossNumber % #BOSSES + 1]
     local count = 1 + math.floor(bossNumber / #BOSSES)
     return {
-      waveDuration = WAVE_DURATION,
+      waveDuration = BOSS_WAVE_DURATION,
       note = "boss wave",
       groups = {{name = boss, count = count, interval = 0, startDelay = 5}},
     }
@@ -274,16 +311,49 @@ function endless.buildWave(wave, difficulty)
     add(pools[1][1].name, 1)
   end
 
+  local modifier = nil
+  local rushSeconds = nil
+  if sharedRoll then
+    modifier = sharedRoll.modifier or nil
+    rushSeconds = sharedRoll.rushSeconds
+  else
+    modifier = rollModifier(wave)
+    if modifier == "rush" then
+      rushSeconds = math.random(RUSH_MIN_SECONDS, RUSH_MAX_SECONDS)
+    end
+  end
+  local duration = WAVE_DURATION
+  if modifier == "rush" then
+    duration = WAVE_DURATION - rushSeconds
+  end
+
   local groups = {}
   for _, name in ipairs(order) do
-    addGroups(groups, name, counts[name])
+    addGroups(groups, name, counts[name], duration)
   end
 
   return {
-    waveDuration = WAVE_DURATION,
+    waveDuration = duration,
     note = (note ~= "" and note or nil),
     groups = groups,
+    modifier = modifier,
+    rushSeconds = rushSeconds,
   }
+end
+
+-- one line for /wave, /wavenext and the wave start message, nil for a wave without a modifier
+function endless.describeModifier(wave)
+  if not wave or not wave.modifier then
+    return nil
+  end
+  if wave.modifier == "rush" then
+    return "Rush wave: " .. tostring(wave.rushSeconds) .. "s shorter, same enemies"
+  elseif wave.modifier == "speed" then
+    return "Speed wave: enemies move " .. math.floor((endless.SPEED_WAVE_MOVEMENT_MODIFIER - 1) * 100 + 0.5) .. "% faster"
+  elseif wave.modifier == "coin" then
+    return "Coin wave: " .. endless.COIN_WAVE_MULTIPLIER .. "x coins per enemy"
+  end
+  return nil
 end
 
 return endless

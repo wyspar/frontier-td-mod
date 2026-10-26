@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.2.0
+Version: 1.2.1
 Date: 2026-09-01
   Changes:
     - Started frontier td
@@ -45,3 +45,22 @@ Date: 2026-10-10
 Date: 2026-10-24
   Changes:
     - Update to 2.1
+    - New map, volcano valley
+    - New tech unique to volcano valley
+    - Infinite dmg researches
+    - highscore command
+    - Map size increased
+    - Removed tesla pushback
+Date: 2026-10-25
+  Changes:
+    - Rocks 40% chance to give a coin
+    - More stuff in pvp market
+    - Pvp market prices change based on demand
+    - Next wave button
+    - Ores now vertical in sand dunes
+    - Golden snitch, flies around the map. Gives coins if killed.
+    - Rocket silo now regens hp over time.
+    - 3 Classes added
+    - New upgrade turret sound
+    - Added pump and storage tank
+    - Turret prices reduced

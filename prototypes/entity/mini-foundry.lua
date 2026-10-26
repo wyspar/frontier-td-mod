@@ -68,6 +68,23 @@ miniFoundry.dying_explosion = assembler.dying_explosion
 scaleGraphics(miniFoundry.graphics_set)
 scaleGraphics(miniFoundry.water_reflection)
 
+--the animation plays at animation_speed * crafting_speed: at crafting speed 2 (the foundry is 4) the foundry's slow
+--animation looked frozen, so it plays ANIMATION_SPEEDUP times faster. the crafting speed stays the same
+local ANIMATION_SPEEDUP = 3
+local function speedUpAnimations(value, seen)
+  if type(value) ~= "table" or seen[value] then
+    return
+  end
+  seen[value] = true
+  if value.animation_speed then
+    value.animation_speed = value.animation_speed * ANIMATION_SPEEDUP
+  end
+  for _, child in pairs(value) do
+    speedUpAnimations(child, seen)
+  end
+end
+speedUpAnimations(miniFoundry.graphics_set, {})
+
 --the same 4 pipes (2 inputs south, 2 outputs north), on the edge of the 3x3 instead of the 5x5
 for _, fluidBox in pairs(miniFoundry.fluid_boxes) do
   for _, connection in pairs(fluidBox.pipe_connections) do

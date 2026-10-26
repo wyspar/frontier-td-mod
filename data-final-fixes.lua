@@ -55,6 +55,12 @@ for _, beacon in pairs(data.raw.beacon) do
   end
 end
 
+-- the silo slowly heals itself, from 0 to full health in SILO_FULL_HEAL_TICKS
+local SILO_FULL_HEAL_TICKS = 10 * 60 * 60
+
+local rocketSilo = data.raw["rocket-silo"]["rocket-silo"]
+rocketSilo.healing_per_tick = (rocketSilo.max_health or 5000) / SILO_FULL_HEAL_TICKS
+
 local laserTurret = data.raw["electric-turret"]["laser-turret"]
 laserTurret.energy_source = {
   type = "void"
@@ -72,6 +78,53 @@ for _, tree in pairs(data.raw["tree"]) do
     tree.minable.results = {
       {type = "item", name = "coin", amount = 1, independent_probability = TREE_COIN_CHANCE}
     }
+  end
+end
+
+-- space age loot taken out: no tungsten ore from the volcanic rocks (big/huge, also the -hot ones)
+-- and no sulfur from the vulcanus chimneys (the vents)
+local function removeMinedResult(entity, itemName)
+  if not entity.minable or not entity.minable.results then
+    return
+  end
+  -- a new list, the results table can be shared with other prototypes
+  local results = {}
+  for _, result in pairs(entity.minable.results) do
+    if result.name ~= itemName then
+      table.insert(results, result)
+    end
+  end
+  entity.minable.results = results
+end
+
+for name, entity in pairs(data.raw["simple-entity"]) do
+  if name:find("volcanic-rock", 1, true) then
+    removeMinedResult(entity, "tungsten-ore")
+  elseif name:find("vulcanus-chimney", 1, true) then
+    removeMinedResult(entity, "sulfur")
+  end
+end
+
+-- rocks keep their normal loot (stone, coal, ...) and also have a 40% chance to give 1 coin.
+-- every minable "simple-entity" with rock in its name (vanilla and space age rocks, map-1-desert's sand rocks,
+-- map-3-volcano's volcanic rocks)
+local ROCK_COIN_CHANCE = 0.4
+
+for name, rock in pairs(data.raw["simple-entity"]) do
+  if rock.minable and name:find("rock", 1, true) then
+    -- a new list, so rocks that share one results table do not get the coin twice
+    local results = {}
+    if rock.minable.results then
+      for _, result in pairs(rock.minable.results) do
+        table.insert(results, result)
+      end
+    elseif rock.minable.result then
+      table.insert(results, {type = "item", name = rock.minable.result, amount = rock.minable.count or 1})
+    end
+    table.insert(results, {type = "item", name = "coin", amount = 1, independent_probability = ROCK_COIN_CHANCE})
+    rock.minable.result = nil
+    rock.minable.count = nil
+    rock.minable.results = results
   end
 end
 
