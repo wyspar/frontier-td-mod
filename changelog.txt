@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.2.1
+Version: 1.2.2
 Date: 2026-09-01
   Changes:
     - Started frontier td
@@ -64,3 +64,6 @@ Date: 2026-10-25
     - New upgrade turret sound
     - Added pump and storage tank
     - Turret prices reduced
+Date: 2026-10-29
+  Changes:
+    - Update to 2.1.24

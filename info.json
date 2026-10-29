@@ -3,12 +3,12 @@
   "title": "Frontier Tower Defense",
   "description": "Frontier Tower Defense is an overhaul mod that turns the game into a tower defense. You start with a few coins to craft starting turrets. Kill enemies to get more coins, and stop them from reaching your silo. Singleplayer or Multiplayer works.",
   "author": "wyspar",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "factorio_version": "2.1",
   "dependencies": [
-    "base >= 2.1.23",
-    "space-age >= 2.1.23",
-    "quality >= 2.1.23",
+    "base >= 2.1.24",
+    "space-age >= 2.1.24",
+    "quality >= 2.1.24",
     "fdsl >= 0.5.4",
     "aai-loaders >= 0.3.0",
     "ArmouredBiters21Compat >= 2.0.7"
