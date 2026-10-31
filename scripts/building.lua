@@ -167,6 +167,10 @@ function building.preventBuilding(event)
       item_name = "yumako-seed"
     end
 
+    if item_name == "coin-tree" then
+      item_name = "money-tree-seeds"
+    end
+
     local inserted_count = player.insert({
       name = item_name,
       count = 1,
